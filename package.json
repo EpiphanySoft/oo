@@ -1,0 +1,30 @@
+{
+    "name": "@epiphanysoft/configly",
+    "version": "1.0.0-alpha.0",
+    "description": "Configurable classes",
+    "main": "index.js",
+    "author": "dongryphon",
+    "license": "MIT",
+    "scripts": {
+        "test": "test"
+    },
+    "directories": {
+        "bin": "./bin",
+        "doc": "./doc",
+        "lib": "./lib",
+        "man": "./man"
+    },
+    "keywords": [
+        "oop",
+        "class",
+        "config",
+        "configurable"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/EpiphanySoft/configly.git"
+    },
+    "bugs": {
+        "url": "https://github.com/EpiphanySoft/configly/issues"
+    }
+}
