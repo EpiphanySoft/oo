@@ -1,0 +1,18 @@
+{
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "name": "Run Tests",
+                "type": "node",
+                "request": "launch",
+                "env": {
+                    "NODE_ENV": "test"
+                 },
+
+                "program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
+                "stopOnEntry": false,
+                "args": ["test/specs/**/*.js", "--no-timeouts"],
+                "cwd": "${workspaceRoot}"
+            }
+        ]
+    }

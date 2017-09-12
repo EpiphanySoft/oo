@@ -5,8 +5,9 @@
     "main": "index.js",
     "author": "dongryphon",
     "license": "MIT",
-    "scripts": {
-        "test": "test"
+    "devDependencies": {
+        "assertly": "^1.0.2",
+        "mocha": "^3.5.3"
     },
     "directories": {
         "bin": "./bin",
@@ -26,5 +27,9 @@
     },
     "bugs": {
         "url": "https://github.com/EpiphanySoft/configly/issues"
+    },
+    "scripts": {
+        "debug": "devtool node_modules/mocha/bin/_mocha -qc -- ./test/specs/**/*.js",
+        "test": "mocha ./test/specs/**/*.js"
     }
 }
