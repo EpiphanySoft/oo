@@ -8,10 +8,10 @@ function Empty (src) {
     }
 }
 
-const pr = Empty.prototype = Object.create(null);
-
 // For sanity (not safe to drop this one out):
-pr.hasOwnProperty = Object.prototype.hasOwnProperty;
+Object.defineProperty(Empty.prototype = Object.create(null), 'hasOwnProperty', {
+    value: Object.prototype.hasOwnProperty
+});
 
 class MySet extends Set {
     addAll (src) {

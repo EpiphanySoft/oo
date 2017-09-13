@@ -1,5 +1,5 @@
 const expect = require('assertly').expect;
-const Base = require('../../lib/Base.js');
+const Base = require('../../src/Base.js');
 
 describe('Base', function () {
     describe('life-cycle', function () {

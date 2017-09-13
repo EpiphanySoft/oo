@@ -7,6 +7,8 @@ const JunctionSymbol = Symbol('methodJunction');
 
 const instanceSkip = new Util.Empty({
     constructor: 1,
+    ctor: 1,
+    dtor: 1,
     $meta: 1,
     super: 1
 });
