@@ -7,6 +7,15 @@
     "license": "MIT",
     "devDependencies": {
         "assertly": "^1.0.2",
+        "babel-cli": "^6.24.0",
+        "babel-core": "^6.24.0",
+        "babel-plugin-transform-class-properties": "^6.23.0",
+        "babel-plugin-transform-decorators-legacy": "^1.3.4",
+        "babel-plugin-transform-es2015-modules-commonjs": "^6.24.0",
+        "babel-plugin-transform-flow-strip-types": "^6.22.0",
+        "babel-plugin-transform-object-rest-spread": "^6.23.0",
+        "babel-polyfill": "^6.23.0",
+        "babel-preset-es2015": "^6.24.0",
         "mocha": "^3.5.3"
     },
     "directories": {
@@ -30,6 +39,6 @@
     },
     "scripts": {
         "debug": "devtool node_modules/mocha/bin/_mocha -qc -- ./test/specs/**/*.js",
-        "test": "mocha ./test/specs/**/*.js"
+        "test": "mocha --compilers js:babel-core/register --require babel-polyfill ./test/specs/**/*.js"
     }
 }

@@ -13,27 +13,52 @@ Object.defineProperty(Empty.prototype = Object.create(null), 'hasOwnProperty', {
     value: Object.prototype.hasOwnProperty
 });
 
-class MySet extends Set {
-    addAll (src) {
-        for (let v of src) {
-            this.add(v);
+// class MySet extends Set {
+//     constructor () {
+//         super();
+//     }
+//
+//     addAll (src) {
+//         for (let v of src) {
+//             this.add(v);
+//         }
+//
+//         return this;
+//     }
+//
+//     clone () {
+//         let ret = new MySet();
+//
+//         return ret.addAll(this);
+//     }
+// }
+
+(function (SetProto) {
+    if (!SetProto.addAll) {
+        SetProto.addAll = function (src) {
+            for (let v of src) {
+                this.add(v);
+            }
+
+            return this;
         }
-
-        return this;
     }
 
-    clone () {
-        let ret = new MySet();
-
-        return ret.addAll(this);
+    if (!SetProto.clone) {
+        SetProto.clone = function () {
+            let ret = new Set();
+            ret.addAll(this);
+            return ret;
+        }
     }
-}
+}(Set.prototype));
+
 
 const Util = {
     nullFn () {},
 
     Empty: Empty,
-    Set: MySet,
+    Set: Set,
 
     capitalize (str) {
         return str ? str[0].toUpperCase() + str.substr(1) : '';

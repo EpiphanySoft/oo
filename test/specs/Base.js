@@ -7,6 +7,7 @@ describe('Base', function () {
         let log;
 
         beforeEach(function () {
+            const Junction = Base.Junction;
             log = [];
 
             C = class c extends Base {
@@ -24,6 +25,7 @@ describe('Base', function () {
             };
 
             D = class d extends C {
+                @Junction
                 foo (x) {
                     let r = super.foo(x);
                     log.push('D.foo=' + x);
@@ -49,9 +51,9 @@ describe('Base', function () {
         });
 
         it('should be able to mixin', function () {
-            D.Junction(null, null, {
-                value: D.prototype.foo
-            });
+            // D.Junction(null, null, {
+            //     value: D.prototype.foo
+            // });
 
             D.mix(M);
 

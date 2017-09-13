@@ -82,6 +82,7 @@ class Base {
     // Private
 
     static Junction (target, name, descriptor) {
+        debugger
         let fn = descriptor.value;
 
         if (typeof fn === 'function') {
