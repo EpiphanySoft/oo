@@ -89,10 +89,19 @@ class Meta {
 
     getMixinId () {
         let mixinId = this.mixinId;
+        let cls = this.class;
+        let MixinIdSymbol = cls.MixinIdSymbol;
 
         if (!mixinId) {
-            mixinId = (this.class.name || 'mixin') + '$' + ++mixinIdSeed;
-            this.mixinId = mixinId = Util.decapitalize(mixinId);
+            if (cls.hasOwnProperty(MixinIdSymbol)) {
+                mixinId = cls[MixinIdSymbol];
+            }
+            else {
+                mixinId = (this.class.name || 'mixin') + '$' + ++mixinIdSeed;
+                mixinId = Util.decapitalize(mixinId);
+            }
+
+            this.mixinId = mixinId;
         }
 
         return mixinId;

@@ -4,6 +4,7 @@ const Meta = require('./Meta.js');
 const Util = require('./Util.js');
 
 const JunctionSymbol = Symbol('methodJunction');
+const MixinIdSymbol = Symbol('mixinId');
 
 const instanceSkip = new Util.Empty({
     constructor: 1,
@@ -81,8 +82,13 @@ class Base {
     //-------------------------------------------------------------------------------
     // Private
 
+    static MixinId (mixinId) {
+        return function (C) {
+            C[MixinIdSymbol] = mixinId;
+        }
+    }
+
     static Junction (target, name, descriptor) {
-        debugger
         let fn = descriptor.value;
 
         if (typeof fn === 'function') {
@@ -220,6 +226,7 @@ class Base {
 }
 
 Base.JunctionSymbol = JunctionSymbol;
+Base.MixinIdSymbol = MixinIdSymbol;
 
 Base.isClass = true;
 

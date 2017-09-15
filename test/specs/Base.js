@@ -1,13 +1,15 @@
 const expect = require('assertly').expect;
 const Base = require('../../src/Base.js');
 
+const Junction = Base.Junction;
+const MixinId = Base.MixinId;
+
 describe('Base', function () {
     describe('life-cycle', function () {
         let C, D, M;
         let log;
 
         beforeEach(function () {
-            const Junction = Base.Junction;
             log = [];
 
             C = class c extends Base {
@@ -17,12 +19,14 @@ describe('Base', function () {
                 }
             };
 
-            M = class m extends Base {
+            @MixinId('mixum')
+            class m extends Base {
                 foo (x) {
                     log.push('M.foo=' + x);
                     return 'm' + x;
                 }
             };
+            M = m;
 
             D = class d extends C {
                 @Junction
