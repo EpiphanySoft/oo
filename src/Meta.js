@@ -71,6 +71,22 @@ class Meta {
         //
     }
 
+    addMixin (mixinMeta, mixinId) {
+        if (!mixinId) {
+            mixinId = mixinMeta.getMixinId();
+        }
+
+        if (mixinId) {
+            let mix = mixinMeta.class;
+            let mixins = this.getMixins();
+
+            if (!mixins[mixinId]) {
+                mixins[mixinId] = mix;
+                this.class.prototype.mixins[mixinId] = mix.prototype;
+            }
+        }
+    }
+
     init () {
         this.complete = true;
     }
@@ -107,23 +123,25 @@ class Meta {
         return mixinId;
     }
 
-    getMixinsMap () {
-        let map = this.mixinsMap;
+    getMixins () {
+        let pro = this.class.prototype;
+        let map = pro.mixins;
 
-        if (!map) {
+        if (!pro.hasOwnProperty('mixins')) {
             this.initMixinsMap();
-            map = this.mixinsMap;
+            map = pro.mixins;
         }
 
         return map;
     }
 
-    getMixinsMapStatic () {
-        let map = this.mixinsMapStatic;
+    getMixinsStatic () {
+        let cls = this.class;
+        let map = cls.mixins;
 
-        if (!map) {
+        if (!cls.hasOwnProperty('mixins')) {
             this.initMixinsMap();
-            map = this.mixinsMapStatic;
+            map = cls.mixins;
         }
 
         return map;
@@ -159,10 +177,11 @@ class Meta {
     }
 
     initMixinsMap () {
+        let cls = this.class;
         let sup = this.super;
 
-        this.mixinsMap = (sup ? Object.create(sup.getMixinsMap()) : {});
-        this.mixinsMapStatic = (sup ? Object.create(sup.getMixinsMapStatic()) : {});
+        cls.mixins = (sup ? Object.create(sup.getMixinsStatic()) : {});
+        cls.prototype.mixins = (sup ? Object.create(sup.getMixins()) : {});
     }
 }
 

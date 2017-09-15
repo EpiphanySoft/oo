@@ -142,9 +142,7 @@ class Base {
             Util.raise(`Too late apply a mixin into this class`);
         }
 
-        if (!mixinId) {
-            mixinId = mixinMeta.getMixinId();
-        }
+        meta.addMixin(mixinMeta, mixinId);
 
         for (mixCls = mixinCls; mixCls !== Base; mixCls = mixCls.super) {
             if (classes.has(mixCls)) {
@@ -225,12 +223,14 @@ class Base {
     }
 }
 
-Base.JunctionSymbol = JunctionSymbol;
-Base.MixinIdSymbol = MixinIdSymbol;
-
 Base.isClass = true;
 
+Base.JunctionSymbol = JunctionSymbol;
+Base.MixinIdSymbol = MixinIdSymbol;
+Base.mixins = new Util.Empty();
+
 Base.prototype.isInstance = true;
+Base.prototype.mixins = new Util.Empty();
 
 new Meta(Base);
 
