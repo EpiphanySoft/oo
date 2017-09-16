@@ -2,18 +2,19 @@
 
 const Meta = require('./Meta.js');
 const Util = require('./Util.js');
+const Empty = Util.Empty;
 
 const JunctionSymbol = Symbol('methodJunction');
 const MixinIdSymbol = Symbol('mixinId');
 
-const instanceSkip = new Util.Empty({
+const instanceSkip = new Empty({
     constructor: 1,
     ctor: 1,
     dtor: 1,
     $meta: 1,
     super: 1
 });
-const staticSkip = new Util.Empty({
+const staticSkip = new Empty({
     prototype: 1,
     length: 1,
     name: 1,
@@ -88,6 +89,19 @@ class Base {
         }
     }
 
+    /**
+     * This decorator is applied to class methods that have multiple base class and/or
+     * mixin "super" methods.
+     *
+     * For example:
+     *
+     *      class Foo extends Base {
+     *          @Junction
+     *          bar (x, y) {
+     *              super.bar(x, y);
+     *          }
+     *      }
+    */
     static Junction (target, name, descriptor) {
         let fn = descriptor.value;
 
@@ -109,7 +123,7 @@ class Base {
 
         // A junction calls the true super method and all mixin methods and returns the
         // return value of the first method called.
-        shim[key] = method.$junction = function (...args) {
+        shim[key] = method[JunctionSymbol] = function (...args) {
             let called = sup[key];
             let result = called && called.apply(this, args);
             let res;
@@ -130,16 +144,18 @@ class Base {
     static mix (mixinCls, mixinId) {
         let me = this;
         let meta = me.getMeta();
-        let classes = meta.classes;
+        let classes = meta.bases;
         let mixinMeta = mixinCls.getMeta();  // ensure all Meta's exist
-        let beforeCount = classes.size;
-        let instanceMap = new Util.Empty();
-        let staticsMap = new Util.Empty();
+        let instanceMap = new Empty();
+        let staticsMap = new Empty();
         let existing, fn, i, isStatic, k, key, keys, map, members, mixCls, mixMeta, prop,
             skip, target;
 
         if (meta.complete) {
             Util.raise(`Too late apply a mixin into this class`);
+        }
+        if (me.class.isPrototypeOf(mixinCls)) {
+            Util.raise('Cannot mix a derived class into a super class');
         }
 
         meta.addMixin(mixinMeta, mixinId);
@@ -149,7 +165,6 @@ class Base {
                 break;
             }
 
-            classes.add(mixCls);
             mixMeta = mixCls.$meta; // earlier call to getMeta ensures this is OK
             mixMeta.init();  // mark the class as complete since we cannot update later
 
@@ -187,12 +202,6 @@ class Base {
                             existing.$owner = me;
                         }
 
-                        /*
-                            @Junction
-                            foo (x, y) {
-                                super.foo(x, y);
-                            }
-                        */
                         if (existing[JunctionSymbol] && existing.$owner === me) {
                             // We could have previously mixed in a method from a class
                             // that was also a Junction, so we need to check that the
@@ -215,10 +224,6 @@ class Base {
 
         }
 
-        if (beforeCount !== classes.size) {
-            classes.addAll(mixinMeta.classes);
-        }
-
         meta.invalidateMembers();
     }
 }
@@ -227,10 +232,10 @@ Base.isClass = true;
 
 Base.JunctionSymbol = JunctionSymbol;
 Base.MixinIdSymbol = MixinIdSymbol;
-Base.mixins = new Util.Empty();
+Base.mixins = new Empty();
 
 Base.prototype.isInstance = true;
-Base.prototype.mixins = new Util.Empty();
+Base.prototype.mixins = new Empty();
 
 new Meta(Base);
 

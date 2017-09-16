@@ -2,6 +2,7 @@
 
 const Configlet = require('./Configlet.js');
 const Util = require('./Util.js');
+const Empty = Util.Empty;
 
 let mixinIdSeed = 0;
 
@@ -28,7 +29,7 @@ function getOwnProps (object) {
     let ret = {
         obj: object,
         keys: getOwnKeys(object),
-        props: new Util.Empty(),
+        props: new Empty(),
         statics: null
     };
 
@@ -72,12 +73,17 @@ class Meta {
     }
 
     addMixin (mixinMeta, mixinId) {
+        let mix = mixinMeta.class;
+        let bases = this.bases;
+
+        bases.addAll(mixinMeta.bases);
+        bases.add(mix);
+
         if (!mixinId) {
             mixinId = mixinMeta.getMixinId();
         }
 
         if (mixinId) {
-            let mix = mixinMeta.class;
             let mixins = this.getMixins();
 
             if (!mixins[mixinId]) {
@@ -180,8 +186,8 @@ class Meta {
         let cls = this.class;
         let sup = this.super;
 
-        cls.mixins = (sup ? Object.create(sup.getMixinsStatic()) : {});
-        cls.prototype.mixins = (sup ? Object.create(sup.getMixins()) : {});
+        cls.mixins = (sup ? Object.create(sup.getMixinsStatic()) : new Empty());
+        cls.prototype.mixins = (sup ? Object.create(sup.getMixins()) : new Empty());
     }
 }
 
