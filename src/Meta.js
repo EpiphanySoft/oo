@@ -1,8 +1,10 @@
 'use strict';
 
-const Configlet = require('./Configlet.js');
+const Config = require('./Config.js');
 const Util = require('./Util.js');
 const Empty = Util.Empty;
+
+const chainOwnerSym = Symbol('chainOwner');
 
 let mixinIdSeed = 0;
 
@@ -55,17 +57,36 @@ class Meta {
         cls.super = superclass;
         proto.super = superclass && superclass.prototype;
 
+        me.chains = superMeta ? Object.create(superMeta.chains) : new Empty();
+        me.liveChains = superMeta ? Object.create(superMeta.liveChains) : new Empty();
         me.id = (cls.name || '') + '$' + ++Meta.count;
         me.bases = superMeta ? superMeta.bases.clone() : new Util.Set();
-        me.classes = superMeta ? superMeta.classes.clone() : new Util.Set();
         me.class = cls;
         me.super = superMeta;
 
         if (superclass) {
             me.bases.add(superclass);
         }
+    }
 
-        me.classes.add(cls);
+    complete () {
+        let cls = this.class;
+
+        this.completed = true;
+
+        (this.classes = this.bases.clone()).add(cls);
+
+        let sup = this.super;
+
+        if (sup && !sup.completed) {
+            sup.complete();
+        }
+    }
+
+    addChains (...methods) {
+        for (let m of methods) {
+            this.chains[m] = this.liveChains[m] = true;
+        }
     }
 
     addConfigs (configs) {
@@ -73,11 +94,15 @@ class Meta {
     }
 
     addMixin (mixinMeta, mixinId) {
-        let mix = mixinMeta.class;
-        let bases = this.bases;
+        if (this.completed) {
+            Util.raise(`Too late apply a mixin into this class`);
+        }
 
-        bases.addAll(mixinMeta.bases);
-        bases.add(mix);
+        mixinMeta.complete();
+
+        let mix = mixinMeta.class;
+
+        this.bases.addAll(mixinMeta.bases).add(mix);
 
         if (!mixinId) {
             mixinId = mixinMeta.getMixinId();
@@ -93,11 +118,11 @@ class Meta {
         }
     }
 
-    init () {
-        this.complete = true;
-    }
-
     getMembers () {
+        if (!this.completed) {
+            Util.raise('Class is incomplete');
+        }
+
         let cls = this.class;
         let members = this.members;
 
@@ -129,28 +154,18 @@ class Meta {
         return mixinId;
     }
 
-    getMixins () {
-        let pro = this.class.prototype;
-        let map = pro.mixins;
-
-        if (!pro.hasOwnProperty('mixins')) {
-            this.initMixinsMap();
-            map = pro.mixins;
-        }
-
-        return map;
-    }
-
-    getMixinsStatic () {
+    getMixins (isStatic) {
         let cls = this.class;
-        let map = cls.mixins;
+        let proto = cls.prototype;
 
         if (!cls.hasOwnProperty('mixins')) {
-            this.initMixinsMap();
-            map = cls.mixins;
+            let sup = this.super;
+
+            cls.mixins = (sup ? Object.create(sup.getMixins(true)) : new Empty());
+            proto.mixins = (sup ? Object.create(sup.getMixins()) : new Empty());
         }
 
-        return map;
+        return (isStatic ? cls : proto).mixins;
     }
 
     getShim (isStatic = true) {
@@ -163,8 +178,37 @@ class Meta {
         return isStatic ? shim : shim.prototype;
     }
 
-    invalidateMembers () {
-        this.members = null;
+    invokeMethodChain (instance, reverse, method, args) {
+        let liveChains = this.liveChains;
+
+        if (liveChains[method]) {
+            let classes = this.classes;
+            let called = 0;
+
+            if (reverse) {
+                classes = this.classesRev || (this.classesRev = Array.from(classes).reverse());
+            }
+
+            for (let cls of classes) {
+                let proto = cls.prototype;
+                let fn = proto[method];
+
+                if (fn && proto.hasOwnProperty(method)) {
+                    ++called;
+
+                    if (args) {
+                        fn.apply(instance, args);
+                    }
+                    else {
+                        fn.call(instance);
+                    }
+                }
+            }
+
+            if (!called) {
+                liveChains[method] = false;
+            }
+        }
     }
 
     //----------------------------------------------------------------------
@@ -181,20 +225,14 @@ class Meta {
 
         return Shim;
     }
-
-    initMixinsMap () {
-        let cls = this.class;
-        let sup = this.super;
-
-        cls.mixins = (sup ? Object.create(sup.getMixinsStatic()) : new Empty());
-        cls.prototype.mixins = (sup ? Object.create(sup.getMixins()) : new Empty());
-    }
 }
 
 Meta.count = 0;
 
 Object.assign(Meta.prototype, {
-    complete: false,
+    classes: null,
+    classesRev: null,
+    completed: false,
 
     instances: 0,
 

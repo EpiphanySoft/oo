@@ -1,8 +1,7 @@
 const expect = require('assertly').expect;
 const Base = require('../../src/Base.js');
 
-const Junction = Base.Junction;
-const MixinId = Base.MixinId;
+const { junction, mixinId } = require('../../src/decorators');
 
 describe('Base', function () {
     describe('life-cycle', function () {
@@ -19,7 +18,7 @@ describe('Base', function () {
                 }
             };
 
-            @MixinId('mixum')
+            @mixinId('mixum')
             class m extends Base {
                 foo (x) {
                     log.push('M.foo=' + x);
@@ -29,7 +28,7 @@ describe('Base', function () {
             M = m;
 
             D = class d extends C {
-                @Junction
+                @junction
                 foo (x) {
                     let r = super.foo(x);
                     log.push('D.foo=' + x);

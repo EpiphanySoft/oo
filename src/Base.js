@@ -4,20 +4,21 @@ const Meta = require('./Meta.js');
 const Util = require('./Util.js');
 const Empty = Util.Empty;
 
-const JunctionSymbol = Symbol('methodJunction');
-const MixinIdSymbol = Symbol('mixinId');
+const JunctionSym = Symbol('junction');
+const MixinIdSym = Symbol('mixinId');
 
 const instanceSkip = new Empty({
     constructor: 1,
-    ctor: 1,
-    dtor: 1,
+
     $meta: 1,
     super: 1
 });
+
 const staticSkip = new Empty({
     prototype: 1,
     length: 1,
     name: 1,
+
     $meta: 1,
     super: 1
 });
@@ -42,8 +43,8 @@ class Base {
     }
 
     constructor (config) {
-        let meta = this.$meta;
         let C = this.constructor;
+        let meta = this.$meta;
 
         if (meta.class !== C) {
             meta = C.getMeta();
@@ -57,7 +58,11 @@ class Base {
     }
 
     construct () {
-        //
+        let meta = this.$meta;
+
+        if (meta.liveChains.ctor) {
+            meta.invokeMethodChain(this, false, 'ctor');
+        }
     }
 
     destroy () {
@@ -73,7 +78,19 @@ class Base {
     }
 
     destruct () {
-        //
+        let meta = this.$meta;
+
+        if (meta.liveChains.dtor) {
+            meta.invokeMethodChain(this, true, 'dtor');
+        }
+    }
+
+    invokeMethodChain (method, ...args) {
+        this.$meta.invokeMethodChain(this, false, method, args);
+    }
+
+    invokeMethodChainRev (method, ...args) {
+        this.$meta.invokeMethodChain(this, true, method, args);
     }
 
     getMeta () {
@@ -82,33 +99,6 @@ class Base {
 
     //-------------------------------------------------------------------------------
     // Private
-
-    static MixinId (mixinId) {
-        return function (C) {
-            C[MixinIdSymbol] = mixinId;
-        }
-    }
-
-    /**
-     * This decorator is applied to class methods that have multiple base class and/or
-     * mixin "super" methods.
-     *
-     * For example:
-     *
-     *      class Foo extends Base {
-     *          @Junction
-     *          bar (x, y) {
-     *              super.bar(x, y);
-     *          }
-     *      }
-    */
-    static Junction (target, name, descriptor) {
-        let fn = descriptor.value;
-
-        if (typeof fn === 'function') {
-            fn[JunctionSymbol] = true;
-        }
-    }
 
     static addJunction (isStatic, key, method) {
         let target = this;
@@ -123,7 +113,7 @@ class Base {
 
         // A junction calls the true super method and all mixin methods and returns the
         // return value of the first method called.
-        shim[key] = method[JunctionSymbol] = function (...args) {
+        shim[key] = method[JunctionSym] = function (...args) {
             let called = sup[key];
             let result = called && called.apply(this, args);
             let res;
@@ -144,16 +134,14 @@ class Base {
     static mix (mixinCls, mixinId) {
         let me = this;
         let meta = me.getMeta();
+        let chains = meta.chains;
         let classes = meta.bases;
         let mixinMeta = mixinCls.getMeta();  // ensure all Meta's exist
         let instanceMap = new Empty();
         let staticsMap = new Empty();
-        let existing, fn, i, isStatic, k, key, keys, map, members, mixCls, mixMeta, prop,
-            skip, target;
+        let existing, fn, i, isStatic, k, key, keys, map, members, mixCls,
+            mixMeta, prop, skip, target;
 
-        if (meta.complete) {
-            Util.raise(`Too late apply a mixin into this class`);
-        }
         if (me.class.isPrototypeOf(mixinCls)) {
             Util.raise('Cannot mix a derived class into a super class');
         }
@@ -166,7 +154,6 @@ class Base {
             }
 
             mixMeta = mixCls.$meta; // earlier call to getMeta ensures this is OK
-            mixMeta.init();  // mark the class as complete since we cannot update later
 
             // Start with instance side members:
             isStatic = false;
@@ -179,18 +166,25 @@ class Base {
                 k = keys.length;
 
                 for (i = 0; i < k; ++i) {
-                    key = keys[i];
-                    if (skip[key] || map[key]) { // TODO filter ctor/dtor et al
+                    if (skip[key = keys[i]]) {
                         continue;
                     }
 
-                    map[key] = true;
                     prop = members.props[key];
+
                     fn = prop.value;
                     fn = (typeof fn === 'function') && fn;
-
                     if (fn && !fn.$owner) {
                         fn.$owner = mixCls;
+                    }
+
+                    if (map[key]) {
+                        continue;
+                    }
+                    map[key] = true;
+
+                    if (!isStatic && chains[key]) {
+                        continue;
                     }
 
                     if (!(key in target)) {
@@ -202,7 +196,7 @@ class Base {
                             existing.$owner = me;
                         }
 
-                        if (existing[JunctionSymbol] && existing.$owner === me) {
+                        if (existing[JunctionSym] && existing.$owner === me) {
                             // We could have previously mixed in a method from a class
                             // that was also a Junction, so we need to check that the
                             // method belongs to the target class.
@@ -223,15 +217,16 @@ class Base {
             }
 
         }
-
-        meta.invalidateMembers();
     }
 }
 
 Base.isClass = true;
 
-Base.JunctionSymbol = JunctionSymbol;
-Base.MixinIdSymbol = MixinIdSymbol;
+Base.symbols = {
+    junction: JunctionSym,
+    mixinId: MixinIdSym
+};
+
 Base.mixins = new Empty();
 
 Base.prototype.isInstance = true;

@@ -2,7 +2,7 @@
 
 const Util = require('./Util.js');
 
-class Configlet {
+class Config {
     constructor (name) {
         let cap = Util.capitalize(name);
 
@@ -14,9 +14,9 @@ class Configlet {
     }
 
     static get (name) {
-        let all = Configlet.all;
+        let all = Config.all;
 
-        return all[name] || (all[name] = new Configlet(name));
+        return all[name] || (all[name] = new Config(name));
     }
 
     extend (options) {
@@ -122,6 +122,6 @@ class Configlet {
     }
 }
 
-Configlet.all = {};
+Config.all = {};
 
-module.exports = Configlet;
+module.exports = Config;
