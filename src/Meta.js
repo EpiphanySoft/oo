@@ -54,18 +54,33 @@ class Meta {
         Object.defineProperty(cls, '$meta', $meta);
         Object.defineProperty(proto, '$meta', $meta);
 
-        cls.super = superclass;
-        proto.super = superclass && superclass.prototype;
-
-        me.chains = superMeta ? Object.create(superMeta.chains) : new Empty();
-        me.liveChains = superMeta ? Object.create(superMeta.liveChains) : new Empty();
         me.id = (cls.name || '') + '$' + ++Meta.count;
-        me.bases = superMeta ? superMeta.bases.clone() : new Util.Set();
         me.class = cls;
         me.super = superMeta;
 
+        cls.super = superclass;
+        proto.super = superclass && superclass.prototype;
+
         if (superclass) {
+            me.bases = superMeta.bases.clone();
             me.bases.add(superclass);
+
+            // Since many classes the the hierarchy can *implement* a chained method,
+            // we don't try to save on this map creation. This is prototype chained to
+            // the superclass's liveChains and only keys with a value of true are put
+            // in the map. This ensures that methods in base classes will "activate" a
+            // chained method.
+            me.liveChains = Object.create(superMeta.liveChains);
+        }
+        else {
+            me.bases = new Util.Set();
+
+            // Defining new chains is rare so we only create this map for Base. The
+            // getChains() method will walk up the supers and return the first class
+            // to have defined method chains (which is Base typically).
+            me.chains = new Empty();
+
+            me.liveChains = new Empty();
         }
     }
 
@@ -73,6 +88,7 @@ class Meta {
         let cls = this.class;
 
         this.completed = true;
+        this.complete = Util.nullFn;
 
         (this.classes = this.bases.clone()).add(cls);
 
@@ -84,8 +100,21 @@ class Meta {
     }
 
     addChains (...methods) {
+        let chains = this.getChains(true);
+        let proto = this.class.prototype;
+
         for (let m of methods) {
-            this.chains[m] = this.liveChains[m] = true;
+            // Assume all chained methods are live initially.
+            this.liveChains[m] = chains[m] = true;
+
+            let name = m + 'Chain';
+
+            Object.defineProperty(proto, name, {
+                value: this.createChainInvoker(m)
+            });
+            Object.defineProperty(proto, name + 'Rev', {
+                value: this.createChainInvoker(m, true)
+            });
         }
     }
 
@@ -116,6 +145,25 @@ class Meta {
                 this.class.prototype.mixins[mixinId] = mix.prototype;
             }
         }
+    }
+
+    getChains (own) {
+        let chains = this.chains;
+
+        if (!chains) {
+            let sup = this.super;
+
+            if (own) {
+                this.chains = chains = Object.create(sup.getChains(true));
+            }
+            else {
+                for (; !chains && sup; sup = sup.super) {
+                    chains = sup.chains;
+                }
+            }
+        }
+
+        return chains;
     }
 
     getMembers () {
@@ -179,40 +227,47 @@ class Meta {
     }
 
     invokeMethodChain (instance, reverse, method, args) {
-        let liveChains = this.liveChains;
+        let classes = this.classes;
+        let calls = 0;
 
-        if (liveChains[method]) {
-            let classes = this.classes;
-            let called = 0;
+        if (reverse) {
+            classes = this.classesRev || (this.classesRev = Array.from(classes).reverse());
+        }
 
-            if (reverse) {
-                classes = this.classesRev || (this.classesRev = Array.from(classes).reverse());
-            }
+        for (let cls of classes) {
+            let proto = cls.prototype;
+            let fn = proto[method];
 
-            for (let cls of classes) {
-                let proto = cls.prototype;
-                let fn = proto[method];
+            if (fn && proto.hasOwnProperty(method)) {
+                ++calls;
 
-                if (fn && proto.hasOwnProperty(method)) {
-                    ++called;
-
-                    if (args) {
-                        fn.apply(instance, args);
-                    }
-                    else {
-                        fn.call(instance);
-                    }
+                if (args) {
+                    fn.apply(instance, args);
+                }
+                else {
+                    fn.call(instance);
                 }
             }
-
-            if (!called) {
-                liveChains[method] = false;
-            }
         }
+
+        return calls;
     }
 
     //----------------------------------------------------------------------
     // Private
+
+    createChainInvoker (name, reverse) {
+        let me = this;
+        let liveChains = me.liveChains;
+
+        return function (...args) {
+            if (liveChains[name]) {
+                if (!me.invokeMethodChain(this, reverse, name, args)) {
+                    liveChains[name] = false;
+                }
+            }
+        };
+    }
 
     createShim () {
         let cls = this.class;
@@ -230,6 +285,7 @@ class Meta {
 Meta.count = 0;
 
 Object.assign(Meta.prototype, {
+    chains: null,
     classes: null,
     classesRev: null,
     completed: false,

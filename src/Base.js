@@ -50,24 +50,19 @@ class Base {
             meta = C.getMeta();
         }
 
-        if (!meta.instances++) {
-            meta.init();
+        if (!meta.instances++ && !meta.completed) {
+            meta.complete();
         }
 
         this.construct();
     }
 
     construct () {
-        let meta = this.$meta;
-
-        if (meta.liveChains.ctor) {
-            meta.invokeMethodChain(this, false, 'ctor');
-        }
+        this.ctorChain();
     }
 
     destroy () {
         let me = this;
-        let meta = me.$meta;
 
         me.destroy = Util.nullFn;
         me.destroying = true;
@@ -78,11 +73,7 @@ class Base {
     }
 
     destruct () {
-        let meta = this.$meta;
-
-        if (meta.liveChains.dtor) {
-            meta.invokeMethodChain(this, true, 'dtor');
-        }
+        this.dtorChainRev();
     }
 
     invokeMethodChain (method, ...args) {
@@ -134,7 +125,7 @@ class Base {
     static mix (mixinCls, mixinId) {
         let me = this;
         let meta = me.getMeta();
-        let chains = meta.chains;
+        let chains = meta.getChains();
         let classes = meta.bases;
         let mixinMeta = mixinCls.getMeta();  // ensure all Meta's exist
         let instanceMap = new Empty();
@@ -215,7 +206,6 @@ class Base {
                 skip = staticSkip;
                 target = me;
             }
-
         }
     }
 }
@@ -232,6 +222,6 @@ Base.mixins = new Empty();
 Base.prototype.isInstance = true;
 Base.prototype.mixins = new Empty();
 
-new Meta(Base);
+new Meta(Base).addChains('ctor', 'dtor');
 
 module.exports = Base;
