@@ -23,6 +23,8 @@ const staticSkip = new Empty({
     super: 1
 });
 
+staticSkip[MixinIdSym] = true;
+
 class Base {
     static addConfigs (configs) {
         this.getMeta().addConfigs(configs);
@@ -124,23 +126,40 @@ class Base {
 
     static mix (mixinCls, mixinId) {
         let me = this;
+        let prototype = me.prototype;
         let meta = me.getMeta();
         let chains = meta.getChains();
-        let classes = meta.bases;
+        let bases = meta.bases;
         let mixinMeta = mixinCls.getMeta();  // ensure all Meta's exist
         let instanceMap = new Empty();
         let staticsMap = new Empty();
         let existing, fn, i, isStatic, k, key, keys, map, members, mixCls,
             mixMeta, prop, skip, target;
 
-        if (me.class.isPrototypeOf(mixinCls)) {
+        if (me.constructor.isPrototypeOf(mixinCls)) {
             Util.raise('Cannot mix a derived class into a super class');
         }
+        if (meta.completed) {
+            Util.raise(`Too late apply a mixin into this class`);
+        }
 
-        meta.addMixin(mixinMeta, mixinId);
+        mixinMeta.complete();
+
+        if (!mixinId) {
+            mixinId = mixinMeta.getMixinId();
+        }
+
+        if (mixinId) {
+            let mixins = meta.getMixins();
+
+            if (!mixins[mixinId]) {
+                mixins[mixinId] = mixinCls;
+                prototype.mixins[mixinId] = mixinCls.prototype;
+            }
+        }
 
         for (mixCls = mixinCls; mixCls !== Base; mixCls = mixCls.super) {
-            if (classes.has(mixCls)) {
+            if (bases.has(mixCls)) {
                 break;
             }
 
@@ -150,7 +169,7 @@ class Base {
             isStatic = false;
             map = instanceMap;
             skip = instanceSkip;
-            target = me.prototype;
+            target = prototype;
 
             for (members = mixMeta.getMembers(); members; members = members.statics) {
                 keys = members.keys;
@@ -207,6 +226,8 @@ class Base {
                 target = me;
             }
         }
+
+        bases.addAll(mixinMeta.bases).add(mixinCls);
     }
 }
 

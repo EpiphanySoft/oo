@@ -65,7 +65,7 @@ class Meta {
             me.bases = superMeta.bases.clone();
             me.bases.add(superclass);
 
-            // Since many classes the the hierarchy can *implement* a chained method,
+            // Since many classes in the hierarchy can *implement* a chained method,
             // we don't try to save on this map creation. This is prototype chained to
             // the superclass's liveChains and only keys with a value of true are put
             // in the map. This ensures that methods in base classes will "activate" a
@@ -104,7 +104,9 @@ class Meta {
         let proto = this.class.prototype;
 
         for (let m of methods) {
-            // Assume all chained methods are live initially.
+            // Assume all chained methods are live initially. When we first call the
+            // chain we check to see if any impls are present and if not we will clear
+            // this value.
             this.liveChains[m] = chains[m] = true;
 
             let name = m + 'Chain';
@@ -120,31 +122,6 @@ class Meta {
 
     addConfigs (configs) {
         //
-    }
-
-    addMixin (mixinMeta, mixinId) {
-        if (this.completed) {
-            Util.raise(`Too late apply a mixin into this class`);
-        }
-
-        mixinMeta.complete();
-
-        let mix = mixinMeta.class;
-
-        this.bases.addAll(mixinMeta.bases).add(mix);
-
-        if (!mixinId) {
-            mixinId = mixinMeta.getMixinId();
-        }
-
-        if (mixinId) {
-            let mixins = this.getMixins();
-
-            if (!mixins[mixinId]) {
-                mixins[mixinId] = mix;
-                this.class.prototype.mixins[mixinId] = mix.prototype;
-            }
-        }
     }
 
     getChains (own) {
@@ -202,18 +179,18 @@ class Meta {
         return mixinId;
     }
 
-    getMixins (isStatic) {
+    getMixins (forPrototype) {
         let cls = this.class;
         let proto = cls.prototype;
 
         if (!cls.hasOwnProperty('mixins')) {
             let sup = this.super;
 
-            cls.mixins = (sup ? Object.create(sup.getMixins(true)) : new Empty());
-            proto.mixins = (sup ? Object.create(sup.getMixins()) : new Empty());
+            cls.mixins = (sup ? Object.create(sup.getMixins()) : new Empty());
+            proto.mixins = (sup ? Object.create(sup.getMixins(true)) : new Empty());
         }
 
-        return (isStatic ? cls : proto).mixins;
+        return (forPrototype ? proto : cls).mixins;
     }
 
     getShim (isStatic = true) {
