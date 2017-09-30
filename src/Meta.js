@@ -162,7 +162,7 @@ class Meta {
     getMixinId () {
         let mixinId = this.mixinId;
         let cls = this.class;
-        let MixinIdSymbol = cls.MixinIdSymbol;
+        let MixinIdSymbol = cls.symbols.mixinId;
 
         if (!mixinId) {
             if (cls.hasOwnProperty(MixinIdSymbol)) {
@@ -234,12 +234,13 @@ class Meta {
     // Private
 
     createChainInvoker (name, reverse) {
-        let me = this;
-        let liveChains = me.liveChains;
-
         return function (...args) {
+            let me = this;
+            let meta = me.$meta;
+            let liveChains = meta.liveChains;
+
             if (liveChains[name]) {
-                if (!me.invokeMethodChain(this, reverse, name, args)) {
+                if (!meta.invokeMethodChain(me, reverse, name, args)) {
                     liveChains[name] = false;
                 }
             }
