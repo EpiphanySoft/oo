@@ -4,8 +4,6 @@ const Config = require('./Config.js');
 const Util = require('./Util.js');
 const Empty = Util.Empty;
 
-const chainOwnerSym = Symbol('chainOwner');
-
 let mixinIdSeed = 0;
 
 let getOwnNames = Object.getOwnPropertyNames;
@@ -101,27 +99,44 @@ class Meta {
 
     addChains (...methods) {
         let chains = this.getChains(true);
-        let proto = this.class.prototype;
 
         for (let m of methods) {
             // Assume all chained methods are live initially. When we first call the
             // chain we check to see if any impls are present and if not we will clear
             // this value.
             this.liveChains[m] = chains[m] = true;
-
-            let name = m + 'Chain';
-
-            Object.defineProperty(proto, name, {
-                value: this.createChainInvoker(m)
-            });
-            Object.defineProperty(proto, name + 'Rev', {
-                value: this.createChainInvoker(m, true)
-            });
         }
     }
 
     addConfigs (configs) {
         //
+    }
+
+    callChain (instance, method, args = null, reverse = false) {
+        let classes = this.classes;
+        let calls = 0;
+
+        if (reverse) {
+            classes = this.classesRev || (this.classesRev = Array.from(classes).reverse());
+        }
+
+        for (let cls of classes) {
+            let proto = cls.prototype;
+            let fn = proto[method];
+
+            if (fn && proto.hasOwnProperty(method)) {
+                ++calls;
+
+                if (args) {
+                    fn.apply(instance, args);
+                }
+                else {
+                    fn.call(instance);
+                }
+            }
+        }
+
+        return calls;
     }
 
     getChains (own) {
@@ -203,49 +218,8 @@ class Meta {
         return isStatic ? shim : shim.prototype;
     }
 
-    invokeMethodChain (instance, reverse, method, args) {
-        let classes = this.classes;
-        let calls = 0;
-
-        if (reverse) {
-            classes = this.classesRev || (this.classesRev = Array.from(classes).reverse());
-        }
-
-        for (let cls of classes) {
-            let proto = cls.prototype;
-            let fn = proto[method];
-
-            if (fn && proto.hasOwnProperty(method)) {
-                ++calls;
-
-                if (args) {
-                    fn.apply(instance, args);
-                }
-                else {
-                    fn.call(instance);
-                }
-            }
-        }
-
-        return calls;
-    }
-
     //----------------------------------------------------------------------
     // Private
-
-    createChainInvoker (name, reverse) {
-        return function (...args) {
-            let me = this;
-            let meta = me.$meta;
-            let liveChains = meta.liveChains;
-
-            if (liveChains[name]) {
-                if (!meta.invokeMethodChain(me, reverse, name, args)) {
-                    liveChains[name] = false;
-                }
-            }
-        };
-    }
 
     createShim () {
         let cls = this.class;

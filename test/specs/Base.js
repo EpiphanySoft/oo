@@ -1,9 +1,17 @@
 const expect = require('assertly').expect;
 const Base = require('../../src/Base.js');
 
-const { junction, mixinId } = require('../../src/decorators');
+const { lazy, merge, junction, mixinId } = require('../../src/decorators');
 
 describe('Base', function () {
+    var obj = {
+        @lazy
+        @merge((value, oldValue) => {
+            debugger
+        })
+        foo: 42
+    };
+
     describe('life-cycle', function () {
         let C, D, M;
         let log;
@@ -117,7 +125,7 @@ describe('Base', function () {
             //     value: D.prototype.foo
             // });
 
-            D.mix(M);
+            D.mixin(M);
 
             expect(D.mixins.mixum === M).to.be(true);
 

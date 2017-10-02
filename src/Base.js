@@ -60,7 +60,7 @@ class Base {
     }
 
     construct () {
-        this.ctorChain();
+        this.$meta.callChain(this, 'ctor');
     }
 
     destroy () {
@@ -75,15 +75,15 @@ class Base {
     }
 
     destruct () {
-        this.dtorChainRev();
+        this.$meta.callChain(this, 'dtor', null, true);
     }
 
-    invokeMethodChain (method, ...args) {
-        this.$meta.invokeMethodChain(this, false, method, args);
+    callChain (method, ...args) {
+        this.$meta.callChain(this, method, args);
     }
 
-    invokeMethodChainRev (method, ...args) {
-        this.$meta.invokeMethodChain(this, true, method, args);
+    callChainRev (method, ...args) {
+        this.$meta.callChain(this, method, args, true);
     }
 
     getMeta () {
@@ -94,9 +94,9 @@ class Base {
     // Private
 
     static addJunction (isStatic, key, method) {
-        let target = this;
-        let shim = target.$meta.getShim(isStatic);
-        let sup = target.super;
+        let cls = this;
+        let shim = cls.$meta.getShim(isStatic);
+        let sup = cls.super;
 
         if (!isStatic) {
             sup = sup.prototype;
@@ -124,13 +124,20 @@ class Base {
         };
     }
 
-    static mix (mixinCls, mixinId) {
+    static mixin (mixinCls) {
         let me = this;
+
+        if (Array.isArray(mixinCls)) {
+            mixinCls.forEach(me.mixin, me);
+            return;
+        }
+
         let prototype = me.prototype;
         let meta = me.getMeta();
         let chains = meta.getChains();
         let bases = meta.bases;
         let mixinMeta = mixinCls.getMeta();  // ensure all Meta's exist
+        let mixinId = mixinMeta.getMixinId();
         let instanceMap = new Empty();
         let staticsMap = new Empty();
         let existing, fn, i, isStatic, k, key, keys, map, members, mixCls,
@@ -139,15 +146,14 @@ class Base {
         if (me.constructor.isPrototypeOf(mixinCls)) {
             Util.raise('Cannot mix a derived class into a super class');
         }
+        if (!Base.isPrototypeOf(mixinCls)) {
+            Util.raise(`Mixins must extend Base`);
+        }
         if (meta.completed) {
             Util.raise(`Too late apply a mixin into this class`);
         }
 
         mixinMeta.complete();
-
-        if (!mixinId) {
-            mixinId = mixinMeta.getMixinId();
-        }
 
         if (mixinId) {
             let mixins = meta.getMixins();

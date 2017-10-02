@@ -13,6 +13,20 @@ class Config {
         this.updater = 'update' + cap;
     }
 
+    static addMeta (instance, name, metaName, metaValue) {
+        let value = instance[name];
+        let cm = value && value[Config.metaSymbol];
+
+        if (!cm) {
+            instance[name] = {
+                [Config.metaSymbol]: cm = {},
+                value: value
+            };
+        }
+
+        cm[metaName] = metaValue;
+    }
+
     static get (name) {
         let all = Config.all;
 
@@ -123,5 +137,6 @@ class Config {
 }
 
 Config.all = {};
+Config.metaSymbol = Symbol('configMeta');
 
 module.exports = Config;
