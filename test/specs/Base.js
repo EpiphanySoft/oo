@@ -120,12 +120,12 @@ describe('Base', function () {
             expect(log).to.equal([ 'C.ctor', 'D.ctor', 'C.foo=42', 'D.foo=42' ]);
         });
 
-        it('should be able to mixin', function () {
+        it('should be able to applyMixins', function () {
             // D.Junction(null, null, {
             //     value: D.prototype.foo
             // });
 
-            D.mixin(M);
+            D.applyMixins(M);
 
             expect(D.mixins.mixum === M).to.be(true);
 

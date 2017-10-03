@@ -90,6 +90,34 @@ class Base {
         return this.$meta;
     }
 
+    static define (options) {
+        let processors = options.processors;
+
+        if (processors) {
+            delete options.processors;
+            this.applyProcessors(processors);
+        }
+
+        processors = this.getMeta().getProcessors();
+
+        let keys = Object.keys(options);
+
+        for (let key of keys) {
+            if (!processors[key]) {
+                Util.raise(`Invalid class option: ${key}`);
+            }
+        }
+
+        keys.sort((a, b) => processors[a].weight - processors[b].weight);
+
+        for (let key of keys) {
+            let proc = processors[key];
+            this[proc.applier](options[key]);
+        }
+
+        return this;
+    }
+
     //-------------------------------------------------------------------------------
     // Private
 
@@ -104,7 +132,7 @@ class Base {
 
         method.fns = [];
 
-        // A junction calls the true super method and all mixin methods and returns the
+        // A junction calls the true super method and all applyMixins methods and returns the
         // return value of the first method called.
         shim[key] = method[JunctionSym] = function (...args) {
             let called = sup[key];
@@ -124,11 +152,19 @@ class Base {
         };
     }
 
-    static mixin (mixinCls) {
+    static applyChains (chains) {
+        this.getMeta().addChains(chains);
+    }
+
+    static applyMixinId (mixinId) {
+        this[MixinIdSym] = mixinId;
+    }
+
+    static applyMixins (mixinCls) {
         let me = this;
 
         if (Array.isArray(mixinCls)) {
-            mixinCls.forEach(me.mixin, me);
+            mixinCls.forEach(me.applyMixins, me);
             return;
         }
 
@@ -235,6 +271,10 @@ class Base {
 
         bases.addAll(mixinMeta.bases).add(mixinCls);
     }
+
+    static applyProcessors (processors) {
+        this.getMeta().applyProcessors(processors);
+    }
 }
 
 Base.isClass = true;
@@ -249,6 +289,14 @@ Base.mixins = new Empty();
 Base.prototype.isInstance = true;
 Base.prototype.mixins = new Empty();
 
-new Meta(Base).addChains('ctor', 'dtor');
+new Meta(Base);//.addChains('ctor', 'dtor');
+
+Base.define({
+    processors: [
+        'chains',
+        'mixins',
+        'mixinId'
+    ]
+});
 
 module.exports = Base;

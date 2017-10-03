@@ -1,6 +1,7 @@
 'use strict';
 
 const Config = require('./Config.js');
+const Processor = require('./Processor.js');
 const Util = require('./Util.js');
 const Empty = Util.Empty;
 
@@ -112,6 +113,10 @@ class Meta {
         //
     }
 
+    applyProcessors (processors) {
+        this.processors = Processor.decode(this.getProcessors(), processors);
+    }
+
     callChain (instance, method, args = null, reverse = false) {
         let classes = this.classes;
         let calls = 0;
@@ -206,6 +211,16 @@ class Meta {
         }
 
         return (forPrototype ? proto : cls).mixins;
+    }
+
+    getProcessors () {
+        let ret = null;
+
+        for (let c = this; c && !ret; c = c.super) {
+            ret = c.processors;
+        }
+
+        return ret;
     }
 
     getShim (isStatic = true) {

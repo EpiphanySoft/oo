@@ -33,6 +33,26 @@ Object.defineProperty(Empty.prototype = Object.create(null), 'hasOwnProperty', {
 //     }
 // }
 
+(function (MapProto) {
+    if (!MapProto.addAll) {
+        MapProto.addAll = function (src) {
+            for (let [key, value] of src) {
+                this.add(key, value);
+            }
+
+            return this;
+        }
+    }
+
+    if (!MapProto.clone) {
+        MapProto.clone = function () {
+            let ret = new Map();
+            ret.addAll(this);
+            return ret;
+        }
+    }
+}(Map.prototype));
+
 (function (SetProto) {
     if (!SetProto.addAll) {
         SetProto.addAll = function (src) {
@@ -53,11 +73,11 @@ Object.defineProperty(Empty.prototype = Object.create(null), 'hasOwnProperty', {
     }
 }(Set.prototype));
 
-
 const Util = {
     nullFn () {},
 
     Empty: Empty,
+    Map: Map,
     Set: Set,
 
     capitalize (str) {
@@ -87,7 +107,14 @@ const Util = {
             return function (object, prototype) {
                 object.__proto__ = prototype;
             };
-        }())
+        }()),
+
+    toArray (src) {
+        if (src && !Array.isArray(src)) {
+            src = [src];
+        }
+        return src;
+    }
 };
 
 module.exports = Util;

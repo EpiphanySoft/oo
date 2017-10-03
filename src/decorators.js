@@ -30,19 +30,20 @@ module.exports = {
 
     define (options) {
         return C => {
-            let chains = options.chains;
-            let mixins = options.mixins;
-            let mixinId = options.mixinId;
-
-            if (chains) {
-                C.getMeta().addChains(chains);
-            }
-            if (mixins) {
-                C.mixin(mixins);
-            }
-            if (mixinId) {
-                C[symbols.mixinId] = mixinId;
-            }
+            // let chains = options.chains;
+            // let mixins = options.mixins;
+            // let mixinId = options.mixinId;
+            //
+            // if (chains) {
+            //     C.getMeta().addChains(chains);
+            // }
+            // if (mixins) {
+            //     C.applyMixins(mixins);
+            // }
+            // if (mixinId) {
+            //     C[symbols.mixinId] = mixinId;
+            // }
+            C.define(options);
         }
     },
 
@@ -57,7 +58,7 @@ module.exports = {
     },
 
     /**
-     * Declares the mixin id for this class. This is used by classes that mixin the
+     * Declares the applyMixins id for this class. This is used by classes that applyMixins the
      * class an need to address it directly.
      *
      * For example
@@ -74,7 +75,7 @@ module.exports = {
      *      class Foo extends Base {
      *          something (x) {
      *              // this method hides the method by this name in the
-     *              // Helper mixin... but we can call it directly:
+     *              // Helper applyMixins... but we can call it directly:
      *
      *              this.mixins.helper.something.call(this, x);
      *          }
@@ -88,7 +89,7 @@ module.exports = {
 
     /**
      * This decorator is applied to class methods that have multiple base class and/or
-     * mixin "super" methods.
+     * applyMixins "super" methods.
      *
      * For example:
      *
