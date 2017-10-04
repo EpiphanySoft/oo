@@ -55,7 +55,8 @@ class Processor {
     }
 
     static decode (inherited, processors) {
-        let ret = new Util.Empty();
+        let map = new Util.Empty();
+        let ret = [];
         let name;
 
         if (typeof processors === 'string') {
@@ -64,36 +65,49 @@ class Processor {
 
         if (Array.isArray(processors)) {
             for (name of processors) {
-                ret[name] = new Processor(name);
+                ret.push(map[name] = new Processor(name));
             }
         }
         else {
             for (name in processors) {
-                ret[name] = new Processor(name, processors[name]);
+                ret.push(map[name] = new Processor(name, processors[name]));
             }
         }
 
         if (inherited) {
-            for (name in inherited) {
-                if (!ret[name]) {
-                    ret[name] = inherited[name].clone();
+            for (let proc of inherited) {
+                if (!map[name = proc.name]) {
+                    ret.push(map[name] = inherited[name].clone());
                 }
             }
         }
 
-        Processor.sort(ret);
-
-        return ret;
+        return Processor.sort(ret);
     }
 
     static sort (processors) {
-        for (let name in processors) {
-            let proc = processors[name];
+        let state = {
+            map: new Util.Empty(),
+            path: [],
+            stack: new Util.Empty(),
+            sorted: []
+        };
+        let proc;
+
+        for (proc of processors) {
+            state.map[proc.name] = proc;
+        }
+
+        for (proc of processors) {
             let before = proc.before;
 
             if (before) {
+                proc.before = null;
+
                 for (let b of before) {
-                    let bef = before[b];
+                    let bef = state.map[b];
+                    let name = proc.name;
+
                     if (!bef) {
                         Util.raise(`No processor matches "before" ${b} on ${name}`);
                     }
@@ -103,20 +117,11 @@ class Processor {
             }
         }
 
-        let state = {
-            all: processors,
-            path: [],
-            stack: new Util.Set(),
-            weight: 0
-        };
-
-        for (let name in processors) {
-            let proc = processors[name];
-
-            if (!proc.weight) {
-                proc.sort(state);
-            }
+        for (proc of processors) {
+            proc.sort(state);
         }
+
+        return state.sorted;
     }
 
     clone () {
@@ -132,29 +137,35 @@ class Processor {
     }
 
     sort (state) {
+        if (this.order) {
+            return;
+        }
+
         let after = this.after;
         let name = this.name;
         let path = state.path;
         let stack = state.stack;
 
-        if (after) {
-            path.push(name);
+        path.push(name);
 
-            if (stack.has(name)) {
-                Util.raise(`Circular processor dependencies: ${path.join(" --> ")}`);
-            }
-
-            stack.add(name);
-
-            for (let a of after) {
-                state.all[a].sort(state);
-            }
-
-            path.pop();
-            stack.delete(name);
+        if (stack[name]) {
+            Util.raise(`Circular processor dependencies: ${path.join(" --> ")}`);
         }
 
-        this.weight = ++state.weight;
+        if (after) {
+            stack[name] = this;
+
+            for (let a of after) {
+                state.map[a].sort(state);
+            }
+
+            delete stack[name];
+        }
+
+        path.pop();
+
+        state.sorted.push(this);
+        this.order = state.sorted.length;
     }
 }
 
