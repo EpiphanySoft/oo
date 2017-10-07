@@ -10,7 +10,9 @@ module.exports = {
      *
      * For example:
      *
-     *      @chains('init')
+     *      @define({
+     *          chains: 'init'
+     *      })
      *      class Foo extends Base {
      *          constructor (config) {
      *              super(config);
@@ -22,27 +24,8 @@ module.exports = {
      *          }
      *      }
      */
-    chains (...methods) {
-        return C => {
-            C.getMeta().addChains(...methods);
-        };
-    },
-
     define (options) {
         return C => {
-            // let chains = options.chains;
-            // let mixins = options.mixins;
-            // let mixinId = options.mixinId;
-            //
-            // if (chains) {
-            //     C.getMeta().addChains(chains);
-            // }
-            // if (mixins) {
-            //     C.applyMixins(mixins);
-            // }
-            // if (mixinId) {
-            //     C[symbols.mixinId] = mixinId;
-            // }
             C.define(options);
         }
     },

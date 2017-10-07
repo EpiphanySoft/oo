@@ -1,6 +1,7 @@
 'use strict';
 
 const Meta = require('./Meta.js');
+const Processor = require('./Processor.js');
 const Util = require('./Util.js');
 const Empty = Util.Empty;
 
@@ -97,7 +98,7 @@ class Base {
 
         processors = this.getMeta().getProcessors();
 
-        for (let proc of processors.sorted) {
+        for (let proc of processors) {
             let name = proc.name;
 
             if (name in options) {
@@ -273,7 +274,9 @@ class Base {
     }
 
     static applyProcessors (processors) {
-        this.getMeta().applyProcessors(processors);
+        let meta = this.getMeta();
+
+        meta.processors = Processor.decode(processors, meta.getProcessors());
     }
 }
 

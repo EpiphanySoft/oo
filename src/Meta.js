@@ -1,7 +1,6 @@
 'use strict';
 
 const Config = require('./Config.js');
-const Processor = require('./Processor.js');
 const Util = require('./Util.js');
 const Empty = Util.Empty;
 
@@ -111,10 +110,6 @@ class Meta {
 
     addConfigs (configs) {
         //
-    }
-
-    applyProcessors (processors) {
-        this.processors = Processor.decode(processors, this.getProcessors());
     }
 
     callChain (instance, method, args = null, reverse = false) {
