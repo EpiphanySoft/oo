@@ -83,7 +83,7 @@ module.exports = {
      */
     mixinId (mixinId) {
         return C => {
-            C[symbols.mixinId] = mixinId;
+            C.applyMixinId(mixinId);
         }
     },
 

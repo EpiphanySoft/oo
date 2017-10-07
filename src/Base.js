@@ -5,7 +5,6 @@ const Util = require('./Util.js');
 const Empty = Util.Empty;
 
 const JunctionSym = Symbol('junction');
-const MixinIdSym = Symbol('mixinId');
 
 const instanceSkip = new Empty({
     constructor: 1,
@@ -22,8 +21,6 @@ const staticSkip = new Empty({
     $meta: 1,
     super: 1
 });
-
-staticSkip[MixinIdSym] = true;
 
 class Base {
     static addConfigs (configs) {
@@ -100,19 +97,18 @@ class Base {
 
         processors = this.getMeta().getProcessors();
 
-        let keys = Object.keys(options);
+        for (let proc of processors.sorted) {
+            let name = proc.name;
 
-        for (let key of keys) {
-            if (!processors[key]) {
-                Util.raise(`Invalid class option: ${key}`);
+            if (name in options) {
+                this[proc.applier](options[name]);
+
+                delete options[name];
             }
         }
 
-        keys.sort((a, b) => processors[a].weight - processors[b].weight);
-
-        for (let key of keys) {
-            let proc = processors[key];
-            this[proc.applier](options[key]);
+        for (let key in options) {
+            Util.raise(`Invalid class option: ${key}`);
         }
 
         return this;
@@ -156,8 +152,12 @@ class Base {
         this.getMeta().addChains(chains);
     }
 
+    static applyConfig (configs) {
+        this.getMeta().addConfigs(configs);
+    }
+
     static applyMixinId (mixinId) {
-        this[MixinIdSym] = mixinId;
+        this.getMeta().mixinId = mixinId;
     }
 
     static applyMixins (mixinCls) {
@@ -280,8 +280,7 @@ class Base {
 Base.isClass = true;
 
 Base.symbols = {
-    junction: JunctionSym,
-    mixinId: MixinIdSym
+    junction: JunctionSym
 };
 
 Base.mixins = new Empty();
@@ -292,11 +291,12 @@ Base.prototype.mixins = new Empty();
 new Meta(Base);//.addChains('ctor', 'dtor');
 
 Base.define({
-    processors: [
-        'chains',
-        'mixins',
-        'mixinId'
-    ]
+    processors: {
+        chains: null,
+        config: 'mixins',
+        mixins: null,
+        mixinId: null
+    }
 });
 
 module.exports = Base;

@@ -54,51 +54,44 @@ class Processor {
         }
     }
 
-    static decode (inherited, processors) {
-        let map = new Util.Empty();
-        let ret = [];
-        let name;
+    static decode (processors, inherited) {
+        let map = new Util.Map();
 
         if (typeof processors === 'string') {
             processors = [processors];
         }
 
         if (Array.isArray(processors)) {
-            for (name of processors) {
-                ret.push(map[name] = new Processor(name));
+            for (let name of processors) {
+                map.set(name, new Processor(name));
             }
         }
         else {
-            for (name in processors) {
-                ret.push(map[name] = new Processor(name, processors[name]));
+            for (let name in processors) {
+                map.set(name, new Processor(name, processors[name]));
             }
         }
 
         if (inherited) {
-            for (let proc of inherited) {
-                if (!map[name = proc.name]) {
-                    ret.push(map[name] = inherited[name].clone());
+            for (let [name, proc] of inherited) {
+                if (!map.has(name)) {
+                    map.set(name, proc.clone());
                 }
             }
         }
 
-        return Processor.sort(ret);
+        map.sorted = Processor.sort(map);
+        return map;
     }
 
     static sort (processors) {
         let state = {
-            map: new Util.Empty(),
+            map: processors,
             path: [],
-            stack: new Util.Empty(),
             sorted: []
         };
-        let proc;
 
-        for (proc of processors) {
-            state.map[proc.name] = proc;
-        }
-
-        for (proc of processors) {
+        for (let proc of processors.values()) {
             let before = proc.before;
 
             if (before) {
@@ -117,8 +110,11 @@ class Processor {
             }
         }
 
-        for (proc of processors) {
-            proc.sort(state);
+        let names = Array.from(processors.keys());
+        names.sort();
+
+        for (let name of names) {
+            processors.get(name).sort(state);
         }
 
         return state.sorted;
@@ -137,35 +133,34 @@ class Processor {
     }
 
     sort (state) {
-        if (this.order) {
+        if (this.sorted) {
             return;
         }
 
         let after = this.after;
         let name = this.name;
         let path = state.path;
-        let stack = state.stack;
 
         path.push(name);
 
-        if (stack[name]) {
+        if (this.sorting) {
             Util.raise(`Circular processor dependencies: ${path.join(" --> ")}`);
         }
 
         if (after) {
-            stack[name] = this;
+            this.sorting = true;
 
             for (let a of after) {
-                state.map[a].sort(state);
+                state.map.get(a).sort(state);
             }
 
-            delete stack[name];
+            this.sorting = false;
         }
 
         path.pop();
 
         state.sorted.push(this);
-        this.order = state.sorted.length;
+        this.sorted = true;
     }
 }
 

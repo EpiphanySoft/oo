@@ -114,7 +114,7 @@ class Meta {
     }
 
     applyProcessors (processors) {
-        this.processors = Processor.decode(this.getProcessors(), processors);
+        this.processors = Processor.decode(processors, this.getProcessors());
     }
 
     callChain (instance, method, args = null, reverse = false) {
@@ -181,17 +181,10 @@ class Meta {
 
     getMixinId () {
         let mixinId = this.mixinId;
-        let cls = this.class;
-        let MixinIdSymbol = cls.symbols.mixinId;
 
         if (!mixinId) {
-            if (cls.hasOwnProperty(MixinIdSymbol)) {
-                mixinId = cls[MixinIdSymbol];
-            }
-            else {
-                mixinId = (this.class.name || 'mixin') + '$' + ++mixinIdSeed;
-                mixinId = Util.decapitalize(mixinId);
-            }
+            mixinId = (this.class.name || 'mixin') + '$' + ++mixinIdSeed;
+            mixinId = Util.decapitalize(mixinId);
 
             this.mixinId = mixinId;
         }
