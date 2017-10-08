@@ -406,31 +406,63 @@ class Meta {
         }
     }
 
+    reconfigure (instance, instanceConfig) {
+        //TODO
+    }
+
     //----------------------------------------------------------------------
     // Private
 
     static adopt (cls) {
         cls.isClass = true;
-
         cls.mixins = new Empty();
 
         cls.prototype.isInstance = true;
         cls.prototype.mixins = new Empty();
 
-        cls.define = function (options) {
-            this.getMeta().processOptions(options);
-            return this;
-        };
+        Util.copyIf(cls, {
+            applyChains (chains) {
+                this.getMeta().addChains(chains);
+            },
 
-        cls.getMeta = function () {
-            let meta = this.$meta;
+            applyConfig (configs) {
+                this.getMeta().addConfigs(configs);
+            },
 
-            if (meta.class !== this) {
-                meta = new Meta(this, Object.getPrototypeOf(this));
+            applyMixinId (mixinId) {
+                this.getMeta().mixinId = mixinId;
+            },
+
+            applyMixins (mixinCls) {
+                this.getMeta().addMixins(mixinCls);
+            },
+
+            applyProcessors (processors) {
+                this.getMeta().addProcessors(processors);
+            },
+
+            applyPrototype (members) {
+                Object.assign(this.prototype, members);
+            },
+
+            applyStatic (members) {
+                Object.assign(this, members);
+            },
+
+            define (options) {
+                this.getMeta().processOptions(options);
+                return this;
+            },
+
+            getMeta () {
+                let meta = this.$meta;
+                if (meta.class !== this) {
+                    meta = new Meta(this, Object.getPrototypeOf(this));
+                }
+
+                return meta;
             }
-
-            return meta;
-        };
+        });
 
         return new Meta(cls);
     }

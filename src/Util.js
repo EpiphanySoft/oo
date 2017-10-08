@@ -80,6 +80,36 @@ const Util = {
     Map: Map,
     Set: Set,
 
+    copy (dest, ...sources) {
+        if (dest) {
+            for (let src of sources) {
+                if (src) {
+                    for (let key in src) {
+                        dest[key] = src[key];
+                    }
+                }
+            }
+        }
+
+        return dest;
+    },
+
+    copyIf (dest, ...sources) {
+        if (dest) {
+            for (let src of sources) {
+                if (src) {
+                    for (let key in src) {
+                        if (!(key in dest)) {
+                            dest[key] = src[key];
+                        }
+                    }
+                }
+            }
+        }
+
+        return dest;
+    },
+
     capitalize (str) {
         return str ? str[0].toUpperCase() + str.substr(1) : '';
     },

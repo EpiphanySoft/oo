@@ -8,15 +8,29 @@ const { define } = require('./decorators.js');
 
     processors: {
         chains: null,
-        config: 'mixins',
-        mixins: 'chains'
+        mixins: 'chains',
+        config: 'mixins'
     },
 
     prototype: {
         configuring: false,
         constructing: true,
         destroying: false,
-        destroyed: false
+        destroyed: false,
+
+        lifecycle: 0  // LIVE
+    },
+
+    static: {
+        LIFECYCLE: {
+            CONSTRUCTING: -100,
+            CONFIGURING: -10,
+
+            LIVE: 0,
+
+            DESTROYING: 10,
+            DESTROYED: 100
+        }
     }
 })
 class Base {
@@ -37,9 +51,11 @@ class Base {
             meta.complete();
         }
 
+        me.lifecycle = Base.LIFECYCLE.CONSTRUCTING;
+
         me.construct(...args);
 
-        me.constructing = false;
+        delete me.lifecycle; // prototype has LIVE (cleaner debugging)
     }
 
     construct (config) {
@@ -47,9 +63,13 @@ class Base {
         let meta = me.$meta;
 
         if (config || meta.configs) {
+            me.lifecycle = Base.LIFECYCLE.CONFIGURING;
             me.configuring = true;
+
             me.configure(config);
+
             me.configuring = false;
+            me.lifecycle = Base.LIFECYCLE.CONSTRUCTING;
         }
 
         if (meta.liveChains.ctor) {
@@ -67,10 +87,12 @@ class Base {
 
         me.destroy = Util.nullFn;
         me.destroying = true;
+        me.lifecycle = Base.LIFECYCLE.DESTROYING;
 
         me.destruct();
 
         me.destroyed = true;
+        me.lifecycle = Base.LIFECYCLE.DESTROYED;
     }
 
     destruct () {
@@ -93,35 +115,12 @@ class Base {
         return this.$meta;
     }
 
-    //-------------------------------------------------------------------------------
-    // Private
+    reconfigure (config) {
+        let me = this;
 
-    static applyChains (chains) {
-        this.getMeta().addChains(chains);
-    }
-
-    static applyConfig (configs) {
-        this.getMeta().addConfigs(configs);
-    }
-
-    static applyMixinId (mixinId) {
-        this.getMeta().mixinId = mixinId;
-    }
-
-    static applyMixins (mixinCls) {
-        this.getMeta().addMixins(mixinCls);
-    }
-
-    static applyProcessors (processors) {
-        this.getMeta().addProcessors(processors);
-    }
-
-    static applyPrototype (members) {
-        Object.assign(this.prototype, members);
-    }
-
-    static applyStatic (members) {
-        Object.assign(this, members);
+        me.configuring = true;
+        me.$meta.reconfigure(me, config);
+        me.configuring = false;
     }
 }
 
