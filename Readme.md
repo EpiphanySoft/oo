@@ -197,9 +197,97 @@ there are the `construct` and `destruct` methods. The implementations of these m
 
 ## Mixins
 
+The concept of mixins has been [explored](https://www.npmjs.com/package/core-decorators)
+in various ways, but the approach Configly takes is to treat mixins like alternative base
+classes as much as possible.
+
+All mixin strategies basically reduce to copying properties from the mixin class to the
+target class. Since Configly defines mixins as actual classes, this includes `static` as
+well as `prototype` properties.
+
+    import { define, Base } from '@epiphanysoft/configly';
+    
+    class MyClass extends Base {
+        ctor () {
+            console.log('MyClass ctor');
+        }
+
+        dtor () {
+            console.log('MyClass dtor');
+        }
+        
+        foo () {
+            console.log('MyClass foo');
+        }
+    }
+
+    class MyMixin extends Base {
+        ctor () {
+            console.log('MyMixin ctor');
+        }
+
+        dtor () {
+            console.log('MyMixin dtor');
+        }
+        
+        bar () {
+            console.log('MyMixin bar');
+        }
+    }
+
+    @define({
+        mixins: MyMixin
+    })
+    class MyDerived extends MyClass {
+        ctor () {
+            console.log('MyClass ctor');
+        }
+
+        dtor () {
+            console.log('MyClass dtor');
+        }
+        
+        foo () {
+            console.log('MyDerived foo');
+            super.foo();
+            this.bar();
+        }
+    }
+    
+    let inst = new MyDerived();
+    
+    > MyClass ctor
+    > MyMixin ctor
+    > MyDerived ctor
+
+The first thing to note here is that all of the `ctor` methods were called and in the
+proper, "top down" order.
+    
+    inst.foo();
+    
+    > MyDerived foo
+    > MyClass foo
+    > MyMixin bar
+
+The call to the `bar` method in `MyDerived.foo()` is made possible by the copied reference
+from the `MyMixin.prototype` to the `MyDerived.prototype`. This works in the same way for
+`static` methods.
+
+Object destruction is similar to creation:
+
+    inst.destroy();
+    
+    > MyDerived dtor
+    > MyMixin dtor
+    > MyClass dtor
+
+In the same way that the `ctor` methods were properly called, so are the `dtor` methods.
+
+### Collisions
+
 ### Method Junctions
 
-### Method Chains
+## Method Chains
 
 ## Class Processors
 
