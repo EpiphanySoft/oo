@@ -97,8 +97,12 @@ class Meta {
         }
     }
 
-    addChains (...methods) {
+    addChains (methods) {
         let chains = this.getChains(true);
+
+        if (!Array.isArray(methods)) {
+            methods = [methods];
+        }
 
         for (let m of methods) {
             // Assume all chained methods are live initially. When we first call the
@@ -113,8 +117,13 @@ class Meta {
     }
 
     callChain (instance, method, args = null, reverse = false) {
+        let liveChains = this.liveChains;
         let classes = this.classes;
-        let calls = 0;
+        let called;
+
+        if (!liveChains[method]) {
+            return;
+        }
 
         if (reverse) {
             classes = this.classesRev || (this.classesRev = Array.from(classes).reverse());
@@ -125,7 +134,7 @@ class Meta {
             let fn = proto[method];
 
             if (fn && proto.hasOwnProperty(method)) {
-                ++calls;
+                called = 1;
 
                 if (args) {
                     fn.apply(instance, args);
@@ -136,7 +145,9 @@ class Meta {
             }
         }
 
-        return calls;
+        if (!called) {
+            liveChains[method] = false;
+        }
     }
 
     getChains (own) {

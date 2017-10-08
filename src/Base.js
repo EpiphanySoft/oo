@@ -24,24 +24,6 @@ const staticSkip = new Empty({
 });
 
 class Base {
-    static addConfigs (configs) {
-        this.getMeta().addConfigs(configs);
-    }
-
-    static define (options) {
-
-    }
-
-    static getMeta () {
-        let meta = this.$meta;
-
-        if (meta.class !== this) {
-            meta = new Meta(this, Object.getPrototypeOf(this));
-        }
-
-        return meta;
-    }
-
     constructor (config) {
         let C = this.constructor;
         let meta = this.$meta;
@@ -58,7 +40,11 @@ class Base {
     }
 
     construct () {
-        this.$meta.callChain(this, 'ctor');
+        let meta = this.$meta;
+
+        if (meta.liveChains.ctor) {
+            meta.callChain(this, 'ctor');
+        }
     }
 
     destroy () {
@@ -73,7 +59,11 @@ class Base {
     }
 
     destruct () {
-        this.$meta.callChain(this, 'dtor', null, true);
+        let meta = this.$meta;
+
+        if (meta.liveChains.dtor) {
+            meta.callChain(this, 'dtor', null, true);
+        }
     }
 
     callChain (method, ...args) {
@@ -103,51 +93,36 @@ class Base {
 
             if (name in options) {
                 this[proc.applier](options[name]);
-
                 delete options[name];
             }
         }
 
         for (let key in options) {
-            Util.raise(`Invalid class option: ${key}`);
+            let applier = Processor.getApplierName(key);
+
+            if (this[applier]) {
+                this[applier](options[key]);
+            }
+            else {
+                Util.raise(`Invalid class option: ${key}`);
+            }
         }
 
         return this;
     }
 
-    //-------------------------------------------------------------------------------
-    // Private
+    static getMeta () {
+        let meta = this.$meta;
 
-    static addJunction (isStatic, key, method) {
-        let cls = this;
-        let shim = cls.$meta.getShim(isStatic);
-        let sup = cls.super;
-
-        if (!isStatic) {
-            sup = sup.prototype;
+        if (meta.class !== this) {
+            meta = new Meta(this, Object.getPrototypeOf(this));
         }
 
-        method.fns = [];
-
-        // A junction calls the true super method and all applyMixins methods and returns the
-        // return value of the first method called.
-        shim[key] = method[JunctionSym] = function (...args) {
-            let called = sup[key];
-            let result = called && called.apply(this, args);
-            let res;
-
-            for (let fn of method.fns) {
-                res = fn.apply(this, args);
-
-                if (!called) {
-                    called = true;
-                    result = res;
-                }
-            }
-
-            return result;
-        };
+        return meta;
     }
+
+    //-------------------------------------------------------------------------------
+    // Private
 
     static applyChains (chains) {
         this.getMeta().addChains(chains);
@@ -254,7 +229,7 @@ class Base {
                             // that was also a Junction, so we need to check that the
                             // method belongs to the target class.
                             if (!existing.fns) {
-                                me.addJunction(isStatic, key, existing);
+                                me.createJunction(isStatic, key, existing);
                             }
 
                             existing.fns.push(fn);
@@ -278,6 +253,45 @@ class Base {
 
         meta.processors = Processor.decode(processors, meta.getProcessors());
     }
+
+    static applyPrototype (members) {
+        Object.assign(this.prototype, members);
+    }
+
+    static applyStatic (members) {
+        Object.assign(this, members);
+    }
+
+    static createJunction (isStatic, key, method) {
+        let cls = this;
+        let shim = cls.$meta.getShim(isStatic);
+        let sup = cls.super;
+
+        if (!isStatic) {
+            sup = sup.prototype;
+        }
+
+        method.fns = [];
+
+        // A junction calls the true super method and all applyMixins methods and
+        // returns the return value of the first method called.
+        shim[key] = method[JunctionSym] = function (...args) {
+            let called = sup[key];
+            let result = called && called.apply(this, args);
+            let res;
+
+            for (let fn of method.fns) {
+                res = fn.apply(this, args);
+
+                if (!called) {
+                    called = true;
+                    result = res;
+                }
+            }
+
+            return result;
+        };
+    }
 }
 
 Base.isClass = true;
@@ -291,14 +305,15 @@ Base.mixins = new Empty();
 Base.prototype.isInstance = true;
 Base.prototype.mixins = new Empty();
 
-new Meta(Base);//.addChains('ctor', 'dtor');
+new Meta(Base);
 
 Base.define({
+    chains: [ 'ctor', 'dtor' ],
+
     processors: {
         chains: null,
         config: 'mixins',
-        mixins: null,
-        mixinId: null
+        mixins: 'chains'
     }
 });
 

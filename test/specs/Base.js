@@ -1,7 +1,7 @@
 const expect = require('assertly').expect;
 const Base = require('../../src/Base.js');
 
-const { lazy, merge, junction, mixinId } = require('../../src/decorators');
+const { define, lazy, merge, junction, mixinId } = require('../../src/decorators');
 
 describe('Base', function () {
     var obj = {
@@ -11,6 +11,41 @@ describe('Base', function () {
         })
         foo: 42
     };
+
+    function getAllKeys (obj) {
+        let ret = [];
+
+        for (let key in obj) {
+            ret.push(key);
+        }
+
+        return ret;
+    }
+
+    describe('basics', function () {
+        it('should have the correct processors', function () {
+            let processors = Base.getMeta().getProcessors();
+
+            expect(processors.length).to.be(3);
+
+            expect(processors[0].name).to.be('chains');
+            expect(processors[1].name).to.be('mixins');
+            expect(processors[2].name).to.be('config');
+        });
+
+        it('should have ctor/dtor chains', function () {
+            let meta = Base.getMeta();
+            let chains = getAllKeys(meta.liveChains);
+
+            chains.sort();
+            expect(chains).to.equal([ 'ctor', 'dtor' ]);
+
+            chains = getAllKeys(meta.chains);
+
+            chains.sort();
+            expect(chains).to.equal([ 'ctor', 'dtor' ]);
+        });
+    });
 
     describe('life-cycle', function () {
         let C, D, M;
@@ -144,6 +179,59 @@ describe('Base', function () {
             log = [];
             instance.destroy();
             expect(log).to.equal([ 'D.dtor', 'M.dtor', 'C.dtor' ]);
+        });
+
+        it('should not copy ctor/dtor methods from mixin', function () {
+            @define({
+                mixins: M
+            })
+            class F extends Base {
+                //
+            }
+
+            expect(F.prototype.ctor).to.be(undefined);
+
+            let instance = new F();
+
+            expect(instance.str).to.be('M');
+            expect(log).to.equal([ 'M.ctor' ]);
+            expect(instance.mixins.mixum === M.prototype).to.be(true);
+
+            expect(instance.getMeta().liveChains.ctor).to.be(true);
+            expect(instance.getMeta().liveChains.dtor).to.be(true);
+        });
+
+        it('should copy prototype and static properties', function () {
+            @define({
+                prototype: {
+                    foo: 1
+                },
+                static: {
+                    bar: 2
+                }
+            })
+            class F extends Base {
+                //
+            }
+
+            expect(F.bar).to.be(2);
+
+            expect(F.prototype.foo).to.be(1);
+        });
+
+        it('should not call ctor/dtor methods if absent', function () {
+            class F extends Base {
+                //
+            }
+
+            let instance = new F();
+
+            instance.destroy();
+
+            expect(log).to.equal([ ]);
+
+            expect(F.getMeta().liveChains.ctor).to.be(false);
+            expect(F.getMeta().liveChains.dtor).to.be(false);
         });
     });
 });

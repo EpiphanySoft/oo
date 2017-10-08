@@ -35,22 +35,24 @@ const Util = require('./Util.js');
  */
 class Processor {
     constructor (name, options) {
-        let cap = Util.capitalize(name);
-
-        this.applier = 'apply' + cap;
+        this.applier = Processor.getApplierName(name);
         this.name = name;
 
         if (options) {
+            let after;
+
             if (typeof options === 'string') {
-                this.after = [options];
+                after = [options];
             }
             else if (Array.isArray(options)) {
-                this.after = options;
+                after = options;
             }
             else {
-                this.after = Util.toArray(options.after) || null;
+                after = Util.toArray(options.after) || null;
                 this.before = Util.toArray(options.before) || null;
             }
+
+            this.after = after;
         }
     }
 
@@ -128,6 +130,19 @@ class Processor {
         return Processor.sort(map);
     }
 
+    static getApplierName (name) {
+        let nameMap = Processor.nameMap;
+        let ret = nameMap[name];
+
+        if (!ret) {
+            let cap = Util.capitalize(name);
+
+            nameMap[name] = ret = 'apply' + cap;
+        }
+
+        return ret;
+    }
+
     static sort (procMap) {
         let processors = Object.values(procMap);
         let ret = [];
@@ -181,5 +196,7 @@ Object.assign(Processor.prototype, {
     sorting: false,
     sorted: false
 });
+
+Processor.nameMap = new Util.Empty();
 
 module.exports = Processor;
