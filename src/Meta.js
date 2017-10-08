@@ -1,6 +1,7 @@
 'use strict';
 
 const Config = require('./Config.js');
+const Processor = require('./Processor.js');
 const Util = require('./Util.js');
 const Empty = Util.Empty;
 
@@ -24,6 +25,24 @@ let getOwnKeys = getOwnSymbols ? function (object) {
 
         return keys;
     } : getOwnNames;
+
+const JunctionSym = Symbol('junction');
+
+const instanceSkip = new Empty({
+    constructor: 1,
+
+    $meta: 1,
+    super: 1
+});
+
+const staticSkip = new Empty({
+    prototype: 1,
+    length: 1,
+    name: 1,
+
+    $meta: 1,
+    super: 1
+});
 
 function getOwnProps (object) {
     let ret = {
@@ -69,6 +88,7 @@ class Meta {
             // in the map. This ensures that methods in base classes will "activate" a
             // chained method.
             me.liveChains = Object.create(superMeta.liveChains);
+            me.rootClass = superMeta.rootClass;
         }
         else {
             me.bases = new Util.Set();
@@ -79,6 +99,7 @@ class Meta {
             me.chains = new Empty();
 
             me.liveChains = new Empty();
+            me.rootClass = cls;
         }
     }
 
@@ -116,6 +137,123 @@ class Meta {
         //
     }
 
+    addMixins (mixinCls) {
+        let me = this;
+
+        if (Array.isArray(mixinCls)) {
+            mixinCls.forEach(me.addMixins, me);
+            return;
+        }
+
+        let cls = this.class;
+        let prototype = cls.prototype;
+        let chains = me.getChains();
+        let bases = me.bases;
+        let mixinMeta = mixinCls.getMeta();  // ensure all Meta's exist
+        let mixinId = mixinMeta.getMixinId();
+        let rootClass = me.rootClass;
+        let instanceMap = new Empty();
+        let staticsMap = new Empty();
+        let existing, fn, i, isStatic, k, key, keys, map, members, mixCls,
+            mixMeta, prop, skip, target;
+
+        if (cls.constructor.isPrototypeOf(mixinCls)) {
+            Util.raise('Cannot mix a derived class into a super class');
+        }
+        if (!rootClass.isPrototypeOf(mixinCls)) {
+            Util.raise(`Mixins must extend base class ${rootClass.name}`);
+        }
+        if (me.completed) {
+            Util.raise(`Too late apply a mixin into this class`);
+        }
+
+        mixinMeta.complete();
+
+        if (mixinId) {
+            let mixins = me.getMixins();
+
+            if (!mixins[mixinId]) {
+                mixins[mixinId] = mixinCls;
+                prototype.mixins[mixinId] = mixinCls.prototype;
+            }
+        }
+
+        for (mixCls = mixinCls; mixCls !== rootClass; mixCls = mixCls.super) {
+            if (bases.has(mixCls)) {
+                break;
+            }
+
+            mixMeta = mixCls.$meta; // earlier call to getMeta ensures this is OK
+
+            // Start with instance side members:
+            isStatic = false;
+            map = instanceMap;
+            skip = instanceSkip;
+            target = prototype;
+
+            for (members = mixMeta.getMembers(); members; members = members.statics) {
+                keys = members.keys;
+                k = keys.length;
+
+                for (i = 0; i < k; ++i) {
+                    if (skip[key = keys[i]]) {
+                        continue;
+                    }
+
+                    prop = members.props[key];
+
+                    fn = prop.value;
+                    fn = (typeof fn === 'function') && fn;
+                    if (fn && !fn.$owner) {
+                        fn.$owner = mixCls;
+                    }
+
+                    if (map[key]) {
+                        continue;
+                    }
+                    map[key] = true;
+
+                    if (!isStatic && chains[key]) {
+                        continue;
+                    }
+
+                    if (!(key in target)) {
+                        Object.defineProperty(target, key, prop);
+                    }
+                    else if (fn && target.hasOwnProperty(key)) {
+                        existing = target[key];
+                        if (!existing.$owner) {
+                            existing.$owner = cls;
+                        }
+
+                        if (existing[JunctionSym] && existing.$owner === cls) {
+                            // We could have previously mixed in a method from a class
+                            // that was also a Junction, so we need to check that the
+                            // method belongs to the target class.
+                            if (!existing.fns) {
+                                me.createJunction(isStatic, key, existing);
+                            }
+
+                            existing.fns.push(fn);
+                        }
+                    }
+                }
+
+                // Switch over to statics for next loop
+                isStatic = true;
+                map = staticsMap;
+                skip = staticSkip;
+                target = cls;
+            }
+        }
+
+        bases.addAll(mixinMeta.bases).add(mixinCls);
+    }
+
+    addProcessors (processors) {
+        this.processors = Processor.decode(processors, this.getProcessors());
+    }
+
     callChain (instance, method, args = null, reverse = false) {
         let liveChains = this.liveChains;
         let classes = this.classes;
@@ -148,6 +286,10 @@ class Meta {
         if (!called) {
             liveChains[method] = false;
         }
+    }
+
+    configure (instance, instanceConfig) {
+        //
     }
 
     getChains (own) {
@@ -232,8 +374,96 @@ class Meta {
         return isStatic ? shim : shim.prototype;
     }
 
+    processOptions (options) {
+        let cls = this.class;
+        let processors = options.processors;
+
+        if (processors) {
+            delete options.processors;
+            cls.applyProcessors(processors);
+        }
+
+        processors = cls.getMeta().getProcessors();
+
+        for (let proc of processors) {
+            let name = proc.name;
+
+            if (name in options) {
+                cls[proc.applier](options[name]);
+                delete options[name];
+            }
+        }
+
+        for (let key in options) {
+            let applier = Processor.getApplierName(key);
+
+            if (cls[applier]) {
+                cls[applier](options[key]);
+            }
+            else {
+                Util.raise(`Invalid class option: ${key}`);
+            }
+        }
+    }
+
     //----------------------------------------------------------------------
     // Private
+
+    static adopt (cls) {
+        cls.isClass = true;
+
+        cls.mixins = new Empty();
+
+        cls.prototype.isInstance = true;
+        cls.prototype.mixins = new Empty();
+
+        cls.define = function (options) {
+            this.getMeta().processOptions(options);
+            return this;
+        };
+
+        cls.getMeta = function () {
+            let meta = this.$meta;
+
+            if (meta.class !== this) {
+                meta = new Meta(this, Object.getPrototypeOf(this));
+            }
+
+            return meta;
+        };
+
+        return new Meta(cls);
+    }
+
+    createJunction (isStatic, key, method) {
+        let shim = this.getShim(isStatic);
+        let sup = this.class.super;
+
+        if (!isStatic) {
+            sup = sup.prototype;
+        }
+
+        method.fns = [];
+
+        // A junction calls the true super method and all applyMixins methods and
+        // returns the return value of the first method called.
+        shim[key] = method[JunctionSym] = function (...args) {
+            let called = sup[key];
+            let result = called && called.apply(this, args);
+            let res;
+
+            for (let fn of method.fns) {
+                res = fn.apply(this, args);
+
+                if (!called) {
+                    called = true;
+                    result = res;
+                }
+            }
+
+            return result;
+        };
+    }
 
     createShim () {
         let cls = this.class;
@@ -249,6 +479,10 @@ class Meta {
 }
 
 Meta.count = 0;
+
+Meta.symbols = {
+    junction: JunctionSym
+};
 
 Object.assign(Meta.prototype, {
     chains: null,

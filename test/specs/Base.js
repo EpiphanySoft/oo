@@ -1,7 +1,7 @@
 const expect = require('assertly').expect;
 const Base = require('../../src/Base.js');
 
-const { define, lazy, merge, junction, mixinId } = require('../../src/decorators');
+const { define, lazy, merge, junction, mixinId } = require('../../src/decorators.js');
 
 describe('Base', function () {
     var obj = {

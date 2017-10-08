@@ -1,8 +1,7 @@
 'use strict';
 
-const Base = require('./Base.js');
 const Config = require('./Config.js');
-const symbols = Base.symbols;
+const Meta = require('./Meta.js');
 
 module.exports = {
     /**
@@ -26,6 +25,10 @@ module.exports = {
      */
     define (options) {
         return C => {
+            if (!C.define) {
+                Meta.adopt(C);
+            }
+
             C.define(options);
         }
     },
@@ -87,7 +90,7 @@ module.exports = {
         let fn = descriptor.value;
 
         if (typeof fn === 'function') {
-            fn[symbols.junction] = true;
+            fn[Meta.symbols.junction] = true;
         }
     }
 };
