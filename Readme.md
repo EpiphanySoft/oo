@@ -5,15 +5,16 @@ embattled JavaScript `class` keyword using ES.next decorators to add powerful ca
 to [classes](./docs/Classes.md) and their [instances](./docs/Instances.md).
 
 The primary entry points for Configly are its `Base` class and `@define` decorator. While
-other base classes can be used, `Base` defines some  of useful behaviors:
+other base classes can be used, [Base](./docs/Base.md) defines some  of useful behaviors:
 
  - Common life-cycle
  - Configuration property management
 
 Other features provided by `Base` can be applied to other class hierarchies because they
-are implemented by a helper class called `Meta` (for "meta-class"). These include:
+are implemented by a helper class called [Meta](./docs/Meta.md) (for "meta-class"). These
+include:
 
- - Mixins (or multiple inheritance)
+ - [Mixins](./docs/Mixins.md) (or multiple inheritance)
  - Method Junctions
  - Method Chains
  - Extensible Processors
@@ -135,7 +136,7 @@ Alternatively, classes can use a `@junction` method for such cases:
         
         @junction
         foo () {
-            super.foo();
+            super.foo(); // calls all inherited foo's (starting w/MyClass)
 
             console.log('MyDerived foo');
         }
@@ -167,4 +168,5 @@ methods also apply properly.
 Above are some of the highlights. For more details see:
  
  - [Classes](./docs/Classes.md)
+ - [Mixins](./docs/Mixins.md)
  - [Instances](./docs/Instances.md)

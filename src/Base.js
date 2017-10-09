@@ -16,21 +16,7 @@ const { define } = require('./decorators.js');
         configuring: false,
         constructing: true,
         destroying: false,
-        destroyed: false,
-
-        lifecycle: 0  // LIVE
-    },
-
-    static: {
-        LIFECYCLE: {
-            CONSTRUCTING: -100,
-            CONFIGURING: -10,
-
-            LIVE: 0,
-
-            DESTROYING: 10,
-            DESTROYED: 100
-        }
+        destroyed: false
     }
 })
 class Base {
@@ -51,11 +37,7 @@ class Base {
             meta.complete();
         }
 
-        me.lifecycle = Base.LIFECYCLE.CONSTRUCTING;
-
         me.construct(...args);
-
-        delete me.lifecycle; // prototype has LIVE (cleaner debugging)
     }
 
     construct (config) {
@@ -63,13 +45,11 @@ class Base {
         let meta = me.$meta;
 
         if (config || meta.configs) {
-            me.lifecycle = Base.LIFECYCLE.CONFIGURING;
             me.configuring = true;
 
             me.configure(config);
 
             me.configuring = false;
-            me.lifecycle = Base.LIFECYCLE.CONSTRUCTING;
         }
 
         if (meta.liveChains.ctor) {
@@ -87,12 +67,10 @@ class Base {
 
         me.destroy = Util.nullFn;
         me.destroying = true;
-        me.lifecycle = Base.LIFECYCLE.DESTROYING;
 
         me.destruct();
 
         me.destroyed = true;
-        me.lifecycle = Base.LIFECYCLE.DESTROYED;
     }
 
     destruct () {
