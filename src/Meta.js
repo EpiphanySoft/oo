@@ -5,8 +5,6 @@ const Processor = require('./Processor.js');
 const Util = require('./Util.js');
 const Empty = Util.Empty;
 
-let mixinIdSeed = 0;
-
 let getOwnNames = Object.getOwnPropertyNames;
 let getOwnSymbols = Object.getOwnPropertySymbols;
 
@@ -137,12 +135,22 @@ class Meta {
         //
     }
 
-    addMixins (mixinCls) {
+    addMixins (mixinCls, mixinId) {
         let me = this;
 
+        if (!mixinCls) {
+            return;
+        }
         if (Array.isArray(mixinCls)) {
             mixinCls.forEach(me.addMixins, me);
             return;
+        }
+        if (!mixinCls.isClass) {
+            let keys = Object.keys(mixinCls);
+            keys.sort();
+            for (let mid of keys) {
+                me.addMixins(mixinCls[mid], mid);
+            }
         }
 
         let cls = this.class;
@@ -150,7 +158,6 @@ class Meta {
         let chains = me.getChains();
         let bases = me.bases;
         let mixinMeta = mixinCls.getMeta();  // ensure all Meta's exist
-        let mixinId = mixinMeta.getMixinId();
         let rootClass = me.rootClass;
         let instanceMap = new Empty();
         let staticsMap = new Empty();
@@ -169,6 +176,7 @@ class Meta {
 
         mixinMeta.complete();
 
+        mixinId = mixinId || mixinMeta.getMixinId();
         if (mixinId) {
             let mixins = me.getMixins();
 
@@ -330,9 +338,9 @@ class Meta {
     getMixinId () {
         let mixinId = this.mixinId;
 
-        if (!mixinId) {
-            mixinId = (this.class.name || 'mixin') + '$' + ++mixinIdSeed;
-            mixinId = Util.decapitalize(mixinId);
+        if (mixinId == null) {
+            mixinId = this.class.name;
+            mixinId = mixinId ? Util.decapitalize(mixinId) : '';
 
             this.mixinId = mixinId;
         }

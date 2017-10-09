@@ -2,158 +2,35 @@
 
 Configly is a class-based, object-orient (OO) library for ES6+. Configly expands on the
 embattled JavaScript `class` keyword using ES.next decorators to add powerful capabilities
-to classes.
+to [classes](./docs/Classes.md) and their [instances](./docs/Instances.md).
 
-# Classes
+The primary entry points for Configly are its `Base` class and `@define` decorator. While
+other base classes can be used, `Base` defines some  of useful behaviors:
 
-As the name implies, the goal of Configly is to make classes (and their instances, see
-below) configurable. This starts at the class-level by allowing classes to be augmented
-in several ways:
+ - Common life-cycle
+ - Configuration property management
 
- - Mixins (multiple inheritance)
- - Method junctions
- - Method chains
- - Extensible processors
+Other features provided by `Base` can be applied to other class hierarchies because they
+are implemented by a helper class called `Meta` (for "meta-class"). These include:
 
-The `@define` decorator (or `static` method) provides a consistent way to accomplish the
-above.
+ - Mixins (or multiple inheritance)
+ - Method Junctions
+ - Method Chains
+ - Extensible Processors
 
-    import { define, Base } from '@epiphanysoft/configly';
-    
-    @define( ... )
-    class MyClass extends Base {
-        //
-    }
+# Life-cycle
 
-## Why Not Use Multiple Decorators?
-
-It is perhaps tempting to view each of these goals as their own decorators (say `@mixin`
-for example). While this works in many cases, using multiple decorators does not ensure a
-consistent order.
-
-Instead that order is lexically determined. For example, consider these classes:
-
-    @foo @bar
-    class FooBar {
-    }
-
-    @bar @foo
-    class BarFoo {
-    }
-
-The different order of the above decorators results in different execution order. In many
-cases this difference will not matter, but if the `@foo` and `@bar` decorators intersect
-in some way, their order can be important.
-
-## Base
-
-Before exploring `@define`, consider the `Base` class used in the first example. Configly
-exports a recommended `Base` class:
+The `Base` class defines two method chains (`ctor` and `dtor`) to manage life-cycle. The
+`ctor` method is called "top down" during object instantiation while `dtor` is called
+"bottom up" when `destroy()` is called.
 
     import { Base } from '@epiphanysoft/configly';
     
     class MyClass extends Base {
-        //
-    }
-
-### Life-cycle
-
-The main feature of `Base` is its standard object life-cycle. 
-
-The `constructor` of `Base` expects a single `Object` parameter that holds configuration
-properties (described later). It is not recommended that a derived class implement a
-`constructor`, but instead take advantage of the `ctor` method.
-
-`Base` also defines a `destroy` method that is used to cleanup any resources that the GC
-(garbage collector) won't handle. It is also not recommended that derived classes override
-the `destroy` method but instead implement a `dtor` method.
-
-These methods ensure the following:
-
- - The `constructing` and `configuring` properties track construction.
- - The `destroying` and `destroyed` properties track destruction.
- - The `lifecycle` property tracks construction and destruction.
- - The `destroy` method is harmless to call after it has been called.
-
-#### ctor
-
-The `ctor` method is like a `constructor` in that it is only called once as the instance
-is being created.
-
-    class MyClass extends Base {
-        ctor () {
-            // do constructor-like things
-        }
-    }
-
-It is different the standard `constructor` in two ways. First, a `ctor` method does not
-call the `super` method. Second, the `Base` class ensures that all `ctor` implementations
-in the class hierarchy are called once and in the proper order.
-
-    class MyClass extends Base {
-        ctor () {
-            // do constructor-like things
-            console.log('MyClass ctor');
-        }
-    }
-
-    class MyDerived extends MyClass {
-        ctor () {
-            // NOTE: no super.ctor() call
-            // do more constructor-like things
-            console.log('MyDerived ctor');
-        }
-    }
-    
-    let inst = new MyDerived();
-    
-    > MyClass ctor
-    > MyDerived ctor
-
-The `ctor` implementations are called "top down" from the `Base` class to the derived-most
-class.
-
-#### dtor
-
-A `dtor` method is like `destroy` but with the same differences the `ctor` has in relation
-to the `constructor`: no `super` calls, and `Base` is responsible for calling the `dtor`
-implementations.
-
-For example:
-
-    class MyClass extends Base {
-        dtor () {
-            console.log('MyClass dtor');
-        }
-    }
-
-    class MyDerived extends MyClass {
-        dtor () {
-            console.log('MyDerived dtor');
-        }
-    }
-    
-    let inst = new MyDerived();
-    
-    inst.destroy();
-    
-    > MyDerived dtor
-    > MyClass dtor
-
-The `dtor` implementations are called "bottom up" from the derived-most class upwards to
-the `Base` class.
-
-#### construct / destruct
-
-There are times when some manual involvement in the life-cycle is needed. In these cases
-there are the `construct` and `destruct` methods. The implementations of these methods in
-`Base` invoke the `ctor` and `dtor` methods, respectively.
-
-    class MyClass extends Base {
         ctor () {
             console.log('MyClass ctor');
         }
-
+        
         dtor () {
             console.log('MyClass dtor');
         }
@@ -167,57 +44,37 @@ there are the `construct` and `destruct` methods. The implementations of these m
         dtor () {
             console.log('MyDerived dtor');
         }
-        
-        construct (config) {
-            console.log('My Derived before construct');
-            super.construct(config);
-            console.log('My Derived after construct');
-        }
-        
-        destruct () {
-            console.log('My Derived before destruct');
-            super.destruct();
-            console.log('My Derived after destruct');
-        }
     }
     
     let inst = new MyDerived();
     
-    > MyDerived before construct    
     > MyClass ctor
     > MyDerived ctor
-    > MyDerived after construct    
-
+    
     inst.destroy();
 
-    > MyDerived before destruct    
     > MyDerived dtor
     > MyClass dtor
-    > MyDerived after destruct    
 
-## Mixins
+In general, method chains are tied to their defining class and can be called in either
+"top down" (forward) or "bottom up" (reverse) order. In the case of `ctor` and `dtor`,
+these chains are automatically called by the `constructor` and `destroy` methods,
+respectively.
 
-The concept of mixins has been [explored](https://www.npmjs.com/package/core-decorators)
-in various ways, but the approach Configly takes is to treat mixins like alternative base
-classes as much as possible.
+# Mixins
 
-All mixin strategies basically reduce to copying properties from the mixin class to the
-target class. Since Configly defines mixins as actual classes, this includes `static` as
-well as `prototype` properties.
+Mixins provide a form of multiple-inheritance that allows behavior reuse beyond JavaScript's
+standard, single-inheritance inheritance model.
 
-    import { define, Base } from '@epiphanysoft/configly';
+    import { Base, define } from '@epiphanysoft/configly';
     
     class MyClass extends Base {
         ctor () {
             console.log('MyClass ctor');
         }
-
+        
         dtor () {
             console.log('MyClass dtor');
-        }
-        
-        foo () {
-            console.log('MyClass foo');
         }
     }
 
@@ -225,13 +82,13 @@ well as `prototype` properties.
         ctor () {
             console.log('MyMixin ctor');
         }
-
+        
         dtor () {
             console.log('MyMixin dtor');
         }
-        
-        bar () {
-            console.log('MyMixin bar');
+
+        foo () {
+            console.log('MyMixin foo');
         }
     }
 
@@ -240,40 +97,38 @@ well as `prototype` properties.
     })
     class MyDerived extends MyClass {
         ctor () {
-            console.log('MyClass ctor');
-        }
-
-        dtor () {
-            console.log('MyClass dtor');
+            console.log('MyDerived ctor');
         }
         
+        dtor () {
+            console.log('MyDerived dtor');
+        }
+
         foo () {
-            console.log('MyDerived foo');
             super.foo();
-            this.bar();
+
+            console.log('MyDerived foo');
+
+            this.mixins.myMixin.foo.call(this);
         }
     }
     
     let inst = new MyDerived();
     
+    inst.foo();
+    
+    > MyClass foo
+    > MyDerived foo
+    > MyMixin foo
+
+For cases where mixins manage non-GC-able resources, the `ctor` and `dtor` life-cycle
+methods also apply properly. 
+
+    let inst = new MyDerived();
+    
     > MyClass ctor
     > MyMixin ctor
     > MyDerived ctor
-
-The first thing to note here is that all of the `ctor` methods were called and in the
-proper, "top down" order.
-    
-    inst.foo();
-    
-    > MyDerived foo
-    > MyClass foo
-    > MyMixin bar
-
-The call to the `bar` method in `MyDerived.foo()` is made possible by the copied reference
-from the `MyMixin.prototype` to the `MyDerived.prototype`. This works in the same way for
-`static` methods.
-
-Object destruction is similar to creation:
 
     inst.destroy();
     
@@ -281,14 +136,9 @@ Object destruction is similar to creation:
     > MyMixin dtor
     > MyClass dtor
 
-In the same way that the `ctor` methods were properly called, so are the `dtor` methods.
+# Next Steps
 
-### Collisions
-
-### Method Junctions
-
-## Method Chains
-
-## Class Processors
-
-# Instance Configuration
+Above are some of the highlights. For more details see:
+ 
+ - [Classes](./docs/Classes.md)
+ - [Instances](./docs/Instances.md)
