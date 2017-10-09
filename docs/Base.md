@@ -24,7 +24,6 @@ These methods ensure the following:
 
  - The `constructing` and `configuring` properties track construction.
  - The `destroying` and `destroyed` properties track destruction.
- - The `lifecycle` property tracks construction and destruction.
  - The `destroy` method is harmless to call after it has been called.
 
 ### ctor
