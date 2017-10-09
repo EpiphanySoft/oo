@@ -58,13 +58,13 @@ The `Base` class defines two method chains (`ctor` and `dtor`) to manage life-cy
 
 In general, method chains are tied to their defining class and can be called in either
 "top down" (forward) or "bottom up" (reverse) order. In the case of `ctor` and `dtor`,
-these chains are automatically called by the `constructor` and `destroy` methods,
+these chains are automatically called by the `constructor` and `destroy` methods of `Base`,
 respectively.
 
 # Mixins
 
 Mixins provide a form of multiple-inheritance that allows behavior reuse beyond JavaScript's
-standard, single-inheritance inheritance model.
+standard, single-inheritance model.
 
     import { Base, define } from '@epiphanysoft/configly';
     
@@ -75,6 +75,10 @@ standard, single-inheritance inheritance model.
         
         dtor () {
             console.log('MyClass dtor');
+        }
+
+        foo () {
+            console.log('MyClass foo');
         }
     }
 
@@ -120,6 +124,28 @@ standard, single-inheritance inheritance model.
     > MyClass foo
     > MyDerived foo
     > MyMixin foo
+
+Alternatively, classes can use a `@junction` method for such cases:
+
+    @define({
+        mixins: MyMixin
+    })
+    class MyDerived extends MyClass {
+        //...
+        
+        @junction
+        foo () {
+            super.foo();
+
+            console.log('MyDerived foo');
+        }
+    }
+    
+    //...
+    
+    > MyClass foo
+    > MyMixin foo
+    > MyDerived foo
 
 For cases where mixins manage non-GC-able resources, the `ctor` and `dtor` life-cycle
 methods also apply properly. 
