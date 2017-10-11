@@ -8,7 +8,29 @@ Configly exports a recommended `Base` class:
         //
     }
 
-The main feature of `Base` is its standard object life-cycle. 
+`Base` defines a standard object life-cycle as well as descriptive properties and helper
+methods. 
+
+## Instance Properties
+
+`Base` maintains the following properties to describe an instance's current life-cycle
+state. These are:
+
+ - `constructing` Starts as `true` and is cleared by the `constructor`.
+ - `configuring` Set to `true` prior to calling `configure` and cleared afterward.
+ - `destroying` Set to `true` on entry to `destroy()` (never cleared).
+ - `destroyed` Set to `true` on exit from `destroy()`.
+ - `$meta` A readonly reference to the class's [Meta](./Meta.md) class.
+
+## Instance Methods
+
+`Base` defines the following methods:
+
+ - callChain
+ - callChainRev
+ - configure
+ - getMeta
+ - reconfigure
 
 ## Life-cycle
 
@@ -147,25 +169,3 @@ there are the `construct` and `destruct` methods. The implementations of these m
     > MyDerived dtor
     > MyClass dtor
     > MyDerived after destruct    
-
-## Instance Properties
-
-There are some helpful properties maintained by `Base` to describe an instance's current
-life-cycle state. These are:
-
- - `constructing` Starts as `true` and is cleared by the `constructor`.
- - `configuring` Set to `true` prior to calling `configure` and cleared afterward.
- - `destroying` Set to `true` on entry to `destroy()` (never cleared).
- - `destroyed` Set to `true` on exit from `destroy()`.
- - `$meta` A readonly reference to the class's [Meta](./Meta.md) class.
-
-## Instance Methods
-
-In addition to the life-cycle methods described previously, `Base` defines a handful of
-additional methods:
-
- - callChain
- - callChainRev
- - configure
- - getMeta
- - reconfigure
