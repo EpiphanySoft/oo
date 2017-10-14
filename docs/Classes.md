@@ -88,8 +88,11 @@ it is worth considering their order:
         }
     }
 
-This class adds a `foo` and `bar` processor and specifies their order of operation. Usage
-is then:
+This class adds a `foo` and `bar` processor and specifies their order of operation. When
+processors are registered for a class, `@define` runs their static applier methods in the
+specified order.
+
+For example:
 
     @define({
         foo: 1,
@@ -102,7 +105,11 @@ is then:
     > applyBar: 2
     > applyFoo: 1
 
-### Advanced Processor Ordering
+The name of the applier method is computed from the processor name:
+
+    appierName = 'apply' + name[0].toUpperCase() + name.substr(1);
+
+### Advanced Processor Options
 
 Let's now consider a processor that defines properties on the class prototype. Since the
 `prototype` processor also places properties on the class prototype, there is room for
@@ -121,4 +128,22 @@ Assume that the new processor should be executed before `prototype`:
         static applyFoo (foo) {
             // runs before prototype processor...
         }
+    }
+
+When the value of a key in the object given to the `processors` processor is an object,
+it can use two properties to configure its behavior:
+
+ - `after`: The processors that this processor must execute after.
+ - `before`: The processors that this processor must execute before.
+
+Any value other than an object or string for a processor is ignored. This is also true of
+any properties other than `before` and `after` in an object value.
+
+In the first example, the `processors` could have be expressed as:
+
+    processors: {
+        foo: {
+            after: 'bar'  // "foo" requires "bar" to run first
+        },
+        bar: true  // the value "true" is ignored
     }

@@ -1,4 +1,7 @@
-/.idea
+/.idea/configly.iml
+/.idea/modules.xml
+/.idea/workspace.xml
+
 node_modules
 /package-lock.json
 /foo.json
