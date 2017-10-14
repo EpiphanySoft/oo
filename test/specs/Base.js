@@ -236,6 +236,47 @@ describe('Base', function () {
         });
     }); // life-cycle
 
+    describe('mixins', function () {
+        it('should be able to reassign mixinId', function () {
+            @define({
+                mixinId: 'moo'
+            })
+            class M extends Base {
+                static foo () {}
+                foo () {}
+            }
+
+            @define({
+                mixins: [
+                    M
+                ]
+            })
+            class D extends Base {
+                //
+            }
+
+            expect(D.foo).to.be(M.foo);
+            expect(D.prototype.foo).to.be(M.prototype.foo);
+
+            expect(D.mixins.moo).to.be(M);
+
+            @define({
+                mixins: [
+                    [ 'goo', M ]
+                ]
+            })
+            class E extends Base {
+                //
+            }
+
+            expect(E.foo).to.be(M.foo);
+            expect(E.prototype.foo).to.be(M.prototype.foo);
+
+            expect(E.mixins.moo).to.be(undefined);
+            expect(E.mixins.goo).to.be(M);
+        });
+    });
+
     describe('processors', function () {
         it('should allow for custom processors', function () {
             @define({
