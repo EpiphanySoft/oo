@@ -64,4 +64,12 @@ on the class constructor:
 
 ## Custom Processors
 
+Processors are class mutation directives. The `processors` processor allows class authors
+to add new processors to the `@define` mechanism. The primary reason to write processors
+instead of decorators is to ensure proper order of operations.
+
+For example, consider a processor that defines properties on the class prototype. Since
+the `prototype` processor also places properties on the class prototype, there is room for
+these processors to conflict. Normally, inherited processors (such as `prototype`) will be
+applied before derived class processors. For this example, assume our new processor 
 TODO

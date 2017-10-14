@@ -142,15 +142,16 @@ class Meta {
             return;
         }
         if (Array.isArray(mixinCls)) {
-            mixinCls.forEach(me.addMixins, me);
-            return;
-        }
-        if (!mixinCls.isClass) {
-            let keys = Object.keys(mixinCls);
-            keys.sort();
-            for (let mid of keys) {
-                me.addMixins(mixinCls[mid], mid);
+            for (let mx of mixinCls) {
+                if (Array.isArray(mx)) {
+                    me.addMixins(mx[1], mx[0]);
+                }
+                else {
+                    me.addMixins(mx);
+                }
             }
+
+            return;
         }
 
         let cls = this.class;

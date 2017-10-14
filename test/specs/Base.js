@@ -233,5 +233,136 @@ describe('Base', function () {
             expect(F.getMeta().liveChains.ctor).to.be(false);
             expect(F.getMeta().liveChains.dtor).to.be(false);
         });
+    }); // life-cycle
+
+    describe('processors', function () {
+        it('should allow for custom processors', function () {
+            @define({
+                processors: 'foo'
+            })
+            class Foo extends Base {
+                static applyFoo (stuff) {
+                    this.fooWasHere = stuff;
+                }
+            }
+
+            @define({
+                foo: 42
+            })
+            class Bar extends Foo {
+                //
+            }
+
+            expect(Bar.fooWasHere).to.be(42);
+        });
+
+        it('should allow for custom processors', function () {
+            @define({
+                processors: 'foo'
+            })
+            class Foo extends Base {
+                static applyFoo (stuff) {
+                    this.fooWasHere = stuff;
+                }
+            }
+
+            @define({
+                foo: 42
+            })
+            class Bar extends Foo {
+                //
+            }
+
+            expect(Bar.fooWasHere).to.be(42);
+        });
+
+        it('should order processors', function () {
+            @define({
+                static: {
+                    fooWasHere: ''
+                },
+                processors: {
+                    x: 'y',
+                    y: 'z',
+                    z: 0
+                }
+            })
+            class Foo extends Base {
+                static applyX (stuff) {
+                    this.fooWasHere += `(x=${stuff})`;
+                }
+                static applyY (stuff) {
+                    this.fooWasHere += `(y=${stuff})`;
+                }
+                static applyZ (stuff) {
+                    this.fooWasHere += `(z=${stuff})`;
+                }
+            }
+
+            @define({
+                x: 'a',
+                y: 'b',
+                z: 'c'
+            })
+            class Bar extends Foo {
+                //
+            }
+
+            expect(Bar.fooWasHere).to.be('(z=c)(y=b)(x=a)');
+        });
+
+        it('should order inherited processors', function () {
+            @define({
+                static: {
+                    fooWasHere: ''
+                },
+                processors: {
+                    y: 'z',
+                    z: 0
+                }
+            })
+            class Foo extends Base {
+                static applyY (stuff) {
+                    this.fooWasHere += `(y=${stuff})`;
+                }
+                static applyZ (stuff) {
+                    this.fooWasHere += `(z=${stuff})`;
+                }
+            }
+
+            @define({
+                processors: {
+                    x: {
+                        before: 'y'
+                    }
+                }
+            })
+            class Foo2 extends Foo {
+                static applyX (stuff) {
+                    this.fooWasHere += `(x=${stuff})`;
+                }
+            }
+
+            @define({
+                y: 'b',
+                z: 'c'
+            })
+            class Bar extends Foo {
+                //
+            }
+
+            expect(Bar.fooWasHere).to.be('(z=c)(y=b)');
+
+            @define({
+                y: 'b',
+                z: 'c',
+                x: 'a'
+            })
+            class Bar2 extends Foo2 {
+                //
+            }
+
+            expect(Bar2.fooWasHere).to.be('(z=c)(x=a)(y=b)');
+        });
     });
 });

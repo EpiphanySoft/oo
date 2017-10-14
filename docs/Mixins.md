@@ -202,22 +202,23 @@ In this case the mixin classes are mixed in sequentially. This means `MyMixin` m
 properties that do not collide with `MyOtherDerived` and would be included while the same
 properties defined in `MyOtherMixin` would be ignored.
 
-The fact that a `mixins` array is mixed in sequentially makes the result more predictable,
-however, in some cases another form may be needed: the object form.
+The fact that a `mixins` array is mixed in sequentially ensures predictability. When using
+an array, each element can be either a class to mixin or a 2-element array:
 
     @define({
-        mixins: {
-            mymix: MyMixin,
-            othermix: MyOtherMixin
-        }
+        mixins: [
+            MyMixin,
+            [ 'othermix', MyOtherMixin ]
+        ]
     })
     class MyOtherDerived extends MyClass {
         //
     }
 
-In this case, the mixin id is the object key. This form may be needed if the mixin class
-did not define an id or if perhaps the mixin classes came from different authors and had
-conflicting id's. In this case, the mixins are applied in `sort()` order.
+When one of the elements of the `mixins` array is a 2-element array, the first item in
+that array is the mixin id (the key to use in the `mixins` object of the target class).
+This form may be needed if the mixin class did not define an id or if perhaps the mixin
+classes came from different authors and had conflicting id's.
 
 ## Method Junctions
 
@@ -244,7 +245,8 @@ methods. This can be accomplished by declaring the colliding method as a `@junct
     class MyDerived extends MyClass {
         @junction
         foo () {
-            super.foo();
+            super.foo(); // calls MyClass.foo() then MyMixin.foo()
+            
             console.log('MyDerived foo');
         }
     }
@@ -261,16 +263,16 @@ methods. This can be accomplished by declaring the colliding method as a `@junct
 
 In order to achieve the above simplicity of using `super.foo()` and having that call reach
 both the proper super class as well as `MyMixin`, the `@junction` decorator inserts the
-junction method in the class prototype between `MyDerived` and `MyClass`. This extra link
-in the prototype chain is added by the first `@junction` method only (all other junctions
-reuse it).
+junction method in the class prototype chain between `MyDerived` and `MyClass`. This extra
+link in the prototype chain is added by the first `@junction` method only (all other
+junctions reuse it).
 
 ## Method Chains
 
-In some cases (like `ctor` and `dtor`) it is important for methods in a class hierarchy to
-be called only once, even if there are multiple paths to a common base class (a.k.a., the
+In cases like `ctor` and `dtor`, it is important for methods in a class hierarchy to be
+called only once, even if there are multiple paths to a common base class (a.k.a., the
 ["dreaded diamond"](https://en.wikipedia.org/wiki/Multiple_inheritance)). This behavior is
-available for other methods using `chains`:
+available for other methods using the `chains` processor:
 
     import { Base, define } from '@epiphanysoft/configly';
     
@@ -311,8 +313,8 @@ available for other methods using `chains`:
     > MyDerived init 1 2
 
 The critical role `chains` plays is preventing methods from being copied from mixins to
-target classes. This is because if they were copied, the `callChain()` would ultimately
-call those methods one time for each class onto which they were copied.
+target classes. This is because if they were copied, the `callChain()` method would
+ultimately call those methods one time for each class onto which they were copied.
 
-While most such methods are `ctor`-like methods, there is also `callChainRev()` for those
-cases where the `dtor` call order is needed.
+While most such methods are `ctor`-like methods (or forward chains), there is also the
+`callChainRev()` method for those cases where the `dtor` call order is needed.
