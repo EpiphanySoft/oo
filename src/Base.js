@@ -7,7 +7,8 @@ const { define } = require('./decorators.js');
     chains: [ 'ctor', 'dtor' ],
 
     processors: {
-        chains: null,
+        prototype: null,
+        chains: 'prototype',
         mixins: 'chains',
         config: 'mixins'
     },

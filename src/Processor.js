@@ -159,7 +159,7 @@ class Processor {
             if (before) {
                 for (let b of before) {
                     if (!procMap[b]) {
-                        Util.raise(`No processor matches "before" ${b} on ${proc.name}`);
+                        Util.raise(`No processor matches "before"="${b}" on ${proc.name}`);
                     }
 
                     let afters = state.afters;

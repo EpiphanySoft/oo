@@ -68,8 +68,57 @@ Processors are class mutation directives. The `processors` processor allows clas
 to add new processors to the `@define` mechanism. The primary reason to write processors
 instead of decorators is to ensure proper order of operations.
 
-For example, consider a processor that defines properties on the class prototype. Since
-the `prototype` processor also places properties on the class prototype, there is room for
-these processors to conflict. Normally, inherited processors (such as `prototype`) will be
-applied before derived class processors. For this example, assume our new processor 
-TODO
+By default, inherited processors (such as `prototype`) will be applied before derived class
+processors so this order is not typically a concern. When defining two processors, however,
+it is worth considering their order:
+
+    @define({
+        processors: {
+            foo: 'bar',   // "foo" requires "bar" to run first
+            bar: true
+        }
+    })
+    class FooBar extends Base {
+        static applyFoo (foo) {
+            console.log('applyFoo: ', foo);
+        }
+        
+        static applyBar (bar) {
+            console.log('applyBar: ', bar);
+        }
+    }
+
+This class adds a `foo` and `bar` processor and specifies their order of operation. Usage
+is then:
+
+    @define({
+        foo: 1,
+        bar: 2
+    })
+    class FooBarUser extends FooBar {
+        //
+    }
+    
+    > applyBar: 2
+    > applyFoo: 1
+
+### Advanced Processor Ordering
+
+Let's now consider a processor that defines properties on the class prototype. Since the
+`prototype` processor also places properties on the class prototype, there is room for
+these processors to conflict.
+
+Assume that the new processor should be executed before `prototype`:
+
+    @define({
+        processors: {
+            foo: {
+                before: 'prototype'
+            }
+        }
+    })
+    class CustomProcessor extends Base {
+        static applyFoo (foo) {
+            // runs before prototype processor...
+        }
+    }

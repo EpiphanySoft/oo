@@ -26,11 +26,12 @@ describe('Base', function () {
         it('should have the correct processors', function () {
             let processors = Base.getMeta().getProcessors();
 
-            expect(processors.length).to.be(3);
+            expect(processors.length).to.be(4);
 
-            expect(processors[0].name).to.be('chains');
-            expect(processors[1].name).to.be('mixins');
-            expect(processors[2].name).to.be('config');
+            expect(processors[0].name).to.be('prototype');
+            expect(processors[1].name).to.be('chains');
+            expect(processors[2].name).to.be('mixins');
+            expect(processors[3].name).to.be('config');
         });
 
         it('should have ctor/dtor chains', function () {
@@ -256,24 +257,43 @@ describe('Base', function () {
             expect(Bar.fooWasHere).to.be(42);
         });
 
-        it('should allow for custom processors', function () {
+        it('should allow for custom processors to precede inherited', function () {
+            let vars = [];
+
             @define({
-                processors: 'foo'
+                processors: {
+                    foo: {
+                        before: 'prototype'
+                    }
+                },
+                prototype: {
+                    foobar: 123
+                }
             })
             class Foo extends Base {
                 static applyFoo (stuff) {
-                    this.fooWasHere = stuff;
+                    vars.push(this.prototype.foobar);
+                    this.prototype.foobar = stuff;
                 }
             }
 
             @define({
-                foo: 42
+                foo: 1,
+                prototype: {
+                    foobar: 42
+                }
             })
             class Bar extends Foo {
-                //
+                static applyPrototype (stuff) {
+                    vars.push(this.prototype.foobar);
+                    super.applyPrototype(stuff);
+                    vars.push(this.prototype.foobar);
+                }
             }
 
-            expect(Bar.fooWasHere).to.be(42);
+            expect(Foo.prototype.foobar).to.be(123);
+            expect(Bar.prototype.foobar).to.be(42);
+            expect(vars).to.equal([123, 1, 42]);
         });
 
         it('should order processors', function () {
