@@ -1,48 +1,8 @@
 'use strict';
 
-const Util = require('./Util.js');
-const { define } = require('./decorators.js');
+const Meta  = require('./Meta.js');
+const { nullFn } = require('./Util.js');
 
-@define({
-    chains: [ 'ctor', 'dtor' ],
-
-    processors: {
-        properties: null,
-        prototype: 'properties',
-        static: 'prototype',
-        chains: 'static',
-        mixins: 'chains',
-        config: 'mixins'
-
-        // mixinId and processors are deliberately not defined. The "mixinId" processor
-        // is only of use when the class is mixed in to another class (so it has no
-        // interaction with other aspects of the class on which it is used). As for the
-        // "processors" processor, because it defines other processors, it is hoisted to
-        // the first in every case.
-    },
-
-    properties: {
-        isInstance: {
-            value: true
-        },
-        configuring: {
-            value: false,
-            writable: true
-        },
-        constructing: {
-            value: true,
-            writable: true
-        },
-        destroying: {
-            value: false,
-            writable: true
-        },
-        destroyed: {
-            value: false,
-            writable: true
-        }
-    }
-})
 class Base {
     constructor (...args) {
         let me = this;
@@ -82,14 +42,14 @@ class Base {
     }
 
     configure (config) {
-        this.configure = Util.nullFn;
+        this.configure = nullFn;
         this.$meta.configure(this, config);
     }
 
     destroy () {
         let me = this;
 
-        me.destroy = Util.nullFn;
+        me.destroy = nullFn;
         me.destroying = true;
 
         me.destruct();
@@ -125,5 +85,48 @@ class Base {
         me.configuring = false;
     }
 }
+
+Meta.adopt(Base);
+
+Base.define({
+    chains: [ 'ctor', 'dtor' ],
+
+    processors: {
+        properties: null,
+        prototype: 'properties',
+        static: 'prototype',
+        chains: 'static',
+        mixins: 'chains',
+        config: 'mixins'
+
+        // mixinId and processors are deliberately not defined. The "mixinId" processor
+        // is only of use when the class is mixed in to another class (so it has no
+        // interaction with other aspects of the class on which it is used). As for the
+        // "processors" processor, because it defines other processors, it is hoisted to
+        // the first in every case.
+    },
+
+    properties: {
+        isInstance: {
+            value: true
+        },
+        configuring: {
+            value: false,
+            writable: true
+        },
+        constructing: {
+            value: true,
+            writable: true
+        },
+        destroying: {
+            value: false,
+            writable: true
+        },
+        destroyed: {
+            value: false,
+            writable: true
+        }
+    }
+});
 
 module.exports = Base;
