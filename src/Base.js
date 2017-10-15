@@ -13,6 +13,12 @@ const { define } = require('./decorators.js');
         config: 'mixins'
     },
 
+    properties: {
+        isInstance: {
+            value: true
+        }
+    },
+
     prototype: {
         configuring: false,
         constructing: true,

@@ -4,6 +4,9 @@ const Config = require('./Config.js');
 const Meta = require('./Meta.js');
 
 module.exports = {
+    //-----------------------------------------------------------------------
+    // Classes
+
     /**
      * Defines method chains for a class.
      *
@@ -30,16 +33,6 @@ module.exports = {
             }
 
             C.define(options);
-        }
-    },
-
-    lazy (instance, name) {
-        Config.addMeta(instance, name, 'lazy', true);
-    },
-
-    merge (fn) {
-        return (instance, name) => {
-            Config.addMeta(instance, name, 'merge', fn);
         }
     },
 
@@ -73,6 +66,9 @@ module.exports = {
         }
     },
 
+    //-----------------------------------------------------------------------
+    // Methods
+
     /**
      * This decorator is applied to class methods that have multiple base class and/or
      * applyMixins "super" methods.
@@ -85,12 +81,25 @@ module.exports = {
      *              super.bar(x, y);
      *          }
      *      }
-    */
+     */
     junction (targetCls, name, descriptor) {
         let fn = descriptor.value;
 
         if (typeof fn === 'function') {
             fn[Meta.symbols.junction] = true;
+        }
+    },
+
+    //-----------------------------------------------------------------------
+    // Configs
+
+    lazy (instance, name) {
+        Config.addMeta(instance, name, 'lazy', true);
+    },
+
+    merge (fn) {
+        return (instance, name) => {
+            Config.addMeta(instance, name, 'merge', fn);
         }
     }
 };

@@ -111,6 +111,9 @@ describe('Base', function () {
         it('should be able to create an instance', function () {
             let instance = new C();
 
+            expect(C.isClass).to.be(true);
+            expect(instance.isInstance).to.be(true);
+
             expect(instance.str).to.be('C');
             expect(log).to.equal([ 'C.ctor' ]);
         });

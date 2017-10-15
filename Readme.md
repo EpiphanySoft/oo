@@ -170,4 +170,5 @@ Above are some of the highlights. For more details see:
  - [Classes](./docs/Classes.md)
  - [Mixins](./docs/Mixins.md)
  - [Instances](./docs/Instances.md)
+ - [Processors](./Processors.md)
  - [Hacking](./docs/dev.md)

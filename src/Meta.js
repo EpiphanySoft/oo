@@ -80,6 +80,9 @@ class Meta {
             me.bases = superMeta.bases.clone();
             me.bases.add(superclass);
 
+            me.configs = Object.create(superMeta.configs);
+            me.configValues = Object.create(superMeta.configValues);
+
             // Since many classes in the hierarchy can *implement* a chained method,
             // we don't try to save on this map creation. This is prototype chained to
             // the superclass's liveChains and only keys with a value of true are put
@@ -95,6 +98,9 @@ class Meta {
             // getChains() method will walk up the supers and return the first class
             // to have defined method chains (which is Base typically).
             me.chains = new Empty();
+
+            me.configs = new Empty(); // configs.title = Config.get('title');
+            me.configValues = new Empty();
 
             me.liveChains = new Empty();
             me.rootClass = cls;
@@ -263,6 +269,10 @@ class Meta {
         this.processors = Processor.decode(processors, this.getProcessors());
     }
 
+    addProperties (properties) {
+        Object.defineProperties(this.class.prototype, properties);
+    }
+
     callChain (instance, method, args = null, reverse = false) {
         let liveChains = this.liveChains;
         let classes = this.classes;
@@ -426,7 +436,6 @@ class Meta {
         cls.isClass = true;
         cls.mixins = new Empty();
 
-        cls.prototype.isInstance = true;
         cls.prototype.mixins = new Empty();
 
         Util.copyIf(cls, {
@@ -448,6 +457,10 @@ class Meta {
 
             applyProcessors (processors) {
                 this.getMeta().addProcessors(processors);
+            },
+
+            applyProperties (properties) {
+                this.getMeta().addProperties(properties);
             },
 
             applyPrototype (members) {

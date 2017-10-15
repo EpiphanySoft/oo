@@ -147,3 +147,7 @@ In the first example, the `processors` could have be expressed as:
         },
         bar: true  // the value "true" is ignored
     }
+
+# Next Steps
+
+See [here](./Processors.md) for a complete list of class processors.

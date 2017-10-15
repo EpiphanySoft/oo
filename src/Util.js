@@ -23,9 +23,7 @@ class MyMap extends Map {
     }
 
     clone () {
-        let ret = new MyMap();
-        ret.addAll(this);
-        return ret;
+        return new MyMap().addAll(this);
     }
 }
 
@@ -43,9 +41,7 @@ class MySet extends Set {
     }
 
     clone () {
-        let ret = new MySet();
-
-        return ret.addAll(this);
+        return new MySet().addAll(this);
     }
 }
 
@@ -96,6 +92,18 @@ const Util = {
 
     raise (msg) {
         throw new Error(msg);
+    },
+
+    prototype (members) {
+        return C => {
+            Object.assign(C.prototype, members);
+        }
+    },
+
+    statics (members) {
+        return C => {
+            Object.assign(C, members);
+        }
     },
 
     setProto: Object.setPrototypeOf || (function () {

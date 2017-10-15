@@ -1,11 +1,20 @@
 'use strict';
 
-const Util = require('./Util.js');
+const { Empty, capitalize, prototype, statics } = require('./Util.js');
 
+@statics({
+    all: new Empty(),
+    metaSymbol: Symbol('configMeta')
+})
+@prototype({
+    cached: false,
+    lazy: false
+})
 class Config {
     constructor (name) {
-        let cap = Util.capitalize(name);
+        let cap = capitalize(name);
 
+        this.$ = this;
         this.capitalized = cap;
         this.name = name;
         this._name = '_' + name;
@@ -27,10 +36,19 @@ class Config {
         cm[metaName] = metaValue;
     }
 
-    static get (name) {
+    static get (name, options, inherited) {
         let all = Config.all;
+        let ret = (inherited && inherited[name]) || all[name];
 
-        return all[name] || (all[name] = new Config(name));
+        if (!ret) {
+            all[name] = ret = new Config(name);
+        }
+
+        if (options) {
+            ret = ret.extend(options);
+        }
+
+        return ret;
     }
 
     extend (options) {
@@ -65,9 +83,12 @@ class Config {
         return this.setter;
     }
 
+    merge () {
+        //
+    }
+
     //--------------------------------------------------------
     // Private
-
 
     createDef () {
         let me = this;
@@ -135,8 +156,5 @@ class Config {
         return fn;
     }
 }
-
-Config.all = {};
-Config.metaSymbol = Symbol('configMeta');
 
 module.exports = Config;
