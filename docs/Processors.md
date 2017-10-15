@@ -1,15 +1,15 @@
-# Processor Reference
+# Processors
 
 The `@define` decorator understands the following built-in processors:
 
- - [chains](#chains)
- - [config](#config)
- - [mixinId](#mixinId)
- - [mixins](#mixins)
- - [processors](#processors)
- - [properties](#properties)
- - [prototype](#prototype)
- - [static](#static)
+ - [chains](#_chains)
+ - [config](#_config)
+ - [mixinId](#_mixinId)
+ - [mixins](#_mixins)
+ - [processors](#_processors)
+ - [properties](#_properties)
+ - [prototype](#_prototype)
+ - [static](#_static)
 
 While all processors operate upon [classes](./Classes.md), the `config` processor is
 ultimately concerned with the [instances](./Instances.md) of the classes.
@@ -44,7 +44,7 @@ The `define` method is useful to avoid the tool chains currently required to tra
 decorator syntax.
 
 # `chains`
-<a name="chains">
+<a name="_chains">
 
 Indicates that the specified methods should be managed as a chain. Unlike normal methods
 that derived classes implement and use `super.method()` calls to invoke inherited methods,
@@ -95,12 +95,12 @@ in the various classes and mixins using `callChain()`. This ensures that all `in
 methods are called and in the correct, top-down order.
 
 # `config`
-<a name="config">
+<a name="_config">
 
 WIP
 
 # `mixinId`
-<a name="mixinId">
+<a name="_mixinId">
 
 Sets the identity for a class when it is used as a mixin. This is used as the key in the
 `mixins` object maintained for classes using mixins.
@@ -141,7 +141,7 @@ The `mixins` object is maintained on the class constructor and prototype:
     MyDerived.prototype.mixins['mymixin'] = MyMixin.prototype;
 
 # `mixins`
-<a name="mixins">
+<a name="_mixins">
 
 Mixins are similar to a base class in that they are a way to inherit functionality from
 one class to another.
@@ -162,7 +162,7 @@ from `MyClass` are not overridden by the mixins.
 See [here](./Mixins.md) for more information on mixins.
 
 # `processors`
-<a name="processors">
+<a name="_processors">
 
 This processor allows a class to define and order custom processors for use in derived
 classes.
@@ -190,7 +190,7 @@ so that `applyBar` will run before `applyFoo`.
 See [here](./Classes.md) for more information on custom processors.
 
 # `properties`
-<a name="properties">
+<a name="_properties">
 
 Defines properties on the class prototype. This is primarily useful for controlling the
 property options as opposed to `prototype`.
@@ -204,8 +204,9 @@ property options as opposed to `prototype`.
     })
     class Something extends Base {
     }
-    
-    // same as:
+
+The above is equivalent to the following:    
+
     Object.defineProperties(Something.prototype, {
         foo: {
             value: 42
@@ -213,7 +214,7 @@ property options as opposed to `prototype`.
     });
 
 # `prototype`
-<a name="prototype">
+<a name="_prototype">
 
 Copies properties to the class prototype. This is an easy way to provide a constant object
 [shape](https://draft.li/blog/2016/12/22/javascript-engines-hidden-classes/).
@@ -227,14 +228,15 @@ Copies properties to the class prototype. This is an easy way to provide a const
     class Something extends Base {
     }
     
-    // same as:
+The above is equivalent to the following:    
+
     Object.assign(Something.prototype, {
         foo: 0,
         bar: true
     });
 
 # `static`
-<a name="static">
+<a name="_static">
 
 Copies properties to the class constructor.
 
@@ -246,7 +248,8 @@ Copies properties to the class constructor.
     class Something extends Base {
     }
     
-    // same as:
+The above is equivalent to the following:    
+
     Object.assign(Something, {
         all: new Map()
     });
