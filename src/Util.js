@@ -13,72 +13,48 @@ Object.defineProperty(Empty.prototype = Object.create(null), 'hasOwnProperty', {
     value: Object.prototype.hasOwnProperty
 });
 
-// class MySet extends Set {
-//     constructor () {
-//         super();
-//     }
-//
-//     addAll (src) {
-//         for (let v of src) {
-//             this.add(v);
-//         }
-//
-//         return this;
-//     }
-//
-//     clone () {
-//         let ret = new MySet();
-//
-//         return ret.addAll(this);
-//     }
-// }
-
-(function (MapProto) {
-    if (!MapProto.addAll) {
-        MapProto.addAll = function (src) {
-            for (let [key, value] of src) {
-                this.add(key, value);
-            }
-
-            return this;
+class MyMap extends Map {
+    addAll (src) {
+        for (let [key, value] of src) {
+            this.add(key, value);
         }
+
+        return this;
     }
 
-    if (!MapProto.clone) {
-        MapProto.clone = function () {
-            let ret = new Map();
-            ret.addAll(this);
-            return ret;
-        }
+    clone () {
+        let ret = new MyMap();
+        ret.addAll(this);
+        return ret;
     }
-}(Map.prototype));
+}
 
-(function (SetProto) {
-    if (!SetProto.addAll) {
-        SetProto.addAll = function (src) {
-            for (let v of src) {
-                this.add(v);
-            }
-
-            return this;
-        }
+class MySet extends Set {
+    constructor () {
+        super();
     }
 
-    if (!SetProto.clone) {
-        SetProto.clone = function () {
-            let ret = new Set();
-            ret.addAll(this);
-            return ret;
+    addAll (src) {
+        for (let v of src) {
+            this.add(v);
         }
+
+        return this;
     }
-}(Set.prototype));
+
+    clone () {
+        let ret = new MySet();
+
+        return ret.addAll(this);
+    }
+}
 
 const Util = {
     nullFn () {},
 
     Empty: Empty,
-    Map: Map,
-    Set: Set,
+    Map: MyMap,
+    Set: MySet,
 
     copy (dest, ...sources) {
         if (dest) {
