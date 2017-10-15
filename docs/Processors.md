@@ -10,7 +10,10 @@ The `@define` decorator understands the following built-in processors:
  - [properties](#properties)
  - [prototype](#prototype)
  - [static](#static)
- 
+
+While all processors operate upon [classes](./Classes.md), the `config` processor is
+ultimately concerned with the [instances](./Instances.md) of the classes.
+
 <a name="chains">
 ## `chains`
 

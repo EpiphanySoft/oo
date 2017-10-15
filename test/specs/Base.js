@@ -24,14 +24,16 @@ describe('Base', function () {
 
     describe('basics', function () {
         it('should have the correct processors', function () {
-            let processors = Base.getMeta().getProcessors();
+            let names = Base.getMeta().getProcessors().map(p => p.name);
 
-            expect(processors.length).to.be(4);
-
-            expect(processors[0].name).to.be('prototype');
-            expect(processors[1].name).to.be('chains');
-            expect(processors[2].name).to.be('mixins');
-            expect(processors[3].name).to.be('config');
+            expect(names).to.equal([
+                'properties',
+                'prototype',
+                'static',
+                'chains',
+                'mixins',
+                'config'
+            ]);
         });
 
         it('should have ctor/dtor chains', function () {
