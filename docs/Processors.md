@@ -28,7 +28,7 @@ The recommended way to use processors is the `@define` decorator:
     }
 
 Alternatively, there is the `define` `static` method of `Base` which is equivalent in
-every respect other then syntax:
+every respect other than syntax:
 
     import { Base } from '@epiphanysoft/configly';
     
