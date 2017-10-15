@@ -43,8 +43,9 @@ every respect other than syntax:
 The `define` method is useful to avoid the tool chains currently required to transpile the
 decorator syntax.
 
-# `chains`
 <a name="_chains">
+
+# `chains`
 
 Indicates that the specified methods should be managed as a chain. Unlike normal methods
 that derived classes implement and use `super.method()` calls to invoke inherited methods,
@@ -94,13 +95,15 @@ call sequence. Instead the `initialize()` method calls all of the `init()` imple
 in the various classes and mixins using `callChain()`. This ensures that all `init()`
 methods are called and in the correct, top-down order.
 
-# `config`
 <a name="_config">
+
+# `config`
 
 WIP
 
-# `mixinId`
 <a name="_mixinId">
+
+# `mixinId`
 
 Sets the identity for a class when it is used as a mixin. This is used as the key in the
 `mixins` object maintained for classes using mixins.
@@ -140,8 +143,9 @@ The `mixins` object is maintained on the class constructor and prototype:
     MyDerived.mixins['mymixin'] = MyMixin;
     MyDerived.prototype.mixins['mymixin'] = MyMixin.prototype;
 
-# `mixins`
 <a name="_mixins">
+
+# `mixins`
 
 Mixins are similar to a base class in that they are a way to inherit functionality from
 one class to another.
@@ -161,8 +165,9 @@ from `MyClass` are not overridden by the mixins.
 
 See [here](./Mixins.md) for more information on mixins.
 
-# `processors`
 <a name="_processors">
+
+# `processors`
 
 This processor allows a class to define and order custom processors for use in derived
 classes.
@@ -189,8 +194,9 @@ so that `applyBar` will run before `applyFoo`.
 
 See [here](./Classes.md) for more information on custom processors.
 
-# `properties`
 <a name="_properties">
+
+# `properties`
 
 Defines properties on the class prototype. This is primarily useful for controlling the
 property options as opposed to `prototype`.
@@ -213,8 +219,9 @@ The above is equivalent to the following:
         }
     });
 
-# `prototype`
 <a name="_prototype">
+
+# `prototype`
 
 Copies properties to the class prototype. This is an easy way to provide a constant object
 [shape](https://draft.li/blog/2016/12/22/javascript-engines-hidden-classes/).
@@ -235,8 +242,9 @@ The above is equivalent to the following:
         bar: true
     });
 
-# `static`
 <a name="_static">
+
+# `static`
 
 Copies properties to the class constructor.
 
