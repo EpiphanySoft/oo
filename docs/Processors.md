@@ -14,7 +14,36 @@ The `@define` decorator understands the following built-in processors:
 While all processors operate upon [classes](./Classes.md), the `config` processor is
 ultimately concerned with the [instances](./Instances.md) of the classes.
 
-## `chains`
+## Using `define`
+
+The recommended way to use processors is the `@define` decorator:
+
+    import { Base, define } from '@epiphanysoft/configly';
+    
+    @define({
+        ...processors go here...
+    })
+    class MyClass extends Base {
+        ...
+    }
+
+Alternatively, there is the `define` `static` method of `Base` which is equivalent in
+every respect other then syntax:
+
+    import { Base } from '@epiphanysoft/configly';
+    
+    class MyClass extends Base {
+        ...
+    }
+    
+    MyClass.define({
+        ...processors go here...
+    })
+
+The `define` method is useful to avoid the tool chains currently required to transpile the
+decorator syntax.
+
+# `chains`
 <a name="chains">
 
 Indicates that the specified methods should be managed as a chain. Unlike normal methods
@@ -23,8 +52,6 @@ method chains are invoked across the class hierarchy.
 
 Consider these classes:
 
-    import { Base, define } from '@epiphanysoft/configly';
-    
     @define({
         chains: ['init']
     })
@@ -67,12 +94,12 @@ call sequence. Instead the `initialize()` method calls all of the `init()` imple
 in the various classes and mixins using `callChain()`. This ensures that all `init()`
 methods are called and in the correct, top-down order.
 
-## `config`
+# `config`
 <a name="config">
 
 WIP
 
-## `mixinId`
+# `mixinId`
 <a name="mixinId">
 
 Sets the identity for a class when it is used as a mixin. This is used as the key in the
@@ -80,8 +107,6 @@ Sets the identity for a class when it is used as a mixin. This is used as the ke
 
 Consider a simple mixin:
 
-    import { Base, define } from '@epiphanysoft/configly';
-    
     class MyClass extends Base {
         foo () {
             console.log('MyClass foo');
@@ -115,14 +140,12 @@ The `mixins` object is maintained on the class constructor and prototype:
     MyDerived.mixins['mymixin'] = MyMixin;
     MyDerived.prototype.mixins['mymixin'] = MyMixin.prototype;
 
-## `mixins`
+# `mixins`
 <a name="mixins">
 
 Mixins are similar to a base class in that they are a way to inherit functionality from
 one class to another.
 
-    import { Base, define } from '@epiphanysoft/configly';
-    
     @define({
         mixins: [ MyMixin, MyOtherMixin ]
     })
@@ -139,7 +162,7 @@ from `MyClass` are not overridden by the mixins.
 See [here](./Mixins.md) for more information on mixins.
 
 <a name="processors">
-## `processors`
+# `processors`
 
 This processor allows a class to define and order custom processors for use in derived
 classes.
@@ -166,7 +189,7 @@ so that `applyBar` will run before `applyFoo`.
 
 See [here](./Classes.md) for more information on custom processors.
 
-## `properties`
+# `properties`
 <a name="properties">
 
 Defines properties on the class prototype. This is primarily useful for controlling the
@@ -189,7 +212,7 @@ property options as opposed to `prototype`.
         }
     });
 
-## `prototype`
+# `prototype`
 <a name="prototype">
 
 Copies properties to the class prototype. This is an easy way to provide a constant object
@@ -210,13 +233,11 @@ Copies properties to the class prototype. This is an easy way to provide a const
         bar: true
     });
 
-## `static`
+# `static`
 <a name="static">
 
 Copies properties to the class constructor.
 
-    import { Base, define } from '@epiphanysoft/configly';
-    
     @define({
         static: {
             all: new Map()
