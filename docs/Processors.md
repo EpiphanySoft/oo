@@ -1,4 +1,4 @@
-# Processors
+# Processor Reference
 
 The `@define` decorator understands the following built-in processors:
 
@@ -161,8 +161,8 @@ from `MyClass` are not overridden by the mixins.
 
 See [here](./Mixins.md) for more information on mixins.
 
-<a name="processors">
 # `processors`
+<a name="processors">
 
 This processor allows a class to define and order custom processors for use in derived
 classes.
