@@ -16,14 +16,23 @@ const { define } = require('./decorators.js');
     properties: {
         isInstance: {
             value: true
+        },
+        configuring: {
+            value: false,
+            writable: true
+        },
+        constructing: {
+            value: true,
+            writable: true
+        },
+        destroying: {
+            value: false,
+            writable: true
+        },
+        destroyed: {
+            value: false,
+            writable: true
         }
-    },
-
-    prototype: {
-        configuring: false,
-        constructing: true,
-        destroying: false,
-        destroyed: false
     }
 })
 class Base {
