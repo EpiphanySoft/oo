@@ -14,8 +14,8 @@ The `@define` decorator understands the following built-in processors:
 While all processors operate upon [classes](./Classes.md), the `config` processor is
 ultimately concerned with the [instances](./Instances.md) of the classes.
 
-<a name="chains">
 ## `chains`
+<a name="chains">
 
 Indicates that the specified methods should be managed as a chain. Unlike normal methods
 that derived classes implement and use `super.method()` calls to invoke inherited methods,
@@ -67,13 +67,13 @@ call sequence. Instead the `initialize()` method calls all of the `init()` imple
 in the various classes and mixins using `callChain()`. This ensures that all `init()`
 methods are called and in the correct, top-down order.
 
-<a name="config">
 ## `config`
+<a name="config">
 
 WIP
 
-<a name="mixinId">
 ## `mixinId`
+<a name="mixinId">
 
 Sets the identity for a class when it is used as a mixin. This is used as the key in the
 `mixins` object maintained for classes using mixins.
@@ -115,8 +115,8 @@ The `mixins` object is maintained on the class constructor and prototype:
     MyDerived.mixins['mymixin'] = MyMixin;
     MyDerived.prototype.mixins['mymixin'] = MyMixin.prototype;
 
-<a name="mixins">
 ## `mixins`
+<a name="mixins">
 
 Mixins are similar to a base class in that they are a way to inherit functionality from
 one class to another.
@@ -166,8 +166,8 @@ so that `applyBar` will run before `applyFoo`.
 
 See [here](./Classes.md) for more information on custom processors.
 
-<a name="properties">
 ## `properties`
+<a name="properties">
 
 Defines properties on the class prototype. This is primarily useful for controlling the
 property options as opposed to `prototype`.
@@ -189,8 +189,8 @@ property options as opposed to `prototype`.
         }
     });
 
-<a name="prototype">
 ## `prototype`
+<a name="prototype">
 
 Copies properties to the class prototype. This is an easy way to provide a constant object
 [shape](https://draft.li/blog/2016/12/22/javascript-engines-hidden-classes/).
@@ -210,8 +210,8 @@ Copies properties to the class prototype. This is an easy way to provide a const
         bar: true
     });
 
-<a name="static">
 ## `static`
+<a name="static">
 
 Copies properties to the class constructor.
 
