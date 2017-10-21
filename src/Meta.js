@@ -24,7 +24,8 @@ let getOwnKeys = getOwnSymbols ? function (object) {
         return keys;
     } : getOwnNames;
 
-const JunctionSym = Symbol('junction');
+const hasConfigsSym = Symbol('hasConfigs');
+const junctionSym = Symbol('junction');
 
 const instanceSkip = new Empty({
     constructor: 1,
@@ -102,6 +103,8 @@ class Meta {
             me.configs = new Empty(); // configs.title = Config.get('title');
             me.configValues = new Empty();
 
+            me.configs[hasConfigsSym] = false;
+
             me.liveChains = new Empty();
             me.rootClass = cls;
         }
@@ -137,21 +140,24 @@ class Meta {
         }
     }
 
-    addConfigs (configs) {
+    addConfigs (configs, mixinMeta) {
         let me = this,
             existingConfigs = me.configs,
             existingValues = me.configValues,
             metaSymbol = Config.metaSymbol,
             config, configMeta, existingConfig, name, value;
 
+        existingConfigs[hasConfigsSym] = true;
+
         for (name in configs) {
             value = configs[name];
             config = existingConfig = existingConfigs[name];
-            configMeta = value && value[metaSymbol];
 
+            configMeta = value && value[metaSymbol];
             if (configMeta) {
                 value = value.value;
             }
+
             //TODO
         }
     }
@@ -175,7 +181,7 @@ class Meta {
             return;
         }
 
-        let cls = this.class;
+        let cls = me.class;
         let prototype = cls.prototype;
         let chains = me.getChains();
         let bases = me.bases;
@@ -197,6 +203,9 @@ class Meta {
         }
 
         mixinMeta.complete();
+        if (mixinMeta.configs[hasConfigsSym]) {
+            me.addConfigs(mixinMeta.configValues, mixinMeta);
+        }
 
         mixinId = mixinId || mixinMeta.getMixinId();
         if (mixinId) {
@@ -256,7 +265,7 @@ class Meta {
                             existing.$owner = cls;
                         }
 
-                        if (existing[JunctionSym] && existing.$owner === cls) {
+                        if (existing[junctionSym] && existing.$owner === cls) {
                             // We could have previously mixed in a method from a class
                             // that was also a Junction, so we need to check that the
                             // method belongs to the target class.
@@ -540,7 +549,7 @@ class Meta {
 
         // A junction calls the true super method and all applyMixins methods and
         // returns the return value of the first method called.
-        shim[key] = method[JunctionSym] = function (...args) {
+        shim[key] = method[junctionSym] = function (...args) {
             let called = sup[key];
             let result = called && called.apply(this, args);
             let res;
@@ -574,7 +583,8 @@ class Meta {
 Meta.count = 0;
 
 Meta.symbols = {
-    junction: JunctionSym
+    hasConfigs: hasConfigsSym,
+    junction: junctionSym
 };
 
 Object.assign(Meta.prototype, {
@@ -585,7 +595,10 @@ Object.assign(Meta.prototype, {
 
     instances: 0,
 
-    members: null
+    members: null,
+
+    configs: null,
+    configValues: null
 });
 
 module.exports = Meta;

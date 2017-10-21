@@ -28,7 +28,7 @@ class Base {
         let me = this;
         let meta = me.$meta;
 
-        if (config || meta.configs) {
+        if (config || meta.configs[Meta.symbols.hasConfigs]) {
             me.configure(config);
         }
         else {
