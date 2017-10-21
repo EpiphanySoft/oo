@@ -138,7 +138,22 @@ class Meta {
     }
 
     addConfigs (configs) {
-        //
+        let me = this,
+            existingConfigs = me.configs,
+            existingValues = me.configValues,
+            metaSymbol = Config.metaSymbol,
+            config, configMeta, existingConfig, name, value;
+
+        for (name in configs) {
+            value = configs[name];
+            config = existingConfig = existingConfigs[name];
+            configMeta = value && value[metaSymbol];
+
+            if (configMeta) {
+                value = value.value;
+            }
+            //TODO
+        }
     }
 
     addMixins (mixinCls, mixinId) {

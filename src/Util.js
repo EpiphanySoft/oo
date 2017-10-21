@@ -1,5 +1,7 @@
 'use strict';
 
+const toString = Object.prototype.toString;
+
 // https://jsperf.com/object-create-null-vs-new-empty-prototype
 
 function Empty (src) {
@@ -90,6 +92,60 @@ const Util = {
         return str ? str[0].toLowerCase() + str.substr(1) : '';
     },
 
+    clone (object) {
+        let i, clone = object;
+
+        if (object) {
+            let type = Util.typeOf(object);
+
+            if (type === 'array') {
+                clone = [];
+
+                for (i = object.length; i-- > 0; ) {
+                    clone[i] = Util.clone(object[i]);
+                }
+            }
+            else if (type === 'date') {
+                clone = new Date(+object);
+            }
+            else if (type === 'object' && object.constructor === Object) {
+                clone = {};
+
+                for (i in object) {
+                    clone[i] = Util.clone(object[i]);
+                }
+            }
+        }
+
+        return clone;
+    },
+
+    merge (target, ...sources) {
+        if (target) {
+            let key, targetValue, value;
+
+            for (let src of sources) {
+                if (src) {
+                    for (key in src) {
+                        value = src[key];
+                        targetValue = target[src];
+
+                        if (value && targetValue &&
+                                value.constructor === Object &&
+                                targetValue.constructor === Object) {
+                            Util.merge(targetValue, value);
+                        }
+                        else {
+                            target[key] = Util.clone(value);
+                        }
+                    }
+                }
+            }
+        }
+
+        return target;
+    },
+
     raise (msg) {
         throw new Error(msg);
     },
@@ -104,6 +160,29 @@ const Util = {
         return C => {
             Object.assign(C, members);
         }
+    },
+
+    typeOf (value) {
+        if (value === null) {
+            return 'null';
+        }
+
+        let type = typeof value;
+        let typeOf = Util.typeOf;
+
+        if (!typeOf.simpletons[type]) {
+            // map s="[object Date]" to type="date"
+            let s = toString.call(value);
+            let cache = typeOf.cache;
+
+            if (!(type = cache[s])) {
+                let m = typeOf.parseRe.exec(s);
+
+                cache[s] = type = m ? m[1].toLowerCase() : s;
+            }
+        }
+
+        return type;
     },
 
     setProto: Object.setPrototypeOf || (function () {
@@ -130,5 +209,16 @@ const Util = {
         return src;
     }
 };
+
+Object.assign(Util.typeOf, {
+    cache: new Empty(),
+    parseRe: /^\[object ([^\]]+)]$/,
+    simpletons: {
+        boolean: 1,
+        number: 1,
+        string: 1,
+        undefined: 1
+    }
+});
 
 module.exports = Util;
