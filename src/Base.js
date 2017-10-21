@@ -29,11 +29,10 @@ class Base {
         let meta = me.$meta;
 
         if (config || meta.configs) {
-            me.configuring = true;
-
             me.configure(config);
-
-            me.configuring = false;
+        }
+        else {
+            me.configGen = 1;
         }
 
         if (meta.liveChains.ctor) {
@@ -42,7 +41,6 @@ class Base {
     }
 
     configure (config) {
-        this.configure = nullFn;
         this.$meta.configure(this, config);
     }
 
@@ -75,14 +73,6 @@ class Base {
 
     getMeta () {
         return this.$meta;
-    }
-
-    reconfigure (config) {
-        let me = this;
-
-        me.configuring = true;
-        me.$meta.reconfigure(me, config);
-        me.configuring = false;
     }
 }
 
@@ -126,6 +116,12 @@ Base.define({
             value: false,
             writable: true
         }
+    },
+
+    prototype: {
+        configGen: 0,
+        afterConfigure: null,
+        beforeConfigure: null
     }
 });
 

@@ -308,7 +308,27 @@ class Meta {
     }
 
     configure (instance, instanceConfig) {
-        //
+        let me = this;
+        let config = instanceConfig;
+
+        instance.configuring = true;
+
+        if ((instance.configGen = (instance.configGen || 0) + 1) < 2) {
+            if (instance.beforeConfigure) {
+                config = instance.beforeConfigure(config) || config;
+            }
+
+            me.initConfig(instance, config);
+
+            if (instance.afterConfigure) {
+                instance.afterConfigure(config);
+            }
+        }
+        else {
+            me.reconfigure(instance, config);
+        }
+
+        instance.configuring = false;
     }
 
     getChains (own) {
@@ -391,6 +411,10 @@ class Meta {
         }
 
         return isStatic ? shim : shim.prototype;
+    }
+
+    initConfig (instance, instanceConfig) {
+        //TODO
     }
 
     processOptions (options) {
