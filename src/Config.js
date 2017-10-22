@@ -1,6 +1,6 @@
 'use strict';
 
-const { Empty, capitalize, prototype, statics } = require('./Util.js');
+const { Empty, capitalize, merge, prototype, statics } = require('./Util.js');
 
 @statics({
     all: new Empty(),
@@ -36,55 +36,28 @@ class Config {
         cm[metaName] = metaValue;
     }
 
-    static get (name, options, inherited) {
+    static get (name) {
         let all = Config.all;
-        let ret = (inherited && inherited[name]) || all[name];
 
-        if (!ret) {
-            all[name] = ret = new Config(name);
-        }
-
-        if (options) {
-            ret = ret.extend(options);
-        }
-
-        return ret;
+        return all[name] || (all[name] = new Config(name));
     }
 
-    extend (options) {
+    extend (options, owner = null) {
         let c = Object.create(this);
 
         Object.assign(c, options);
+
+        c.owner = owner;
 
         return c;
     }
 
     getDef () {
-        if (!this.hasOwnProperty('def')) {
-            this.createDef();
-        }
-
-        return this.def;
+        return this.def || this.$.createDef();
     }
 
     getInitDef () {
-        if (!this.hasOwnProperty('initDef')) {
-            this.createInitDef();
-        }
-
-        return this.initDef;
-    }
-
-    getSetter () {
-        if (!this.hasOwnProperty('setter')) {
-            this.createSetter();
-        }
-
-        return this.setter;
-    }
-
-    merge () {
-        //
+        return this.initDef || this.$.createInitDef();
     }
 
     //--------------------------------------------------------
@@ -93,13 +66,35 @@ class Config {
     createDef () {
         let me = this;
         let _name = me._name;
+        let applier = this.applier;
+        let updater = this.updater;
 
         return me.def = {
             get () {
                 return this[_name];
             },
 
-            set: me.getSetter()
+            set (value) {
+                let me = this;
+                let old = me[_name];
+
+                if (me[applier]) {
+                    value = me[applier](value, old);
+                    if (value === undefined) {
+                        return;
+                    }
+
+                    old = me[_name];
+                }
+
+                if (old !== value) {
+                    me[_name] = value;
+
+                    if (me[updater]) {
+                        me[updater](value, old);
+                    }
+                }
+            }
         };
     }
 
@@ -122,39 +117,15 @@ class Config {
             }
         }
     }
-
-    createSetter () {
-        let _name = this._name;
-        let applier = this.applier;
-        let updater = this.updater;
-
-        let fn = function (value) {
-            let me = this;
-            let old = me[_name];
-
-            if (me[applier]) {
-                value = me[applier](value, old);
-                if (value === undefined) {
-                    return;
-                }
-
-                old = me[_name];
-            }
-
-            if (old !== value) {
-                me[_name] = value;
-
-                if (me[updater]) {
-                    me[updater](value, old);
-                }
-            }
-        };
-
-        this.setter = fn;
-        fn.$cfg = this;
-
-        return fn;
-    }
 }
+
+Object.assign(Config.prototype, {
+    isConfig: true,
+    owner: null,
+
+    merge: merge
+});
+
+merge.isStdMerge = true;
 
 module.exports = Config;

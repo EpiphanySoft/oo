@@ -142,20 +142,47 @@ class Meta {
 
     addConfigs (configs, mixinMeta) {
         let me = this,
+            cls = me.class,
             existingConfigs = me.configs,
             existingValues = me.configValues,
             metaSymbol = Config.metaSymbol,
-            config, configMeta, existingConfig, name, value;
+            mixinConfigs = mixinMeta && mixinMeta.configs,
+            config, configMeta, existingConfig, isStdMerge, name, value;
 
         existingConfigs[hasConfigsSym] = true;
 
         for (name in configs) {
             value = configs[name];
             config = existingConfig = existingConfigs[name];
+            isStdMerge = existingConfig && existingConfig.merge.isStdMerge;
 
             configMeta = value && value[metaSymbol];
             if (configMeta) {
                 value = value.value;
+            }
+
+            if (mixinMeta) {
+                if (isStdMerge) {
+                    continue;
+                }
+
+                if (!config) {
+                    config = mixinConfigs[name];
+                    // this will exist since we are adding configs from this mixin
+                }
+            }
+            else if (!config) {
+                config = Config.all[name] || Config.get(name);
+            }
+
+            if (configMeta) {
+                if (config.owner !== cls) {
+
+                }
+            }
+
+            if (config !== existingConfig) {
+                existingConfigs[name] = config;
             }
 
             //TODO
