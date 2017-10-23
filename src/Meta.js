@@ -145,7 +145,7 @@ class Meta {
             cls = me.class,
             existingConfigs = me.configs,
             existingValues = me.configValues,
-            metaSymbol = Config.metaSymbol,
+            metaSymbol = Config.symbols.meta,
             mixinConfigs = mixinMeta && mixinMeta.configs,
             config, configMeta, existingConfig, isStdMerge, name, value;
 

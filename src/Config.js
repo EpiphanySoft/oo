@@ -2,9 +2,15 @@
 
 const { Empty, capitalize, merge, prototype, statics } = require('./Util.js');
 
+const metaSym = Symbol('configMeta');
+const initSym = Symbol('configInit');
+
 @statics({
     all: new Empty(),
-    metaSymbol: Symbol('configMeta')
+    symbols: {
+        meta: metaSym,
+        init: initSym
+    }
 })
 @prototype({
     cached: false,
@@ -24,11 +30,11 @@ class Config {
 
     static addMeta (instance, name, metaName, metaValue) {
         let value = instance[name];
-        let cm = value && value[Config.metaSymbol];
+        let cm = value && value[metaSym];
 
         if (!cm) {
             instance[name] = {
-                [Config.metaSymbol]: cm = {},
+                [metaSym]: cm = {},
                 value: value
             };
         }
@@ -64,19 +70,20 @@ class Config {
     // Private
 
     createDef () {
-        let me = this;
-        let _name = me._name;
-        let applier = this.applier;
-        let updater = this.updater;
+        let cfg = this;
+        let name = cfg.name;
+        let applier = cfg.applier;
+        let updater = cfg.updater;
 
-        return me.def = {
+        return cfg.def = {
             get () {
-                return this[_name];
+                return this.config[name];
             },
 
             set (value) {
                 let me = this;
-                let old = me[_name];
+                let c = me.config;
+                let old = c[name];
 
                 if (me[applier]) {
                     value = me[applier](value, old);
@@ -84,11 +91,11 @@ class Config {
                         return;
                     }
 
-                    old = me[_name];
+                    old = c[name];
                 }
 
                 if (old !== value) {
-                    me[_name] = value;
+                    c[name] = value;
 
                     if (me[updater]) {
                         me[updater](value, old);
@@ -99,16 +106,17 @@ class Config {
     }
 
     createInitDef () {
-        let me = this;
-        let name = me.name;
+        let name = this.name;
 
         return this.initDef = {
             configurable: true,
 
             get () {
                 delete this[name];
-                this[name] = this.config[name];
-                return this[name];
+                // Now that our init def is removed, the following assignment will run
+                // the normal def's set() method.
+                this[name] = this[initSym][name];  // std setter
+                return this[name];  // std getter
             },
 
             set (v) {

@@ -28,10 +28,15 @@ class Base {
         let me = this;
         let meta = me.$meta;
 
-        if (config || meta.configs[Meta.symbols.hasConfigs]) {
+        if (meta.configs[Meta.symbols.hasConfigs]) {
+            me.config = {};
             me.configure(config);
         }
         else {
+            if (config) {
+                Object.assign(me, config);
+            }
+
             me.configGen = 1;
         }
 
