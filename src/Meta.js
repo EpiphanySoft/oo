@@ -147,45 +147,49 @@ class Meta {
             existingValues = me.configValues,
             metaSymbol = Config.symbols.meta,
             mixinConfigs = mixinMeta && mixinMeta.configs,
-            config, configMeta, existingConfig, isStdMerge, name, value;
+            prototype = cls.prototype,
+            config, configMeta, existingConfig, existingValue, name, value;
 
         existingConfigs[hasConfigsSym] = true;
 
         for (name in configs) {
             value = configs[name];
             config = existingConfig = existingConfigs[name];
-            isStdMerge = existingConfig && existingConfig.merge.isStdMerge;
-
-            configMeta = value && value[metaSymbol];
-            if (configMeta) {
-                value = value.value;
-            }
+            existingValue = existingValues[name];
 
             if (mixinMeta) {
-                if (isStdMerge) {
-                    continue;
+                if (config) {
+                    value = config.merge(existingValue, value, cls, mixinMeta);
                 }
-
+                else {
+                    config = mixinConfigs[name]; // this will always exists
+                }
+            }
+            else {
                 if (!config) {
-                    config = mixinConfigs[name];
-                    // this will exist since we are adding configs from this mixin
+                    config = Config.all[name] || Config.get(name);
                 }
-            }
-            else if (!config) {
-                config = Config.all[name] || Config.get(name);
-            }
 
-            if (configMeta) {
-                if (config.owner !== cls) {
+                configMeta = value && value[metaSymbol];
+                if (configMeta) {
+                    value = value.value;
+                    config = config.extend(configMeta, cls);
+                }
 
+                if (existingConfig) {
+                    value = config.merge(existingValue, value, cls);
                 }
             }
 
             if (config !== existingConfig) {
                 existingConfigs[name] = config;
+
+                if (!existingConfig) {
+                    config.define(prototype);
+                }
             }
 
-            //TODO
+            existingValues[name] = value;
         }
     }
 

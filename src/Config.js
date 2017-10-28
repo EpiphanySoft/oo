@@ -13,6 +13,9 @@ const initSym = Symbol('configInit');
     }
 })
 @prototype({
+    isConfig: true,
+    owner: null,
+
     cached: false,
     lazy: false
 })
@@ -28,18 +31,18 @@ class Config {
         this.updater = 'update' + cap;
     }
 
-    static addMeta (instance, name, metaName, metaValue) {
-        let value = instance[name];
+    static addMeta (value, metaName, metaValue) {
         let cm = value && value[metaSym];
 
         if (!cm) {
-            instance[name] = {
+            value = {
                 [metaSym]: cm = {},
                 value: value
             };
         }
 
         cm[metaName] = metaValue;
+        return value;
     }
 
     static get (name) {
@@ -48,14 +51,35 @@ class Config {
         return all[name] || (all[name] = new Config(name));
     }
 
+    define (target) {
+        Object.defineProperty(target, this.name, this.getDef());
+    }
+
     extend (options, owner = null) {
-        let c = Object.create(this);
+        let cfg = this;
 
-        Object.assign(c, options);
+        if (!owner || owner !== cfg.owner) {
+            cfg = Object.create(cfg);
+            cfg.owner = owner;
+        }
 
-        c.owner = owner;
+        Object.assign(cfg, options);
 
-        return c;
+        return cfg;
+    }
+
+    merge (value, newValue, target = null, mixinMeta = null) {
+        if (mixinMeta) {
+            return value;
+        }
+
+        if (newValue && newValue.constructor === Object) {
+            if (value && value.constructor === Object) {
+                newValue = merge({}, value, newValue);
+            }
+        }
+
+        return newValue;
     }
 
     getDef () {
@@ -126,14 +150,5 @@ class Config {
         }
     }
 }
-
-Object.assign(Config.prototype, {
-    isConfig: true,
-    owner: null,
-
-    merge: merge
-});
-
-merge.isStdMerge = true;
 
 module.exports = Config;

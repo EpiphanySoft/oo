@@ -3,6 +3,26 @@ const Base = require('../../src/Base.js');
 
 const { define, lazy, merge, junction, mixinId } = require('../../src/decorators.js');
 
+function getAllKeys (object) {
+    let keys = [];
+
+    for (let key in object) {
+        keys.push(key);
+    }
+
+    return keys;
+}
+
+function getAllValues (object) {
+    let values = [];
+
+    for (let key in object) {
+        values.push(object[key]);
+    }
+
+    return values;
+}
+
 describe('Base', function () {
     var obj = {
         @lazy
@@ -429,6 +449,159 @@ describe('Base', function () {
             }
 
             expect(Bar2.fooWasHere).to.be('(z=c)(x=a)(y=b)');
+        });
+    });
+
+    describe('configs', function () {
+        it('should define basic config', function () {
+            @define({
+                config: {
+                    foo: 123
+                }
+            })
+            class Foo extends Base {}
+
+            let fooMeta = Foo.getMeta();
+            let names = Object.keys(fooMeta.configs);
+
+            expect(names).to.equal([ 'foo' ]);
+
+            names = Object.keys(fooMeta.configValues);
+
+            expect(names).to.equal([ 'foo' ]);
+
+            let values = Object.values(fooMeta.configValues);
+
+            expect(values).to.equal([ 123 ]);
+
+            expect(fooMeta.configs.foo.owner).to.be(null);
+            expect(fooMeta.configs.foo.lazy).to.be(false);
+            expect(fooMeta.configs.foo.cached).to.be(false);
+        });
+
+        it('should define lazy config', function () {
+            @define({
+                config: {
+                    @lazy
+                    foo: 123
+                }
+            })
+            class Foo extends Base {}
+
+            let fooMeta = Foo.getMeta();
+            let names = Object.keys(fooMeta.configs);
+
+            expect(names).to.equal([ 'foo' ]);
+
+            names = Object.keys(fooMeta.configValues);
+
+            expect(names).to.equal([ 'foo' ]);
+
+            let values = Object.values(fooMeta.configValues);
+
+            expect(values).to.equal([ 123 ]);
+
+            expect(fooMeta.configs.foo.owner).to.be(Foo);
+            expect(fooMeta.configs.foo.lazy).to.be(true);
+            expect(fooMeta.configs.foo.cached).to.be(false);
+        });
+
+        it('should define lazy config w/custom merge', function () {
+            let mergeFn = () => {};
+            @define({
+                config: {
+                    @lazy
+                    @merge(mergeFn)
+                    foo: 123
+                }
+            })
+            class Foo extends Base {}
+
+            let fooMeta = Foo.getMeta();
+            let names = Object.keys(fooMeta.configs);
+
+            expect(names).to.equal([ 'foo' ]);
+
+            names = Object.keys(fooMeta.configValues);
+
+            expect(names).to.equal([ 'foo' ]);
+
+            let values = Object.values(fooMeta.configValues);
+
+            expect(values).to.equal([ 123 ]);
+
+            expect(fooMeta.configs.foo.owner).to.be(Foo);
+            expect(fooMeta.configs.foo.cached).to.be(false);
+            expect(fooMeta.configs.foo.lazy).to.be(true);
+            expect(fooMeta.configs.foo.merge).to.be(mergeFn);
+        });
+
+        it('should inherit basic config', function () {
+            @define({
+                config: {
+                    foo: 123
+                }
+            })
+            class Bar extends Base {}
+
+            class Foo extends Bar {}
+
+            let fooMeta = Foo.getMeta();
+            let names = Object.keys(fooMeta.configs);
+
+            expect(names).to.equal([ ]);
+
+            names = getAllKeys(fooMeta.configs);
+
+            expect(names).to.equal([ 'foo' ]);
+
+            names = Object.keys(fooMeta.configValues);
+
+            expect(names).to.equal([ ]);
+
+            names = getAllKeys(fooMeta.configValues);
+
+            expect(names).to.equal([ 'foo' ]);
+
+            let values = Object.values(fooMeta.configValues);
+
+            expect(values).to.equal([ ]);
+
+            values = getAllValues(fooMeta.configValues);
+
+            expect(values).to.equal([ 123 ]);
+        });
+
+        it('should mixin a basic config', function () {
+            @define({
+                config: {
+                    foo: 123
+                }
+            })
+            class Bar extends Base {}
+
+            @define({
+                mixins: Bar
+            })
+            class Foo extends Base {}
+
+            let fooMeta = Foo.getMeta();
+            let names = Object.keys(fooMeta.configs);
+
+            expect(names).to.equal([ 'foo' ]);
+
+            names = Object.keys(fooMeta.configValues);
+
+            expect(names).to.equal([ 'foo' ]);
+
+            let values = Object.values(fooMeta.configValues);
+
+            expect(values).to.equal([ 123 ]);
+
+            let barMeta = Bar.getMeta();
+
+            expect(fooMeta.configs.foo === barMeta.configs.foo).to.be(true);
+            expect(barMeta.configs.foo.owner).to.be(null);
         });
     });
 });
