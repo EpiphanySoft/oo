@@ -1,16 +1,17 @@
-# Configly
+# Widgetry
 
-Configly is a class-based, object-orient (OO) library for ES6+. Configly expands on the
+Widgetry is a class-based, object-orient (OO) library for ES6+. Widgetry expands on the
 embattled JavaScript `class` keyword using ES.next decorators to add powerful capabilities
 to [classes](./docs/Classes.md) and their [instances](./docs/Instances.md).
 
-The primary entry points for Configly are its `Base` class and `@define` decorator. While
-other base classes can be used, [Base](./docs/Base.md) defines some  of useful behaviors:
+The primary entry points for Widgetry are its `Widget` class and `@define` decorator.
+While other base classes can be used, [Widget](./docs/Widget.md) defines some  of useful
+behaviors:
 
  - Common life-cycle
  - Configuration property management
 
-Other features provided by `Base` can be applied to other class hierarchies because they
+Other features provided by `Widget` can be applied to other class hierarchies because they
 are implemented by a helper class called [Meta](./docs/Meta.md) (for "meta-class"). These
 include:
 
@@ -21,13 +22,13 @@ include:
 
 # Life-cycle
 
-The `Base` class defines two method chains (`ctor` and `dtor`) to manage life-cycle. The
+The `Widget` class defines two method chains (`ctor` and `dtor`) to manage life-cycle. The
 `ctor` method is called "top down" during object instantiation while `dtor` is called
 "bottom up" when `destroy()` is called.
 
-    import { Base } from '@epiphanysoft/configly';
+    import { Widget } from '@epiphanysoft/widgetry';
     
-    class MyClass extends Base {
+    class MyClass extends Widget {
         ctor () {
             console.log('MyClass ctor');
         }
@@ -59,17 +60,17 @@ The `Base` class defines two method chains (`ctor` and `dtor`) to manage life-cy
 
 In general, method chains are tied to their defining class and can be called in either
 "top down" (forward) or "bottom up" (reverse) order. In the case of `ctor` and `dtor`,
-these chains are automatically called by the `constructor` and `destroy` methods of `Base`,
-respectively.
+these chains are automatically called by the `constructor` and `destroy` methods of
+`Widget`, respectively.
 
 # Mixins
 
 Mixins provide a form of multiple-inheritance that allows behavior reuse beyond JavaScript's
 standard, single-inheritance model.
 
-    import { Base, define } from '@epiphanysoft/configly';
+    import { Widget, define } from '@epiphanysoft/widgetry';
     
-    class MyClass extends Base {
+    class MyClass extends Widget {
         ctor () {
             console.log('MyClass ctor');
         }
@@ -83,7 +84,7 @@ standard, single-inheritance model.
         }
     }
 
-    class MyMixin extends Base {
+    class MyMixin extends Widget {
         ctor () {
             console.log('MyMixin ctor');
         }

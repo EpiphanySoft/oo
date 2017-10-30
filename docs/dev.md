@@ -1,7 +1,6 @@
 # Development Setup
 
-In order to do development on Configly, you will need to enable Babel in your dev
-environment,
+In order to do development you will need to enable Babel in your dev environment,
 
 ## JetBrains (IntelliJ etc.)
 

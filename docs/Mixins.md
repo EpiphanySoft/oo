@@ -8,9 +8,9 @@ All mixin strategies basically reduce to copying properties from the mixin class
 target class. Since Configly defines mixins as actual classes, this includes `static` as
 well as `prototype` properties.
 
-    import { Base, define } from '@epiphanysoft/configly';
+    import { Widget, define } from '@epiphanysoft/widgetry';
     
-    class MyClass extends Base {
+    class MyClass extends Widget {
         ctor () {
             console.log('MyClass ctor');
         }
@@ -24,7 +24,7 @@ well as `prototype` properties.
         }
     }
 
-    class MyMixin extends Base {
+    class MyMixin extends Widget {
         ctor () {
             console.log('MyMixin ctor');
         }
@@ -134,7 +134,7 @@ is to assign one to the mixin class:
     @define({
         mixinId: 'mymixin'
     })
-    class MyMixin extends Base {
+    class MyMixin extends Widget {
         //...
     }
 
@@ -147,9 +147,9 @@ These object allow a class to directly access their mixins. In code:
 
 For example:
 
-    import { Base, define } from '@epiphanysoft/configly';
+    import { Widget, define } from '@epiphanysoft/widgetry';
     
-    class MyClass extends Base {
+    class MyClass extends Widget {
         foo () {
             console.log('MyClass foo');
         }
@@ -158,7 +158,7 @@ For example:
     @define({
         mixinId: 'mymixin'
     })
-    class MyMixin extends Base {
+    class MyMixin extends Widget {
         foo () {
             console.log('MyMixin foo');
         }
@@ -225,15 +225,15 @@ classes came from different authors and had conflicting id's.
 When methods collide it is often desirable to treat the mixin methods as normal `super`
 methods. This can be accomplished by declaring the colliding method as a `@junction`.
 
-    import { Base, define, junction } from '@epiphanysoft/configly';
+    import { Widget, define, junction } from '@epiphanysoft/widgetry';
     
-    class MyClass extends Base {
+    class MyClass extends Widget {
         foo () {
             console.log('MyClass foo');
         }
     }
 
-    class MyMixin extends Base {
+    class MyMixin extends Widget {
         foo () {
             console.log('MyMixin foo');
         }
@@ -274,12 +274,12 @@ called only once, even if there are multiple paths to a common base class (a.k.a
 ["dreaded diamond"](https://en.wikipedia.org/wiki/Multiple_inheritance)). This behavior is
 available for other methods using the `chains` processor:
 
-    import { Base, define } from '@epiphanysoft/configly';
+    import { Widget, define } from '@epiphanysoft/widgetry';
     
     @define({
         chains: ['init']
     })
-    class MyClass extends Base {
+    class MyClass extends Widget {
         initialize (x, y) {
             this.callChain('init', x, y);
         }
@@ -289,7 +289,7 @@ available for other methods using the `chains` processor:
         }
     }
 
-    class MyMixin extends Base {
+    class MyMixin extends Widget {
         init (x, y) {
             console.log('MyMixin init', x, y);
         }

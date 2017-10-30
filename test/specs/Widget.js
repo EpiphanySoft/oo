@@ -1,5 +1,5 @@
 const expect = require('assertly').expect;
-const Base = require('../../src/Base.js');
+const Widget = require('../../src/Widget.js');
 
 const { define, lazy, merge, junction, mixinId } = require('../../src/decorators.js');
 
@@ -23,15 +23,7 @@ function getAllValues (object) {
     return values;
 }
 
-describe('Base', function () {
-    var obj = {
-        @lazy
-        @merge((value, oldValue) => {
-            debugger
-        })
-        foo: 42
-    };
-
+describe('Widget', function () {
     function getAllKeys (obj) {
         let ret = [];
 
@@ -44,7 +36,7 @@ describe('Base', function () {
 
     describe('basics', function () {
         it('should have the correct processors', function () {
-            let names = Base.getMeta().getProcessors().map(p => p.name);
+            let names = Widget.getMeta().getProcessors().map(p => p.name);
 
             expect(names).to.equal([
                 'properties',
@@ -57,7 +49,7 @@ describe('Base', function () {
         });
 
         it('should have ctor/dtor chains', function () {
-            let meta = Base.getMeta();
+            let meta = Widget.getMeta();
             let chains = getAllKeys(meta.liveChains);
 
             chains.sort();
@@ -77,7 +69,7 @@ describe('Base', function () {
         beforeEach(function () {
             log = [];
 
-            C = class c extends Base {
+            C = class c extends Widget {
                 ctor () {
                     log.push('C.ctor');
                     this.str = (this.str || '') + 'C';
@@ -94,7 +86,7 @@ describe('Base', function () {
             };
 
             @mixinId('mixum')
-            class m extends Base {
+            class m extends Widget {
                 ctor () {
                     log.push('M.ctor');
                     this.str = (this.str || '') + 'M';
@@ -211,7 +203,7 @@ describe('Base', function () {
             @define({
                 mixins: M
             })
-            class F extends Base {
+            class F extends Widget {
                 //
             }
 
@@ -236,7 +228,7 @@ describe('Base', function () {
                     bar: 2
                 }
             })
-            class F extends Base {
+            class F extends Widget {
                 //
             }
 
@@ -246,7 +238,7 @@ describe('Base', function () {
         });
 
         it('should not call ctor/dtor methods if absent', function () {
-            class F extends Base {
+            class F extends Widget {
                 //
             }
 
@@ -266,7 +258,7 @@ describe('Base', function () {
             @define({
                 mixinId: 'moo'
             })
-            class M extends Base {
+            class M extends Widget {
                 static foo () {}
                 foo () {}
             }
@@ -276,7 +268,7 @@ describe('Base', function () {
                     M
                 ]
             })
-            class D extends Base {
+            class D extends Widget {
                 //
             }
 
@@ -290,7 +282,7 @@ describe('Base', function () {
                     [ 'goo', M ]
                 ]
             })
-            class E extends Base {
+            class E extends Widget {
                 //
             }
 
@@ -307,7 +299,7 @@ describe('Base', function () {
             @define({
                 processors: 'foo'
             })
-            class Foo extends Base {
+            class Foo extends Widget {
                 static applyFoo (stuff) {
                     this.fooWasHere = stuff;
                 }
@@ -336,7 +328,7 @@ describe('Base', function () {
                     foobar: 123
                 }
             })
-            class Foo extends Base {
+            class Foo extends Widget {
                 static applyFoo (stuff) {
                     vars.push(this.prototype.foobar);
                     this.prototype.foobar = stuff;
@@ -373,7 +365,7 @@ describe('Base', function () {
                     z: 0
                 }
             })
-            class Foo extends Base {
+            class Foo extends Widget {
                 static applyX (stuff) {
                     this.fooWasHere += `(x=${stuff})`;
                 }
@@ -407,7 +399,7 @@ describe('Base', function () {
                     z: 0
                 }
             })
-            class Foo extends Base {
+            class Foo extends Widget {
                 static applyY (stuff) {
                     this.fooWasHere += `(y=${stuff})`;
                 }
@@ -459,7 +451,7 @@ describe('Base', function () {
                     foo: 123
                 }
             })
-            class Foo extends Base {}
+            class Foo extends Widget {}
 
             let fooMeta = Foo.getMeta();
             let names = Object.keys(fooMeta.configs);
@@ -486,7 +478,7 @@ describe('Base', function () {
                     foo: 123
                 }
             })
-            class Foo extends Base {}
+            class Foo extends Widget {}
 
             let fooMeta = Foo.getMeta();
             let names = Object.keys(fooMeta.configs);
@@ -515,7 +507,7 @@ describe('Base', function () {
                     foo: 123
                 }
             })
-            class Foo extends Base {}
+            class Foo extends Widget {}
 
             let fooMeta = Foo.getMeta();
             let names = Object.keys(fooMeta.configs);
@@ -542,7 +534,7 @@ describe('Base', function () {
                     foo: 123
                 }
             })
-            class Bar extends Base {}
+            class Bar extends Widget {}
 
             class Foo extends Bar {}
 
@@ -578,12 +570,12 @@ describe('Base', function () {
                     foo: 123
                 }
             })
-            class Bar extends Base {}
+            class Bar extends Widget {}
 
             @define({
                 mixins: Bar
             })
-            class Foo extends Base {}
+            class Foo extends Widget {}
 
             let fooMeta = Foo.getMeta();
             let names = Object.keys(fooMeta.configs);

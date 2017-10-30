@@ -3,7 +3,7 @@
 const Meta  = require('./Meta.js');
 const { nullFn } = require('./Util.js');
 
-class Base {
+class Widget {
     constructor (...args) {
         let me = this;
         let C = me.constructor;
@@ -81,9 +81,9 @@ class Base {
     }
 }
 
-Meta.adopt(Base);
+Meta.adopt(Widget);
 
-Base.define({
+Widget.define({
     chains: [ 'ctor', 'dtor' ],
 
     processors: {
@@ -130,4 +130,4 @@ Base.define({
     }
 });
 
-module.exports = Base;
+module.exports = Widget;
