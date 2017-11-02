@@ -128,7 +128,7 @@ const Util = {
                 if (src) {
                     for (key in src) {
                         value = src[key];
-                        targetValue = target[src];
+                        targetValue = target[key];
 
                         if (value && targetValue &&
                                 value.constructor === Object &&
