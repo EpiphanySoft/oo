@@ -10,21 +10,21 @@ let getOwnSymbols = Object.getOwnPropertySymbols;
 
 let getOwnKeys = getOwnSymbols ? function (object) {
         let keys = getOwnNames(object);
-        let syms = getOwnSymbols(object);
+        let symbols = getOwnSymbols(object);
 
         if (keys.length) {
-            if (syms.length) {
-                keys.push(...syms);
+            if (symbols.length) {
+                keys.push(...symbols);
             }
         }
         else {
-            keys = syms;
+            keys = symbols;
         }
 
         return keys;
     } : getOwnNames;
 
-const hasConfigsSym = Symbol('hasConfigs');
+const configValuesSym = Symbol('configValues');
 const junctionSym = Symbol('junction');
 
 const instanceSkip = new Empty({
@@ -58,6 +58,34 @@ function getOwnProps (object) {
     return ret;
 }
 
+class Configs {
+    constructor () {
+        let me = this;
+
+        me.defs = new Empty(
+            // title: Config.get('title')
+        );
+
+        me.names = null;  // [ 'collapsed', 'disabled', 'text' ]  (sorted)
+
+        me.hasConfigs = false;
+
+        me.values = new Empty(
+            // title: 'hello'
+        );
+    }
+
+    extend () {
+        let me = this;
+        let ret = Object.create(me);
+
+        ret.defs = Object.create(me.defs);
+        ret.values = Object.create(me.values);
+
+        return ret;
+    }
+}
+
 class Meta {
     constructor (cls, superclass = null) {
         let me = this;
@@ -81,9 +109,6 @@ class Meta {
             me.bases = superMeta.bases.clone();
             me.bases.add(superclass);
 
-            me.configs = Object.create(superMeta.configs);
-            me.configValues = Object.create(superMeta.configValues);
-
             // Since many classes in the hierarchy can *implement* a chained method,
             // we don't try to save on this map creation. This is prototype chained to
             // the superclass's liveChains and only keys with a value of true are put
@@ -99,11 +124,6 @@ class Meta {
             // getChains() method will walk up the supers and return the first class
             // to have defined method chains (which is Base typically).
             me.chains = new Empty();
-
-            me.configs = new Empty(); // configs.title = Config.get('title');
-            me.configValues = new Empty();
-
-            me.configs[hasConfigsSym] = false;
 
             me.liveChains = new Empty();
             me.rootClass = cls;
@@ -140,20 +160,21 @@ class Meta {
         }
     }
 
-    addConfigs (configs, mixinMeta) {
+    addConfigs (newConfigs, mixinMeta) {
         let me = this,
             cls = me.class,
-            existingConfigs = me.configs,
-            existingValues = me.configValues,
+            configs = me.getConfigs(true),
+            existingConfigs = configs.defs,
+            existingValues = configs.values,
             metaSymbol = Config.symbols.meta,
-            mixinConfigs = mixinMeta && mixinMeta.configs,
+            mixinConfigs = mixinMeta && mixinMeta.configs && mixinMeta.configs.defs,
             prototype = cls.prototype,
             config, configMeta, existingConfig, existingValue, name, value;
 
-        existingConfigs[hasConfigsSym] = true;
+        configs.hasConfigs = true;
 
-        for (name in configs) {
-            value = configs[name];
+        for (name in newConfigs) {
+            value = newConfigs[name];
             config = existingConfig = existingConfigs[name];
             existingValue = existingValues[name];
 
@@ -174,6 +195,10 @@ class Meta {
                 if (configMeta) {
                     value = value.value;
                     config = config.extend(configMeta, cls);
+
+                    if (configMeta.initial) {
+                        config.initialValue = value;
+                    }
                 }
 
                 if (existingConfig) {
@@ -217,6 +242,7 @@ class Meta {
         let chains = me.getChains();
         let bases = me.bases;
         let mixinMeta = mixinCls.getMeta();  // ensure all Meta's exist
+        let mixinConfigs = mixinMeta.configs;
         let rootClass = me.rootClass;
         let instanceMap = new Empty();
         let staticsMap = new Empty();
@@ -234,8 +260,8 @@ class Meta {
         }
 
         mixinMeta.complete();
-        if (mixinMeta.configs[hasConfigsSym]) {
-            me.addConfigs(mixinMeta.configValues, mixinMeta);
+        if (mixinConfigs && mixinConfigs.hasConfigs) {
+            me.addConfigs(mixinConfigs.values, mixinMeta);
         }
 
         mixinId = mixinId || mixinMeta.getMixinId();
@@ -405,6 +431,18 @@ class Meta {
         return chains;
     }
 
+    getConfigs (create) {
+        let configs = this.configs;
+
+        if (!configs && create) {
+            let sup = this.super;
+
+            this.configs = configs = sup ? sup.getConfigs(true).extend() : new Configs();
+        }
+
+        return configs;
+    }
+
     getMembers () {
         if (!this.completed) {
             Util.raise('Class is incomplete');
@@ -469,7 +507,31 @@ class Meta {
     }
 
     initConfig (instance, instanceConfig) {
-        //TODO
+        let me = this;
+
+        if (me.instances < 2) {
+            me.initFirstInstance(instance);
+        }
+    }
+
+    initFirstInstance (instance) {
+        let me = this;
+        let configs = me.configs;
+        let defs = configs.defs;
+        let configNames = configs.names = Util.getAllKeys(defs);
+        let configValues = configs.values;
+        let cfg, name, value;
+
+        configNames.sort();
+
+        for (name of configNames) {
+            cfg = defs[name];
+            value = configValues[name];
+
+            if (value !== null && !(cfg.initial && value === cfg.initialValue)) {
+                //
+            }
+        }
     }
 
     processOptions (options) {
@@ -614,7 +676,7 @@ class Meta {
 Meta.count = 0;
 
 Meta.symbols = {
-    hasConfigs: hasConfigsSym,
+    configValues: configValuesSym,
     junction: junctionSym
 };
 
@@ -626,10 +688,8 @@ Object.assign(Meta.prototype, {
 
     instances: 0,
 
-    members: null,
-
     configs: null,
-    configValues: null
+    members: null
 });
 
 module.exports = Meta;

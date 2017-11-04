@@ -3,12 +3,6 @@
 const Config = require('./Config.js');
 const Meta = require('./Meta.js');
 
-function addConfigMeta (descriptor, metaName, metaValue) {
-    let value = Config.addMeta(descriptor.initializer(), metaName, metaValue);
-
-    descriptor.initializer = () => value;
-}
-
 module.exports = {
     //-----------------------------------------------------------------------
     // Classes
@@ -99,13 +93,17 @@ module.exports = {
     //-----------------------------------------------------------------------
     // Configs
 
+    initial (instance, name, descriptor) {
+        Config.addMeta(descriptor, 'initial', true);
+    },
+
     lazy (instance, name, descriptor) {
-        addConfigMeta(descriptor, 'lazy', true);
+        Config.addMeta(descriptor, 'lazy', true);
     },
 
     merge (fn) {
         return (instance, name, descriptor) => {
-            addConfigMeta(descriptor, 'merge', fn);
+            Config.addMeta(descriptor, 'merge', fn);
         }
     }
 };

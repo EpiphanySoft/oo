@@ -28,7 +28,7 @@ class Widget {
         let me = this;
         let meta = me.$meta;
 
-        if (meta.configs[Meta.symbols.hasConfigs]) {
+        if (meta.configs && meta.configs.hasConfigs) {
             me.config = {};
             me.configure(config);
         }

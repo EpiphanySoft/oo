@@ -1,7 +1,7 @@
 const expect = require('assertly').expect;
 const Widget = require('../../src/Widget.js');
 
-const { define, lazy, merge, junction, mixinId } = require('../../src/decorators.js');
+const { define, initial, lazy, merge, junction, mixinId } = require('../../src/decorators.js');
 
 function getAllKeys (object) {
     let keys = [];

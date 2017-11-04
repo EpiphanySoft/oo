@@ -54,42 +54,8 @@ const Util = {
     Map: MyMap,
     Set: MySet,
 
-    copy (dest, ...sources) {
-        if (dest) {
-            for (let src of sources) {
-                if (src) {
-                    for (let key in src) {
-                        dest[key] = src[key];
-                    }
-                }
-            }
-        }
-
-        return dest;
-    },
-
-    copyIf (dest, ...sources) {
-        if (dest) {
-            for (let src of sources) {
-                if (src) {
-                    for (let key in src) {
-                        if (!(key in dest)) {
-                            dest[key] = src[key];
-                        }
-                    }
-                }
-            }
-        }
-
-        return dest;
-    },
-
     capitalize (str) {
         return str ? str[0].toUpperCase() + str.substr(1) : '';
-    },
-
-    decapitalize (str) {
-        return str ? str[0].toLowerCase() + str.substr(1) : '';
     },
 
     clone (object) {
@@ -120,6 +86,50 @@ const Util = {
         return clone;
     },
 
+    copy (dest, ...sources) {
+        if (dest) {
+            for (let src of sources) {
+                if (src) {
+                    for (let key in src) {
+                        dest[key] = src[key];
+                    }
+                }
+            }
+        }
+
+        return dest;
+    },
+
+    copyIf (dest, ...sources) {
+        if (dest) {
+            for (let src of sources) {
+                if (src) {
+                    for (let key in src) {
+                        if (!(key in dest)) {
+                            dest[key] = src[key];
+                        }
+                    }
+                }
+            }
+        }
+
+        return dest;
+    },
+
+    decapitalize (str) {
+        return str ? str[0].toLowerCase() + str.substr(1) : '';
+    },
+
+    getAllKeys (object) {
+        let keys = [];
+
+        for (let key in object) {
+            keys.push(key);
+        }
+
+        return keys;
+    },
+
     merge (target, ...sources) {
         if (target) {
             let key, targetValue, value;
@@ -146,20 +156,27 @@ const Util = {
         return target;
     },
 
-    raise (msg) {
-        throw new Error(msg);
-    },
-
     prototype (members) {
         return C => {
             Object.assign(C.prototype, members);
         }
     },
 
+    raise (msg) {
+        throw new Error(msg);
+    },
+
     statics (members) {
         return C => {
             Object.assign(C, members);
         }
+    },
+
+    toArray (src) {
+        if (src && !Array.isArray(src)) {
+            src = [src];
+        }
+        return src;
     },
 
     typeOf (value) {
@@ -183,32 +200,25 @@ const Util = {
         }
 
         return type;
-    },
-
-    setProto: Object.setPrototypeOf || (function () {
-            let base = { works: 1 };
-            let extended = {};
-
-            extended.__proto__ = base;
-
-            if (!extended.works) {
-                return function () {
-                    Util.raise(`Cannot polyfill setPrototypeOf`);
-                };
-            }
-
-            return function (object, prototype) {
-                object.__proto__ = prototype;
-            };
-        }()),
-
-    toArray (src) {
-        if (src && !Array.isArray(src)) {
-            src = [src];
-        }
-        return src;
     }
 };
+
+Util.setProto = Object.setPrototypeOf || (function () {
+    let base = { works: 1 };
+    let extended = {};
+
+    extended.__proto__ = base;
+
+    if (!extended.works) {
+        return function () {
+            Util.raise(`Cannot polyfill setPrototypeOf`);
+        };
+    }
+
+    return function (object, prototype) {
+        object.__proto__ = prototype;
+    };
+}());
 
 Object.assign(Util.typeOf, {
     cache: new Empty(),

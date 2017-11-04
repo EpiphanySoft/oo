@@ -31,7 +31,8 @@ class Config {
         this.updater = 'update' + cap;
     }
 
-    static addMeta (value, metaName, metaValue) {
+    static addMeta (descriptor, metaName, metaValue) {
+        let value = descriptor.initializer();
         let cm = value && value[metaSym];
 
         if (!cm) {
@@ -42,7 +43,8 @@ class Config {
         }
 
         cm[metaName] = metaValue;
-        return value;
+
+        descriptor.initializer = () => value;
     }
 
     static get (name) {
@@ -52,7 +54,7 @@ class Config {
     }
 
     define (target) {
-        Object.defineProperty(target, this.name, this.getDef());
+        Object.defineProperty(target, this.name, this.def || this.getDef());
     }
 
     extend (options, owner = null) {
