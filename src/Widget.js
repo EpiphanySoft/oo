@@ -28,17 +28,7 @@ class Widget {
         let me = this;
         let meta = me.$meta;
 
-        if (meta.configs && meta.configs.hasConfigs) {
-            me.config = {};
-            me.configure(config);
-        }
-        else {
-            if (config) {
-                Object.assign(me, config);
-            }
-
-            me.configGen = 1;
-        }
+        me.configure(config);
 
         if (meta.liveChains.ctor) {
             meta.callChain(me, 'ctor');

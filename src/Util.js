@@ -1,5 +1,7 @@
 'use strict';
 
+const getOwnNames = Object.getOwnPropertyNames;
+const getOwnSymbols = Object.getOwnPropertySymbols;
 const toString = Object.prototype.toString;
 
 // https://jsperf.com/object-create-null-vs-new-empty-prototype
@@ -130,6 +132,22 @@ const Util = {
         return keys;
     },
 
+    getOwnKeys (object) {
+        let keys = getOwnNames(object);
+        let symbols = getOwnSymbols(object);
+
+        if (keys.length) {
+            if (symbols.length) {
+                keys.push(...symbols);
+            }
+        }
+        else {
+            keys = symbols;
+        }
+
+        return keys;
+    },
+
     merge (target, ...sources) {
         if (target) {
             let key, targetValue, value;
@@ -202,6 +220,10 @@ const Util = {
         return type;
     }
 };
+
+if (!getOwnSymbols) {
+    Util.getOwnKeys = getOwnNames;
+}
 
 Util.setProto = Object.setPrototypeOf || (function () {
     let base = { works: 1 };

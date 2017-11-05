@@ -1,33 +1,15 @@
 'use strict';
 
 const Config = require('./Config.js');
+const Configs = require('./Configs.js');
 const Processor = require('./Processor.js');
 const Util = require('./Util.js');
-const Empty = Util.Empty;
 
-let getOwnNames = Object.getOwnPropertyNames;
-let getOwnSymbols = Object.getOwnPropertySymbols;
+const { clone, Empty, getOwnKeys, raise, setProto } = Util;
 
-let getOwnKeys = getOwnSymbols ? function (object) {
-        let keys = getOwnNames(object);
-        let symbols = getOwnSymbols(object);
-
-        if (keys.length) {
-            if (symbols.length) {
-                keys.push(...symbols);
-            }
-        }
-        else {
-            keys = symbols;
-        }
-
-        return keys;
-    } : getOwnNames;
-
-const configValuesSym = Symbol('configValues');
 const junctionSym = Symbol('junction');
 
-const instanceSkip = new Empty({
+const prototypeSkip = new Empty({
     constructor: 1,
 
     $meta: 1,
@@ -56,36 +38,6 @@ function getOwnProps (object) {
     }
 
     return ret;
-}
-
-class Configs {
-    constructor () {
-        let me = this;
-
-        me.defs = new Empty(
-            // title: Config.get('title')
-        );
-
-        me.hasConfigs = false;
-
-        me.names = null;  // [ 'collapsed', 'disabled', 'text' ]  (sorted)
-
-        me.open = false;
-
-        me.values = new Empty(
-            // title: 'hello'
-        );
-    }
-
-    extend () {
-        let me = this;
-        let ret = Object.create(me);
-
-        ret.defs = Object.create(me.defs);
-        ret.values = Object.create(me.values);
-
-        return ret;
-    }
 }
 
 class Meta {
@@ -169,11 +121,11 @@ class Meta {
             existingConfigs = configs.defs,
             existingValues = configs.values,
             metaSymbol = Config.symbols.meta,
-            mixinConfigs = mixinMeta && mixinMeta.configs && mixinMeta.configs.defs,
+            mixinConfigs = mixinMeta && mixinMeta.configs.defs,
             prototype = cls.prototype,
             config, configMeta, existingConfig, existingValue, name, value;
 
-        configs.hasConfigs = true;
+        configs.inherited.hasConfigs = true;
 
         if (Config.symbols.open in newConfigs) {
             configs.open = newConfigs[Config.symbols.open];
@@ -248,7 +200,7 @@ class Meta {
         let chains = me.getChains();
         let bases = me.bases;
         let mixinMeta = mixinCls.getMeta();  // ensure all Meta's exist
-        let mixinConfigs = mixinMeta.configs;
+        let mixinConfigs = mixinMeta.getConfigs();
         let rootClass = me.rootClass;
         let instanceMap = new Empty();
         let staticsMap = new Empty();
@@ -256,17 +208,17 @@ class Meta {
             mixMeta, prop, skip, target;
 
         if (cls.constructor.isPrototypeOf(mixinCls)) {
-            Util.raise('Cannot mix a derived class into a super class');
+            raise('Cannot mix a derived class into a super class');
         }
         if (!rootClass.isPrototypeOf(mixinCls)) {
-            Util.raise(`Mixins must extend base class ${rootClass.name}`);
+            raise(`Mixins must extend base class ${rootClass.name}`);
         }
         if (me.completed) {
-            Util.raise(`Too late apply a mixin into this class`);
+            raise(`Too late apply a mixin into this class`);
         }
 
         mixinMeta.complete();
-        if (mixinConfigs && mixinConfigs.hasConfigs) {
+        if (mixinConfigs) {
             me.addConfigs(mixinConfigs.values, mixinMeta);
         }
 
@@ -290,7 +242,7 @@ class Meta {
             // Start with instance side members:
             isStatic = false;
             map = instanceMap;
-            skip = instanceSkip;
+            skip = prototypeSkip;
             target = prototype;
 
             for (members = mixMeta.getMembers(); members; members = members.statics) {
@@ -394,21 +346,26 @@ class Meta {
         }
     }
 
-    configure (instance, instanceConfig) {
+    configure (instance, config) {
         let me = this;
-        let config = instanceConfig;
+        let configs = me.getConfigs();
 
         instance.configuring = true;
 
         if ((instance.configGen = (instance.configGen || 0) + 1) < 2) {
-            if (instance.beforeConfigure) {
-                config = instance.beforeConfigure(config) || config;
+            if (configs) {
+                if (instance.beforeConfigure) {
+                    config = instance.beforeConfigure(config) || config;
+                }
+
+                me.initConfig(instance, config);
+
+                if (instance.afterConfigure) {
+                    instance.afterConfigure(config);
+                }
             }
-
-            me.initConfig(instance, config);
-
-            if (instance.afterConfigure) {
-                instance.afterConfigure(config);
+            else if (config && config.constructor === Object) {
+                Object.assign(me, config);
             }
         }
         else {
@@ -440,7 +397,12 @@ class Meta {
     getConfigs (create) {
         let configs = this.configs;
 
-        if (!configs && create) {
+        if (!create) {
+            if (configs && !configs.inherited.hasConfigs) {
+                configs = null;
+            }
+        }
+        else if (!configs) {
             let sup = this.super;
 
             this.configs = configs = sup ? sup.getConfigs(true).extend() : new Configs();
@@ -451,7 +413,7 @@ class Meta {
 
     getMembers () {
         if (!this.completed) {
-            Util.raise('Class is incomplete');
+            raise('Class is incomplete');
         }
 
         let cls = this.class;
@@ -514,19 +476,34 @@ class Meta {
 
     initConfig (instance, instanceConfig) {
         let me = this;
+        let configs = me.configs;
+        let classConfig = clone(configs.values);
+
+        instance[Config.symbols.values] = {
+            // title: 'hello',
+            // layout: new Layout(...)
+        };
 
         if (me.instances < 2) {
-            me.initFirstInstance(instance);
+            me.initFirstInstance(instance, classConfig);
+            me.reconfigure(instance, instanceConfig);
+            return;
         }
+
+        instanceConfig = me.mergeConfigs(classConfig, instanceConfig);
+        //TODO
     }
 
-    initFirstInstance (instance) {
+    initFirstInstance (instance, configValues) {
         let me = this;
+        let cachedInits = null;
         let configs = me.configs;
         let defs = configs.defs;
         let configNames = configs.names = Util.getAllKeys(defs);
-        let configValues = configs.values;
-        let cfg, name, value;
+        let inits = configs.inits = [];
+        let initsMap = configs.initsMap = new Empty();
+        let prototype = me.class.prototype;
+        let cfg, name, simple, value;
 
         configNames.sort();
 
@@ -534,10 +511,41 @@ class Meta {
             cfg = defs[name];
             value = configValues[name];
 
-            if (value != null && !(cfg.initial && value === cfg.initialValue)) {
-                //
+            simple = value == null ||
+                (cfg.initial && value === cfg.initialValue) ||
+                (!prototype[cfg.applier] && !prototype[cfg.updater] &&
+                    typeof value !== 'object');
+
+            if (!simple) {
+                if (cfg.cached) {
+                    (cachedInits || (cachedInits = [])).push(cfg);
+                }
+                else {
+                    inits.push(initsMap[name] = cfg);
+                }
             }
         }
+    }
+
+    mergeConfigs (target, source) {
+        let configs = this.configs;
+        let defs = configs.defs;
+        let cfg, name, value;
+
+        for (name in source) {
+            value = source[name];
+
+            if (!(cfg = defs[name])) {
+                if (configs.open) {
+                    target[name] = value;
+                }
+            }
+            else {
+                target[name] = cfg.merge(target[name], value);
+            }
+        }
+
+        return target;
     }
 
     processOptions (options) {
@@ -567,7 +575,7 @@ class Meta {
                 cls[applier](options[key]);
             }
             else {
-                Util.raise(`Invalid class option: ${key}`);
+                raise(`Invalid class option: ${key}`);
             }
         }
     }
@@ -672,8 +680,8 @@ class Meta {
 
         class Shim extends base {}
 
-        Util.setProto(cls, Shim);
-        Util.setProto(cls.prototype, Shim.prototype);
+        setProto(cls, Shim);
+        setProto(cls.prototype, Shim.prototype);
 
         return Shim;
     }
@@ -682,7 +690,6 @@ class Meta {
 Meta.count = 0;
 
 Meta.symbols = {
-    configValues: configValuesSym,
     junction: junctionSym
 };
 

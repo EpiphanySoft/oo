@@ -4,14 +4,16 @@ const { Empty, capitalize, merge, prototype, statics } = require('./Util.js');
 
 const metaSym = Symbol('configMeta');
 const initSym = Symbol('configInit');
-const openSym = Symbol('openSym');
+const openSym = Symbol('configOpen');
+const valuesSym = Symbol('configValues');
 
 @statics({
     all: new Empty(),
     symbols: {
         meta: metaSym,
         init: initSym,
-        open: openSym
+        open: openSym,
+        values: valuesSym
     }
 })
 @prototype({
@@ -19,6 +21,8 @@ const openSym = Symbol('openSym');
     owner: null,
 
     cached: false,
+    initial: false,
+    initialValue: null,
     lazy: false
 })
 class Config {
@@ -26,9 +30,8 @@ class Config {
         let cap = capitalize(name);
 
         this.$ = this;
-        this.capitalized = cap;
+
         this.name = name;
-        this._name = '_' + name;
         this.applier = 'apply' + cap;
         this.updater = 'update' + cap;
     }
@@ -105,13 +108,13 @@ class Config {
 
         return cfg.def = {
             get () {
-                return this.config[name];
+                return this[valuesSym][name];
             },
 
             set (value) {
                 let me = this;
-                let c = me.config;
-                let old = c[name];
+                let values = me[valuesSym];
+                let old = values[name];
 
                 if (me[applier]) {
                     value = me[applier](value, old);
@@ -119,11 +122,11 @@ class Config {
                         return;
                     }
 
-                    old = c[name];
+                    old = values[name];
                 }
 
                 if (old !== value) {
-                    c[name] = value;
+                    values[name] = value;
 
                     if (me[updater]) {
                         me[updater](value, old);
@@ -134,22 +137,25 @@ class Config {
     }
 
     createInitDef () {
-        let name = this.name;
+        const name = this.name;
 
         return this.initDef = {
             configurable: true,
 
             get () {
-                delete this[name];
+                delete this[name];  // remove the initDef property definition
+
                 // Now that our init def is removed, the following assignment will run
                 // the normal def's set() method.
+
                 this[name] = this[initSym][name];  // std setter
                 return this[name];  // std getter
             },
 
             set (v) {
-                delete this[name];
-                this[name] = v;
+                delete this[name];  // remove the initDef property definition
+
+                this[name] = v;  // std setter
             }
         }
     }
