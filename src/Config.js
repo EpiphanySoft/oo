@@ -4,12 +4,14 @@ const { Empty, capitalize, merge, prototype, statics } = require('./Util.js');
 
 const metaSym = Symbol('configMeta');
 const initSym = Symbol('configInit');
+const openSym = Symbol('openSym');
 
 @statics({
     all: new Empty(),
     symbols: {
         meta: metaSym,
-        init: initSym
+        init: initSym,
+        open: openSym
     }
 })
 @prototype({

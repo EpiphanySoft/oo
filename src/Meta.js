@@ -66,9 +66,11 @@ class Configs {
             // title: Config.get('title')
         );
 
+        me.hasConfigs = false;
+
         me.names = null;  // [ 'collapsed', 'disabled', 'text' ]  (sorted)
 
-        me.hasConfigs = false;
+        me.open = false;
 
         me.values = new Empty(
             // title: 'hello'
@@ -172,6 +174,10 @@ class Meta {
             config, configMeta, existingConfig, existingValue, name, value;
 
         configs.hasConfigs = true;
+
+        if (Config.symbols.open in newConfigs) {
+            configs.open = newConfigs[Config.symbols.open];
+        }
 
         for (name in newConfigs) {
             value = newConfigs[name];
@@ -528,7 +534,7 @@ class Meta {
             cfg = defs[name];
             value = configValues[name];
 
-            if (value !== null && !(cfg.initial && value === cfg.initialValue)) {
+            if (value != null && !(cfg.initial && value === cfg.initialValue)) {
                 //
             }
         }
