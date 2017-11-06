@@ -53,6 +53,7 @@ const Util = {
     nullFn () {},
 
     Empty: Empty,
+    EMPTY: Object.freeze([]),
     Map: MyMap,
     Set: MySet,
 

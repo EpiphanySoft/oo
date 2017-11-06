@@ -5,7 +5,7 @@ const Configs = require('./Configs.js');
 const Processor = require('./Processor.js');
 const Util = require('./Util.js');
 
-const { clone, Empty, getOwnKeys, raise, setProto } = Util;
+const { clone, Empty, EMPTY, getAllKeys, getOwnKeys, raise, setProto } = Util;
 
 const junctionSym = Symbol('junction');
 
@@ -477,33 +477,86 @@ class Meta {
     initConfig (instance, instanceConfig) {
         let me = this;
         let configs = me.configs;
-        let classConfig = clone(configs.values);
-
-        instance[Config.symbols.values] = {
-            // title: 'hello',
-            // layout: new Layout(...)
-        };
 
         if (me.instances < 2) {
-            me.initFirstInstance(instance, classConfig);
-            me.reconfigure(instance, instanceConfig);
-            return;
+            me.initFirstInstance(instance);
+
+            if (instance.afterCachedConfig) {
+                instance.afterCachedConfig();
+            }
         }
 
-        instanceConfig = me.mergeConfigs(classConfig, instanceConfig);
-        //TODO
+        let mergedConfig = new Empty();
+        let configValues = configs.values;
+        let defs = configs.defs;
+        let inits = configs.inits;
+        let initsMap = configs.initsMap;
+        let cfg, name, value;
+
+        // The mergedConfig is stored on the instance for use by the initializer. It is
+        // used here for immediately initialized properties, but also later for any lazy
+        // configs.
+        instance[Config.symbols.init] = mergedConfig;
+
+        // This object is the backing store for config properties.
+        instance[Config.symbols.values] = Object.create(configs.defaults);
+
+        for (cfg of inits) {
+            cfg.define(instance, /*init=*/true);
+
+            mergedConfig[cfg.name] = configValues[cfg.name];
+        }
+
+        //TODO transformations
+
+        if (instanceConfig) {
+            for (name in instanceConfig) {
+                cfg = defs[name];
+                value = instanceConfig[name];
+
+                if (cfg) {
+                    if (!initsMap[name]) {
+                        cfg.define(instance, /*init=*/true);
+                    }
+
+                    mergedConfig[name] = cfg.merge(configValues[name], value);
+                }
+                else if (configs.open) {
+                    //TODO @open({ functions: true })
+
+                    instance[name] = value;
+                }
+            }
+        }
+
+        if (instance.beforeInitConfig) {
+            instance.beforeInitConfig();
+        }
+
+        for (name of configs.names) {
+            if (name in initsMap || (instanceConfig && (name in instanceConfig))) {
+                if (instance.hasOwnProperty(name) && !defs[name].lazy) {
+                    instance[name] = mergedConfig[name];
+                }
+            }
+        }
     }
 
-    initFirstInstance (instance, configValues) {
+    initFirstInstance (instance) {
         let me = this;
         let cachedInits = null;
         let configs = me.configs;
+        let defaults = configs.defaults = new Empty();
         let defs = configs.defs;
-        let configNames = configs.names = Util.getAllKeys(defs);
+        let configNames = configs.names = getAllKeys(defs);
+        let configValues = configs.values;
         let inits = configs.inits = [];
         let initsMap = configs.initsMap = new Empty();
         let prototype = me.class.prototype;
-        let cfg, name, simple, value;
+        let cfg, instanceValues, name, simple, value;
+
+        instance[Config.symbols.init] = configValues;
+        instance[Config.symbols.values] = instanceValues = Object.create(defaults);
 
         configNames.sort();
 
@@ -511,18 +564,35 @@ class Meta {
             cfg = defs[name];
             value = configValues[name];
 
-            simple = value == null ||
-                (cfg.initial && value === cfg.initialValue) ||
-                (!prototype[cfg.applier] && !prototype[cfg.updater] &&
-                    typeof value !== 'object');
-
+            simple = value == null || (cfg.initial && value === cfg.initialValue);
             if (!simple) {
-                if (cfg.cached) {
-                    (cachedInits || (cachedInits = [])).push(cfg);
+                simple = !prototype[cfg.applier] && !prototype[cfg.updater] &&
+                         typeof value !== 'object';
+            }
+
+            if (simple) {
+                defaults[name] = value;
+            }
+            else if (cfg.cached) {
+                (cachedInits || (cachedInits = [])).push(cfg);
+                cfg.define(instance, /*init=*/true);
+            }
+            else {
+                inits.push(initsMap[name] = cfg);
+            }
+        }
+
+        if (cachedInits) {
+            for (cfg of cachedInits) {
+                if (instance.hasOwnProperty(name = cfg.name)) {
+                    instance[name] = configValues[name];
                 }
-                else {
-                    inits.push(initsMap[name] = cfg);
-                }
+            }
+
+            for (cfg of cachedInits) {
+                name = cfg.name;
+                defaults[name] = instanceValues[name];
+                delete instanceValues[name];
             }
         }
     }

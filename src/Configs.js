@@ -3,6 +3,8 @@
 const { Empty, prototype } = require('./Util.js');
 
 @prototype({
+    defaults: null,
+
     // The array of Config instances that need to be initialized per-instance
     inits: null,
 

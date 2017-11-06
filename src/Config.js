@@ -1,6 +1,6 @@
 'use strict';
 
-const { Empty, capitalize, merge, prototype, statics } = require('./Util.js');
+const { clone, Empty, capitalize, merge, prototype, statics } = require('./Util.js');
 
 const metaSym = Symbol('configMeta');
 const initSym = Symbol('configInit');
@@ -58,8 +58,10 @@ class Config {
         return all[name] || (all[name] = new Config(name));
     }
 
-    define (target) {
-        Object.defineProperty(target, this.name, this.def || this.getDef());
+    define (target, init) {
+        let def = init ? (this.initDef || this.getInitDef()) : (this.def || this.getDef());
+
+        Object.defineProperty(target, this.name, def);
     }
 
     extend (options, owner = null) {
@@ -82,7 +84,7 @@ class Config {
 
         if (newValue && newValue.constructor === Object) {
             if (value && value.constructor === Object) {
-                newValue = merge({}, value, newValue);
+                newValue = merge(clone(value), newValue);
             }
         }
 
@@ -111,25 +113,19 @@ class Config {
                 return this[valuesSym][name];
             },
 
-            set (value) {
+            set (val) {
                 let me = this;
                 let values = me[valuesSym];
-                let old = values[name];
 
-                if (me[applier]) {
-                    value = me[applier](value, old);
-                    if (value === undefined) {
-                        return;
-                    }
+                if (!me[applier] || (val = me[applier](val, values[name])) !== undefined) {
+                    let old = values[name];
 
-                    old = values[name];
-                }
+                    if (old !== val) {
+                        values[name] = val;
 
-                if (old !== value) {
-                    values[name] = value;
-
-                    if (me[updater]) {
-                        me[updater](value, old);
+                        if (me[updater]) {
+                            me[updater](val, old);
+                        }
                     }
                 }
             }
