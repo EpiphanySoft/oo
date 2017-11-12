@@ -2,9 +2,13 @@
     "name": "@epiphanysoft/configly",
     "version": "1.0.0-alpha.0",
     "description": "Configurable classes",
-    "main": "index.js",
-    "author": "dongryphon",
+    "author": "Don Griffin (dongryphon)",
     "license": "MIT",
+    "homepage": "https://github.com/EpiphanySoft/configly#readme",
+    "main": "index.js",
+    "bugs": {
+        "url": "https://github.com/EpiphanySoft/configly/issues"
+    },
     "devDependencies": {
         "assertly": "^1.0.2",
         "babel-cli": "^6.24.0",
@@ -33,9 +37,6 @@
     "repository": {
         "type": "git",
         "url": "git+https://github.com/EpiphanySoft/configly.git"
-    },
-    "bugs": {
-        "url": "https://github.com/EpiphanySoft/configly/issues"
     },
     "scripts": {
         "debug": "devtool node_modules/mocha/bin/_mocha -qc -- ./test/specs/**/*.js",
