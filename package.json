@@ -43,6 +43,7 @@
     },
     "scripts": {
         "debug": "devtool node_modules/mocha/bin/_mocha -qc -- ./test/specs/**/*.js",
-        "test": "nyc mocha --compilers js:babel-core/register --require babel-polyfill ./test/specs/**/*.js"
+        "test": "nyc mocha --compilers js:babel-core/register --require babel-polyfill ./test/specs/**/*.js",
+        "coverage": "nyc report --reporter=text-lcov | coveralls"
     }
 }
