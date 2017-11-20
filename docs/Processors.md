@@ -18,7 +18,7 @@ ultimately concerned with the [instances](./Instances.md) of the classes.
 
 The recommended way to use processors is the `@define` decorator:
 
-    import { Widget, define } from '@epiphanysoft/widgetry';
+    import { Widget, define } from '@epiphanysoft/oo';
     
     @define({
         ...processors go here...
@@ -30,7 +30,7 @@ The recommended way to use processors is the `@define` decorator:
 Alternatively, there is the `define` `static` method of `Widget` which is equivalent in
 every respect other than syntax:
 
-    import { Widget } from '@epiphanysoft/widgetry';
+    import { Widget } from '@epiphanysoft/oo';
     
     class MyClass extends Widget {
         ...

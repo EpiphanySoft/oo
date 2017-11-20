@@ -8,7 +8,7 @@ All mixin strategies basically reduce to copying properties from the mixin class
 target class. Since Configly defines mixins as actual classes, this includes `static` as
 well as `prototype` properties.
 
-    import { Widget, define } from '@epiphanysoft/widgetry';
+    import { Widget, define } from '@epiphanysoft/oo';
     
     class MyClass extends Widget {
         ctor () {
@@ -147,7 +147,7 @@ These object allow a class to directly access their mixins. In code:
 
 For example:
 
-    import { Widget, define } from '@epiphanysoft/widgetry';
+    import { Widget, define } from '@epiphanysoft/oo';
     
     class MyClass extends Widget {
         foo () {
@@ -225,7 +225,7 @@ classes came from different authors and had conflicting id's.
 When methods collide it is often desirable to treat the mixin methods as normal `super`
 methods. This can be accomplished by declaring the colliding method as a `@junction`.
 
-    import { Widget, define, junction } from '@epiphanysoft/widgetry';
+    import { Widget, define, junction } from '@epiphanysoft/oo';
     
     class MyClass extends Widget {
         foo () {
@@ -274,7 +274,7 @@ called only once, even if there are multiple paths to a common base class (a.k.a
 ["dreaded diamond"](https://en.wikipedia.org/wiki/Multiple_inheritance)). This behavior is
 available for other methods using the `chains` processor:
 
-    import { Widget, define } from '@epiphanysoft/widgetry';
+    import { Widget, define } from '@epiphanysoft/oo';
     
     @define({
         chains: ['init']

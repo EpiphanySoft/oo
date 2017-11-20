@@ -1,8 +1,8 @@
 # Widget
 
-Widgetry exports a recommended `Widget` base class:
+`oo` exports a recommended `Widget` base class:
 
-    import { Widget } from '@epiphanysoft/widgetry';
+    import { Widget } from '@epiphanysoft/oo';
     
     class MyClass extends Widget {
         //

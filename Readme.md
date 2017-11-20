@@ -1,11 +1,11 @@
-# Widgetry
+# oo
 
-Widgetry is a class-based, object-orient (OO) library for ES6+. Widgetry expands on the
+`oo` is a class-based, object-oriented (OO) library for ES6+. `oo` expands on the
 embattled JavaScript `class` keyword using ES.next decorators to add powerful capabilities
 to [classes](./docs/Classes.md) and their [instances](./docs/Instances.md).
 
-The primary entry points for Widgetry are its `Widget` class and `@define` decorator.
-While other base classes can be used, [Widget](./docs/Widget.md) defines some  of useful
+The primary entry points for `oo` are its `Widget` class and `@define` decorator. While
+other base classes can be used, [Widget](./docs/Widget.md) defines some  of useful
 behaviors:
 
  - Common life-cycle
@@ -26,7 +26,7 @@ The `Widget` class defines two method chains (`ctor` and `dtor`) to manage life-
 `ctor` method is called "top down" during object instantiation while `dtor` is called
 "bottom up" when `destroy()` is called.
 
-    import { Widget } from '@epiphanysoft/widgetry';
+    import { Widget } from '@epiphanysoft/oo';
     
     class MyClass extends Widget {
         ctor () {
@@ -68,7 +68,7 @@ these chains are automatically called by the `constructor` and `destroy` methods
 Mixins provide a form of multiple-inheritance that allows behavior reuse beyond JavaScript's
 standard, single-inheritance model.
 
-    import { Widget, define } from '@epiphanysoft/widgetry';
+    import { Widget, define } from '@epiphanysoft/oo';
     
     class MyClass extends Widget {
         ctor () {

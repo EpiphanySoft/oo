@@ -1,4 +1,5 @@
 const expect = require('assertly').expect;
+
 const Widget = require('../../src/Widget.js');
 
 const { define, initial, lazy, merge, open, junction, mixinId } = require('../../src/decorators.js');
@@ -453,13 +454,20 @@ describe('Widget', function () {
             })
             class Foo extends Widget {}
 
+            let widgetMeta = Widget.getMeta();
+            let widgetConfigs = widgetMeta.getConfigs();
+            expect(widgetConfigs).to.be(null);
+
+            widgetConfigs = widgetMeta.configs;
+            expect(widgetConfigs.open).to.be(false);
+
             let fooMeta = Foo.getMeta();
             let configs = fooMeta.configs.defs;
             let configValues = fooMeta.configs.values;
-            let names = Object.keys(configs);
 
-            expect(Widget.getMeta().getConfigs().open).to.be(false);
             expect(fooMeta.configs.open).to.be(false);
+
+            let names = Object.keys(configs);
 
             expect(names).to.equal([ 'foo' ]);
 
@@ -490,7 +498,11 @@ describe('Widget', function () {
             let configValues = fooMeta.configs.values;
             let names = Object.keys(configs);
 
-            expect(Widget.getMeta().getConfigs().open).to.be(false);
+            let widgetMeta = Widget.getMeta();
+
+            expect(widgetMeta.getConfigs()).to.be(null);
+            expect(widgetMeta.configs.open).to.be(false);
+
             expect(fooMeta.configs.open).to.be(true);
 
             expect(names).to.equal([ 'foo' ]);
