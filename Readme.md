@@ -1,4 +1,7 @@
 # oo
+[![Build Status](https://travis-ci.org/EpiphanySoft/oo.svg?branch=master)](https://travis-ci.org/EpiphanySoft/oo)
+[![Coverage Status](https://coveralls.io/repos/github/EpiphanySoft/oo/badge.svg?branch=master)](https://coveralls.io/github/EpiphanySoft/oo?branch=master)
+[![MIT Licence](https://badges.frapsoft.com/os/mit/mit.svg?v=103)](https://opensource.org/licenses/mit-license.php)
 
 `oo` is a class-based, object-oriented (OO) library for ES6+. `oo` expands on the
 embattled JavaScript `class` keyword using ES.next decorators to add powerful capabilities
