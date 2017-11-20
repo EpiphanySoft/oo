@@ -1,13 +1,28 @@
 'use strict';
 
-const { Empty, capitalize, prototype, statics } = require('./Util.js');
+const { clone, Empty, capitalize, merge, prototype, statics } = require('./Util.js');
+
+const metaSym = Symbol('configMeta');
+const initSym = Symbol('configInit');
+const openSym = Symbol('configOpen');
+const valuesSym = Symbol('configValues');
 
 @statics({
     all: new Empty(),
-    metaSymbol: Symbol('configMeta')
+    symbols: {
+        meta: metaSym,
+        init: initSym,
+        open: openSym,
+        values: valuesSym
+    }
 })
 @prototype({
+    isConfig: true,
+    owner: null,
+
     cached: false,
+    initial: false,
+    initialValue: null,
     lazy: false
 })
 class Config {
@@ -15,145 +30,130 @@ class Config {
         let cap = capitalize(name);
 
         this.$ = this;
-        this.capitalized = cap;
+
         this.name = name;
-        this._name = '_' + name;
         this.applier = 'apply' + cap;
         this.updater = 'update' + cap;
     }
 
-    static addMeta (instance, name, metaName, metaValue) {
-        let value = instance[name];
-        let cm = value && value[Config.metaSymbol];
+    static addMeta (descriptor, metaName, metaValue) {
+        let value = descriptor.initializer();
+        let cm = value && value[metaSym];
 
         if (!cm) {
-            instance[name] = {
-                [Config.metaSymbol]: cm = {},
+            value = {
+                [metaSym]: cm = {},
                 value: value
             };
         }
 
         cm[metaName] = metaValue;
+
+        descriptor.initializer = () => value;
     }
 
-    static get (name, options, inherited) {
+    static get (name) {
         let all = Config.all;
-        let ret = (inherited && inherited[name]) || all[name];
 
-        if (!ret) {
-            all[name] = ret = new Config(name);
-        }
-
-        if (options) {
-            ret = ret.extend(options);
-        }
-
-        return ret;
+        return all[name] || (all[name] = new Config(name));
     }
 
-    extend (options) {
-        let c = Object.create(this);
+    define (target, init) {
+        let def = init ? (this.initDef || this.getInitDef()) : (this.def || this.getDef());
 
-        Object.assign(c, options);
+        Object.defineProperty(target, this.name, def);
+    }
 
-        return c;
+    extend (options, owner = null) {
+        let cfg = this;
+
+        if (!owner || owner !== cfg.owner) {
+            cfg = Object.create(cfg);
+            cfg.owner = owner;
+        }
+
+        Object.assign(cfg, options);
+
+        return cfg;
+    }
+
+    merge (value, newValue, target = null, mixinMeta = null) {
+        if (mixinMeta) {
+            return value;
+        }
+
+        if (newValue && newValue.constructor === Object) {
+            if (value && value.constructor === Object) {
+                newValue = merge(clone(value), newValue);
+            }
+        }
+
+        return newValue;
     }
 
     getDef () {
-        if (!this.hasOwnProperty('def')) {
-            this.createDef();
-        }
-
-        return this.def;
+        return this.def || this.$.createDef();
     }
 
     getInitDef () {
-        if (!this.hasOwnProperty('initDef')) {
-            this.createInitDef();
-        }
-
-        return this.initDef;
-    }
-
-    getSetter () {
-        if (!this.hasOwnProperty('setter')) {
-            this.createSetter();
-        }
-
-        return this.setter;
-    }
-
-    merge () {
-        //
+        return this.initDef || this.$.createInitDef();
     }
 
     //--------------------------------------------------------
     // Private
 
     createDef () {
-        let me = this;
-        let _name = me._name;
+        let cfg = this;
+        let name = cfg.name;
+        let applier = cfg.applier;
+        let updater = cfg.updater;
 
-        return me.def = {
+        return cfg.def = {
             get () {
-                return this[_name];
+                return this[valuesSym][name];
             },
 
-            set: me.getSetter()
+            set (val) {
+                let me = this;
+                let values = me[valuesSym];
+
+                if (!me[applier] || (val = me[applier](val, values[name])) !== undefined) {
+                    let old = values[name];
+
+                    if (old !== val) {
+                        values[name] = val;
+
+                        if (me[updater]) {
+                            me[updater](val, old);
+                        }
+                    }
+                }
+            }
         };
     }
 
     createInitDef () {
-        let me = this;
-        let name = me.name;
+        const name = this.name;
 
         return this.initDef = {
             configurable: true,
 
             get () {
-                delete this[name];
-                this[name] = this.config[name];
-                return this[name];
+                delete this[name];  // remove the initDef property definition
+
+                // Now that our init def is removed, the following assignment will run
+                // the normal def's set() method.
+
+                this[name] = this[initSym][name];  // std setter
+                return this[name];  // std getter
             },
 
             set (v) {
-                delete this[name];
-                this[name] = v;
+                delete this[name];  // remove the initDef property definition
+
+                this[name] = v;  // std setter
             }
         }
-    }
-
-    createSetter () {
-        let _name = this._name;
-        let applier = this.applier;
-        let updater = this.updater;
-
-        let fn = function (value) {
-            let me = this;
-            let old = me[_name];
-
-            if (me[applier]) {
-                value = me[applier](value, old);
-                if (value === undefined) {
-                    return;
-                }
-
-                old = me[_name];
-            }
-
-            if (old !== value) {
-                me[_name] = value;
-
-                if (me[updater]) {
-                    me[updater](value, old);
-                }
-            }
-        };
-
-        this.setter = fn;
-        fn.$cfg = this;
-
-        return fn;
     }
 }
 

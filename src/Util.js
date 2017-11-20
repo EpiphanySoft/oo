@@ -1,5 +1,9 @@
 'use strict';
 
+const getOwnNames = Object.getOwnPropertyNames;
+const getOwnSymbols = Object.getOwnPropertySymbols;
+const toString = Object.prototype.toString;
+
 // https://jsperf.com/object-create-null-vs-new-empty-prototype
 
 function Empty (src) {
@@ -49,8 +53,41 @@ const Util = {
     nullFn () {},
 
     Empty: Empty,
+    EMPTY: Object.freeze([]),
     Map: MyMap,
     Set: MySet,
+
+    capitalize (str) {
+        return str ? str[0].toUpperCase() + str.substr(1) : '';
+    },
+
+    clone (object) {
+        let i, clone = object;
+
+        if (object) {
+            let type = Util.typeOf(object);
+
+            if (type === 'array') {
+                clone = [];
+
+                for (i = object.length; i-- > 0; ) {
+                    clone[i] = Util.clone(object[i]);
+                }
+            }
+            else if (type === 'date') {
+                clone = new Date(+object);
+            }
+            else if (type === 'object' && object.constructor === Object) {
+                clone = {};
+
+                for (i in object) {
+                    clone[i] = Util.clone(object[i]);
+                }
+            }
+        }
+
+        return clone;
+    },
 
     copy (dest, ...sources) {
         if (dest) {
@@ -82,16 +119,60 @@ const Util = {
         return dest;
     },
 
-    capitalize (str) {
-        return str ? str[0].toUpperCase() + str.substr(1) : '';
-    },
-
     decapitalize (str) {
         return str ? str[0].toLowerCase() + str.substr(1) : '';
     },
 
-    raise (msg) {
-        throw new Error(msg);
+    getAllKeys (object) {
+        let keys = [];
+
+        for (let key in object) {
+            keys.push(key);
+        }
+
+        return keys;
+    },
+
+    getOwnKeys (object) {
+        let keys = getOwnNames(object);
+        let symbols = getOwnSymbols(object);
+
+        if (keys.length) {
+            if (symbols.length) {
+                keys.push(...symbols);
+            }
+        }
+        else {
+            keys = symbols;
+        }
+
+        return keys;
+    },
+
+    merge (target, ...sources) {
+        if (target) {
+            let key, targetValue, value;
+
+            for (let src of sources) {
+                if (src) {
+                    for (key in src) {
+                        value = src[key];
+                        targetValue = target[key];
+
+                        if (value && targetValue &&
+                                value.constructor === Object &&
+                                targetValue.constructor === Object) {
+                            Util.merge(targetValue, value);
+                        }
+                        else {
+                            target[key] = Util.clone(value);
+                        }
+                    }
+                }
+            }
+        }
+
+        return target;
     },
 
     prototype (members) {
@@ -100,35 +181,77 @@ const Util = {
         }
     },
 
+    raise (msg) {
+        throw new Error(msg);
+    },
+
     statics (members) {
         return C => {
             Object.assign(C, members);
         }
     },
 
-    setProto: Object.setPrototypeOf || (function () {
-            let base = { works: 1 };
-            let extended = {};
-
-            extended.__proto__ = base;
-
-            if (!extended.works) {
-                return function () {
-                    Util.raise(`Cannot polyfill setPrototypeOf`);
-                };
-            }
-
-            return function (object, prototype) {
-                object.__proto__ = prototype;
-            };
-        }()),
-
     toArray (src) {
         if (src && !Array.isArray(src)) {
             src = [src];
         }
         return src;
+    },
+
+    typeOf (value) {
+        if (value === null) {
+            return 'null';
+        }
+
+        let type = typeof value;
+        let typeOf = Util.typeOf;
+
+        if (!typeOf.simpletons[type]) {
+            // map s="[object Date]" to type="date"
+            let s = toString.call(value);
+            let cache = typeOf.cache;
+
+            if (!(type = cache[s])) {
+                let m = typeOf.parseRe.exec(s);
+
+                cache[s] = type = m ? m[1].toLowerCase() : s;
+            }
+        }
+
+        return type;
     }
 };
+
+if (!getOwnSymbols) {
+    Util.getOwnKeys = getOwnNames;
+}
+
+Util.setProto = Object.setPrototypeOf || (function () {
+    let base = { works: 1 };
+    let extended = {};
+
+    extended.__proto__ = base;
+
+    if (!extended.works) {
+        return function () {
+            Util.raise(`Cannot polyfill setPrototypeOf`);
+        };
+    }
+
+    return function (object, prototype) {
+        object.__proto__ = prototype;
+    };
+}());
+
+Object.assign(Util.typeOf, {
+    cache: new Empty(),
+    parseRe: /^\[object ([^\]]+)]$/,
+    simpletons: {
+        boolean: 1,
+        number: 1,
+        string: 1,
+        undefined: 1
+    }
+});
 
 module.exports = Util;

@@ -1,19 +1,19 @@
-# Base
+# Widget
 
-Configly exports a recommended `Base` class:
+Widgetry exports a recommended `Widget` base class:
 
-    import { Base } from '@epiphanysoft/configly';
+    import { Widget } from '@epiphanysoft/widgetry';
     
-    class MyClass extends Base {
+    class MyClass extends Widget {
         //
     }
 
-`Base` defines a standard object life-cycle as well as descriptive properties and helper
+`Widget` defines a standard object life-cycle as well as descriptive properties and helper
 methods. 
 
 ## Instance Properties
 
-`Base` maintains the following properties to describe an instance's current life-cycle
+`Widget` maintains the following properties to describe an instance's current life-cycle
 state. These are:
 
  - `constructing` Starts as `true` and is cleared by the `constructor`.
@@ -24,7 +24,7 @@ state. These are:
 
 ## Instance Methods
 
-`Base` defines the following methods:
+`Widget` defines the following methods:
 
  - callChain
  - callChainRev
@@ -34,11 +34,11 @@ state. These are:
 
 ## Life-cycle
 
-The `constructor` of `Base` expects a single `Object` parameter that holds configuration
+The `constructor` of `Widget` expects a single `Object` parameter that holds configuration
 properties (described later). It is not recommended that a derived class implement a
 `constructor`, but instead take advantage of the `ctor` method.
 
-`Base` also defines a `destroy` method that is used to cleanup any resources that the GC
+`Widget` also defines a `destroy` method that is used to cleanup any resources that the GC
 (garbage collector) won't handle. It is also not recommended that derived classes override
 the `destroy` method but instead implement a `dtor` method.
 
@@ -53,19 +53,19 @@ These methods ensure the following:
 The `ctor` method is like a `constructor` in that it is only called once as the instance
 is being created.
 
-    class MyClass extends Base {
+    class MyClass extends Widget {
         ctor () {
             // do constructor-like things
         }
     }
 
 The major difference between a `ctor` and a standard `constructor` is how `ctor` methods
-are called. `Base` ensures that all `ctor` implementations in the class hierarchy are
+are called. `Widget` ensures that all `ctor` implementations in the class hierarchy are
 called once and in the proper order.
 
 For example:
 
-    class MyClass extends Base {
+    class MyClass extends Widget {
         ctor () {
             // do constructor-like things
             console.log('MyClass ctor');
@@ -85,18 +85,18 @@ For example:
     > MyClass ctor
     > MyDerived ctor
 
-The `ctor` implementations are called "top down" from the `Base` class to the derived-most
-class.
+The `ctor` implementations are called "top down" from the `Widget` class to the
+derived-most class.
 
 ### dtor
 
-As with `ctor` calls, the `Base` class ensures that the proper `dtor` calls are made. This
-saves derived classes from overriding `destroy` and remembering to call `super.destroy()`
-at the proper time.
+As with `ctor` calls, the `Widget` class ensures that the proper `dtor` calls are made.
+This saves derived classes from overriding `destroy` and remembering to call
+`super.destroy()` at the proper time.
 
 For example:
 
-    class MyClass extends Base {
+    class MyClass extends Widget {
         dtor () {
             console.log('MyClass dtor');
         }
@@ -116,15 +116,15 @@ For example:
     > MyClass dtor
 
 The `dtor` implementations are called "bottom up" from the derived-most class upwards to
-the `Base` class.
+the `Widget` class.
 
 ### construct / destruct
 
 There are times when some manual involvement in the life-cycle is needed. In these cases
 there are the `construct` and `destruct` methods. The implementations of these methods in
-`Base` invoke the `ctor` and `dtor` methods, respectively.
+`Widget` invoke the `ctor` and `dtor` methods, respectively.
 
-    class MyClass extends Base {
+    class MyClass extends Widget {
         ctor () {
             console.log('MyClass ctor');
         }

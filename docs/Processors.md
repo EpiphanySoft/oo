@@ -18,21 +18,21 @@ ultimately concerned with the [instances](./Instances.md) of the classes.
 
 The recommended way to use processors is the `@define` decorator:
 
-    import { Base, define } from '@epiphanysoft/configly';
+    import { Widget, define } from '@epiphanysoft/widgetry';
     
     @define({
         ...processors go here...
     })
-    class MyClass extends Base {
+    class MyClass extends Widget {
         ...
     }
 
-Alternatively, there is the `define` `static` method of `Base` which is equivalent in
+Alternatively, there is the `define` `static` method of `Widget` which is equivalent in
 every respect other than syntax:
 
-    import { Base } from '@epiphanysoft/configly';
+    import { Widget } from '@epiphanysoft/widgetry';
     
-    class MyClass extends Base {
+    class MyClass extends Widget {
         ...
     }
     
@@ -56,7 +56,7 @@ Consider these classes:
     @define({
         chains: ['init']
     })
-    class MyClass extends Base {
+    class MyClass extends Widget {
         initialize (x, y) {
             this.callChain('init', x, y);
         }
@@ -66,7 +66,7 @@ Consider these classes:
         }
     }
 
-    class MyMixin extends Base {
+    class MyMixin extends Widget {
         init (x, y) {
             console.log('MyMixin init', x, y);
         }
@@ -110,7 +110,7 @@ Sets the identity for a class when it is used as a mixin. This is used as the ke
 
 Consider a simple mixin:
 
-    class MyClass extends Base {
+    class MyClass extends Widget {
         foo () {
             console.log('MyClass foo');
         }
@@ -119,7 +119,7 @@ Consider a simple mixin:
     @define({
         mixinId: 'mymixin'  // the name of this mixin
     })
-    class MyMixin extends Base {
+    class MyMixin extends Widget {
         foo () {
             console.log('MyMixin foo');
         }
@@ -178,7 +178,7 @@ classes.
             bar: true
         }
     })
-    class FooBar extends Base {
+    class FooBar extends Widget {
         static applyFoo (foo) {
             console.log('applyFoo: ', foo);
         }
@@ -208,7 +208,7 @@ property options as opposed to `prototype`.
             }
         }
     })
-    class Something extends Base {
+    class Something extends Widget {
     }
 
 The above is equivalent to the following:    
@@ -232,7 +232,7 @@ Copies properties to the class prototype. This is an easy way to provide a const
             bar: true
         }
     })
-    class Something extends Base {
+    class Something extends Widget {
     }
     
 The above is equivalent to the following:    
@@ -253,7 +253,7 @@ Copies properties to the class constructor.
             all: new Map()
         }
     })
-    class Something extends Base {
+    class Something extends Widget {
     }
     
 The above is equivalent to the following:    

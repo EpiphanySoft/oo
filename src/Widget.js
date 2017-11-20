@@ -3,7 +3,7 @@
 const Meta  = require('./Meta.js');
 const { nullFn } = require('./Util.js');
 
-class Base {
+class Widget {
     constructor (...args) {
         let me = this;
         let C = me.constructor;
@@ -28,13 +28,7 @@ class Base {
         let me = this;
         let meta = me.$meta;
 
-        if (config || meta.configs) {
-            me.configuring = true;
-
-            me.configure(config);
-
-            me.configuring = false;
-        }
+        me.configure(config);
 
         if (meta.liveChains.ctor) {
             meta.callChain(me, 'ctor');
@@ -42,7 +36,6 @@ class Base {
     }
 
     configure (config) {
-        this.configure = nullFn;
         this.$meta.configure(this, config);
     }
 
@@ -76,19 +69,11 @@ class Base {
     getMeta () {
         return this.$meta;
     }
-
-    reconfigure (config) {
-        let me = this;
-
-        me.configuring = true;
-        me.$meta.reconfigure(me, config);
-        me.configuring = false;
-    }
 }
 
-Meta.adopt(Base);
+Meta.adopt(Widget);
 
-Base.define({
+Widget.define({
     chains: [ 'ctor', 'dtor' ],
 
     processors: {
@@ -126,7 +111,13 @@ Base.define({
             value: false,
             writable: true
         }
+    },
+
+    prototype: {
+        configGen: 0,
+        afterConfigure: null,
+        beforeConfigure: null
     }
 });
 
-module.exports = Base;
+module.exports = Widget;

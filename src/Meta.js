@@ -1,32 +1,15 @@
 'use strict';
 
 const Config = require('./Config.js');
+const Configs = require('./Configs.js');
 const Processor = require('./Processor.js');
 const Util = require('./Util.js');
-const Empty = Util.Empty;
 
-let getOwnNames = Object.getOwnPropertyNames;
-let getOwnSymbols = Object.getOwnPropertySymbols;
+const { clone, Empty, EMPTY, getAllKeys, getOwnKeys, raise, setProto } = Util;
 
-let getOwnKeys = getOwnSymbols ? function (object) {
-        let keys = getOwnNames(object);
-        let syms = getOwnSymbols(object);
+const junctionSym = Symbol('junction');
 
-        if (keys.length) {
-            if (syms.length) {
-                keys.push(...syms);
-            }
-        }
-        else {
-            keys = syms;
-        }
-
-        return keys;
-    } : getOwnNames;
-
-const JunctionSym = Symbol('junction');
-
-const instanceSkip = new Empty({
+const prototypeSkip = new Empty({
     constructor: 1,
 
     $meta: 1,
@@ -80,9 +63,6 @@ class Meta {
             me.bases = superMeta.bases.clone();
             me.bases.add(superclass);
 
-            me.configs = Object.create(superMeta.configs);
-            me.configValues = Object.create(superMeta.configValues);
-
             // Since many classes in the hierarchy can *implement* a chained method,
             // we don't try to save on this map creation. This is prototype chained to
             // the superclass's liveChains and only keys with a value of true are put
@@ -98,9 +78,6 @@ class Meta {
             // getChains() method will walk up the supers and return the first class
             // to have defined method chains (which is Base typically).
             me.chains = new Empty();
-
-            me.configs = new Empty(); // configs.title = Config.get('title');
-            me.configValues = new Empty();
 
             me.liveChains = new Empty();
             me.rootClass = cls;
@@ -137,8 +114,66 @@ class Meta {
         }
     }
 
-    addConfigs (configs) {
-        //
+    addConfigs (newConfigs, mixinMeta) {
+        let me = this,
+            cls = me.class,
+            configs = me.getConfigs(true),
+            existingConfigs = configs.defs,
+            existingValues = configs.values,
+            metaSymbol = Config.symbols.meta,
+            mixinConfigs = mixinMeta && mixinMeta.configs.defs,
+            prototype = cls.prototype,
+            config, configMeta, existingConfig, existingValue, name, value;
+
+        configs.inherited.hasConfigs = true;
+
+        if (Config.symbols.open in newConfigs) {
+            configs.open = newConfigs[Config.symbols.open];
+        }
+
+        for (name in newConfigs) {
+            value = newConfigs[name];
+            config = existingConfig = existingConfigs[name];
+            existingValue = existingValues[name];
+
+            if (mixinMeta) {
+                if (config) {
+                    value = config.merge(existingValue, value, cls, mixinMeta);
+                }
+                else {
+                    config = mixinConfigs[name]; // this will always exists
+                }
+            }
+            else {
+                if (!config) {
+                    config = Config.all[name] || Config.get(name);
+                }
+
+                configMeta = value && value[metaSymbol];
+                if (configMeta) {
+                    value = value.value;
+                    config = config.extend(configMeta, cls);
+
+                    if (configMeta.initial) {
+                        config.initialValue = value;
+                    }
+                }
+
+                if (existingConfig) {
+                    value = config.merge(existingValue, value, cls);
+                }
+            }
+
+            if (config !== existingConfig) {
+                existingConfigs[name] = config;
+
+                if (!existingConfig) {
+                    config.define(prototype);
+                }
+            }
+
+            existingValues[name] = value;
+        }
     }
 
     addMixins (mixinCls, mixinId) {
@@ -160,11 +195,12 @@ class Meta {
             return;
         }
 
-        let cls = this.class;
+        let cls = me.class;
         let prototype = cls.prototype;
         let chains = me.getChains();
         let bases = me.bases;
         let mixinMeta = mixinCls.getMeta();  // ensure all Meta's exist
+        let mixinConfigs = mixinMeta.getConfigs();
         let rootClass = me.rootClass;
         let instanceMap = new Empty();
         let staticsMap = new Empty();
@@ -172,16 +208,19 @@ class Meta {
             mixMeta, prop, skip, target;
 
         if (cls.constructor.isPrototypeOf(mixinCls)) {
-            Util.raise('Cannot mix a derived class into a super class');
+            raise('Cannot mix a derived class into a super class');
         }
         if (!rootClass.isPrototypeOf(mixinCls)) {
-            Util.raise(`Mixins must extend base class ${rootClass.name}`);
+            raise(`Mixins must extend base class ${rootClass.name}`);
         }
         if (me.completed) {
-            Util.raise(`Too late apply a mixin into this class`);
+            raise(`Too late apply a mixin into this class`);
         }
 
         mixinMeta.complete();
+        if (mixinConfigs) {
+            me.addConfigs(mixinConfigs.values, mixinMeta);
+        }
 
         mixinId = mixinId || mixinMeta.getMixinId();
         if (mixinId) {
@@ -203,7 +242,7 @@ class Meta {
             // Start with instance side members:
             isStatic = false;
             map = instanceMap;
-            skip = instanceSkip;
+            skip = prototypeSkip;
             target = prototype;
 
             for (members = mixMeta.getMembers(); members; members = members.statics) {
@@ -241,7 +280,7 @@ class Meta {
                             existing.$owner = cls;
                         }
 
-                        if (existing[JunctionSym] && existing.$owner === cls) {
+                        if (existing[junctionSym] && existing.$owner === cls) {
                             // We could have previously mixed in a method from a class
                             // that was also a Junction, so we need to check that the
                             // method belongs to the target class.
@@ -307,8 +346,33 @@ class Meta {
         }
     }
 
-    configure (instance, instanceConfig) {
-        //
+    configure (instance, config) {
+        let me = this;
+        let configs = me.getConfigs();
+
+        instance.configuring = true;
+
+        if ((instance.configGen = (instance.configGen || 0) + 1) < 2) {
+            if (configs) {
+                if (instance.beforeConfigure) {
+                    config = instance.beforeConfigure(config) || config;
+                }
+
+                me.initConfig(instance, config);
+
+                if (instance.afterConfigure) {
+                    instance.afterConfigure(config);
+                }
+            }
+            else if (config && config.constructor === Object) {
+                Object.assign(me, config);
+            }
+        }
+        else {
+            me.reconfigure(instance, config);
+        }
+
+        instance.configuring = false;
     }
 
     getChains (own) {
@@ -330,9 +394,26 @@ class Meta {
         return chains;
     }
 
+    getConfigs (create) {
+        let configs = this.configs;
+
+        if (!create) {
+            if (configs && !configs.inherited.hasConfigs) {
+                configs = null;
+            }
+        }
+        else if (!configs) {
+            let sup = this.super;
+
+            this.configs = configs = sup ? sup.getConfigs(true).extend() : new Configs();
+        }
+
+        return configs;
+    }
+
     getMembers () {
         if (!this.completed) {
-            Util.raise('Class is incomplete');
+            raise('Class is incomplete');
         }
 
         let cls = this.class;
@@ -393,6 +474,150 @@ class Meta {
         return isStatic ? shim : shim.prototype;
     }
 
+    initConfig (instance, instanceConfig) {
+        let me = this;
+        let configs = me.configs;
+
+        if (me.instances < 2) {
+            me.initFirstInstance(instance);
+
+            if (instance.afterCachedConfig) {
+                instance.afterCachedConfig();
+            }
+        }
+
+        let mergedConfig = new Empty();
+        let configValues = configs.values;
+        let defs = configs.defs;
+        let inits = configs.inits;
+        let initsMap = configs.initsMap;
+        let cfg, name, value;
+
+        // The mergedConfig is stored on the instance for use by the initializer. It is
+        // used here for immediately initialized properties, but also later for any lazy
+        // configs.
+        instance[Config.symbols.init] = mergedConfig;
+
+        // This object is the backing store for config properties.
+        instance[Config.symbols.values] = Object.create(configs.defaults);
+
+        for (cfg of inits) {
+            cfg.define(instance, /*init=*/true);
+
+            mergedConfig[cfg.name] = configValues[cfg.name];
+        }
+
+        //TODO transformations
+
+        if (instanceConfig) {
+            for (name in instanceConfig) {
+                cfg = defs[name];
+                value = instanceConfig[name];
+
+                if (cfg) {
+                    if (!initsMap[name]) {
+                        cfg.define(instance, /*init=*/true);
+                    }
+
+                    mergedConfig[name] = cfg.merge(configValues[name], value);
+                }
+                else if (configs.open) {
+                    //TODO @open({ functions: true })
+
+                    instance[name] = value;
+                }
+            }
+        }
+
+        if (instance.beforeInitConfig) {
+            instance.beforeInitConfig();
+        }
+
+        for (name of configs.names) {
+            if (name in initsMap || (instanceConfig && (name in instanceConfig))) {
+                if (instance.hasOwnProperty(name) && !defs[name].lazy) {
+                    instance[name] = mergedConfig[name];
+                }
+            }
+        }
+    }
+
+    initFirstInstance (instance) {
+        let me = this;
+        let cachedInits = null;
+        let configs = me.configs;
+        let defaults = configs.defaults = new Empty();
+        let defs = configs.defs;
+        let configNames = configs.names = getAllKeys(defs);
+        let configValues = configs.values;
+        let inits = configs.inits = [];
+        let initsMap = configs.initsMap = new Empty();
+        let prototype = me.class.prototype;
+        let cfg, instanceValues, name, simple, value;
+
+        instance[Config.symbols.init] = configValues;
+        instance[Config.symbols.values] = instanceValues = Object.create(defaults);
+
+        configNames.sort();
+
+        for (name of configNames) {
+            cfg = defs[name];
+            value = configValues[name];
+
+            simple = value == null || (cfg.initial && value === cfg.initialValue);
+            if (!simple) {
+                simple = !prototype[cfg.applier] && !prototype[cfg.updater] &&
+                         typeof value !== 'object';
+            }
+
+            if (simple) {
+                defaults[name] = value;
+            }
+            else if (cfg.cached) {
+                (cachedInits || (cachedInits = [])).push(cfg);
+                cfg.define(instance, /*init=*/true);
+            }
+            else {
+                inits.push(initsMap[name] = cfg);
+            }
+        }
+
+        if (cachedInits) {
+            for (cfg of cachedInits) {
+                if (instance.hasOwnProperty(name = cfg.name)) {
+                    instance[name] = configValues[name];
+                }
+            }
+
+            for (cfg of cachedInits) {
+                name = cfg.name;
+                defaults[name] = instanceValues[name];
+                delete instanceValues[name];
+            }
+        }
+    }
+
+    mergeConfigs (target, source) {
+        let configs = this.configs;
+        let defs = configs.defs;
+        let cfg, name, value;
+
+        for (name in source) {
+            value = source[name];
+
+            if (!(cfg = defs[name])) {
+                if (configs.open) {
+                    target[name] = value;
+                }
+            }
+            else {
+                target[name] = cfg.merge(target[name], value);
+            }
+        }
+
+        return target;
+    }
+
     processOptions (options) {
         let cls = this.class;
         let processors = options.processors;
@@ -420,7 +645,7 @@ class Meta {
                 cls[applier](options[key]);
             }
             else {
-                Util.raise(`Invalid class option: ${key}`);
+                raise(`Invalid class option: ${key}`);
             }
         }
     }
@@ -501,7 +726,7 @@ class Meta {
 
         // A junction calls the true super method and all applyMixins methods and
         // returns the return value of the first method called.
-        shim[key] = method[JunctionSym] = function (...args) {
+        shim[key] = method[junctionSym] = function (...args) {
             let called = sup[key];
             let result = called && called.apply(this, args);
             let res;
@@ -525,8 +750,8 @@ class Meta {
 
         class Shim extends base {}
 
-        Util.setProto(cls, Shim);
-        Util.setProto(cls.prototype, Shim.prototype);
+        setProto(cls, Shim);
+        setProto(cls.prototype, Shim.prototype);
 
         return Shim;
     }
@@ -535,7 +760,7 @@ class Meta {
 Meta.count = 0;
 
 Meta.symbols = {
-    junction: JunctionSym
+    junction: junctionSym
 };
 
 Object.assign(Meta.prototype, {
@@ -546,6 +771,7 @@ Object.assign(Meta.prototype, {
 
     instances: 0,
 
+    configs: null,
     members: null
 });
 

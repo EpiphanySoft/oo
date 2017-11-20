@@ -8,8 +8,8 @@ As the name implies, the goal of Configly is to make classes (and their
  - Method Chains
  - Extensible Processors
 
-While most of these features are provided by Configly's `Meta` class (which can be applied
-to any class), standard usage is simplified by extending Configly's [Base](./Base.md) class.
+While most of these features are provided by the `Meta` class (which can be applied to
+any class), standard usage is simplified by extending [Widget](./Widget.md).
 
 ## The `@define` Decorator
 
@@ -35,7 +35,7 @@ is an easy way to share objects but also can help to provide a more constant obj
             bar: true
         }
     })
-    class Something extends Base {
+    class Something extends Widget {
     }
     
     // same as:
@@ -54,7 +54,7 @@ on the class constructor:
             all: new Map()
         }
     })
-    class Something extends Base {
+    class Something extends Widget {
     }
     
     // same as:
@@ -78,7 +78,7 @@ it is worth considering their order:
             bar: true
         }
     })
-    class FooBar extends Base {
+    class FooBar extends Widget {
         static applyFoo (foo) {
             console.log('applyFoo: ', foo);
         }
@@ -124,7 +124,7 @@ Assume that the new processor should be executed before `prototype`:
             }
         }
     })
-    class CustomProcessor extends Base {
+    class CustomProcessor extends Widget {
         static applyFoo (foo) {
             // runs before prototype processor...
         }
