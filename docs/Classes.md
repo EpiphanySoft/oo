@@ -29,6 +29,7 @@ The `prototype` processor is used to put non-method properties on the class prot
 is an easy way to share objects but also can help to provide a more constant object
 [shape](https://draft.li/blog/2016/12/22/javascript-engines-hidden-classes/).
 
+```javascript
     @define({
         prototype: {
             foo: 0,
@@ -43,12 +44,14 @@ is an easy way to share objects but also can help to provide a more constant obj
         foo: 0,
         bar: true
     });
+```
 
 ## The `static` Processor
 
 Similar to the `prototype` processor, the `static` processor is used to place non-methods
 on the class constructor:
 
+```javascript
     @define({
         static: {
             all: new Map()
@@ -61,6 +64,7 @@ on the class constructor:
     Object.assign(Something, {
         all: new Map()
     });
+```
 
 ## Custom Processors
 
@@ -72,6 +76,7 @@ By default, inherited processors (such as `prototype`) will be applied before de
 processors so this order is not typically a concern. When defining two processors, however,
 it is worth considering their order:
 
+```javascript
     @define({
         processors: {
             foo: 'bar',   // "foo" requires "bar" to run first
@@ -87,6 +92,7 @@ it is worth considering their order:
             console.log('applyBar: ', bar);
         }
     }
+```
 
 This class adds a `foo` and `bar` processor and specifies their order of operation. When
 processors are registered for a class, `@define` runs their static applier methods in the
@@ -94,6 +100,7 @@ specified order.
 
 For example:
 
+```javascript
     @define({
         foo: 1,
         bar: 2
@@ -101,6 +108,7 @@ For example:
     class FooBarUser extends FooBar {
         //
     }
+```
     
     > applyBar: 2
     > applyFoo: 1
@@ -117,6 +125,7 @@ these processors to conflict.
 
 Assume that the new processor should be executed before `prototype`:
 
+```javascript
     @define({
         processors: {
             foo: {
@@ -129,6 +138,7 @@ Assume that the new processor should be executed before `prototype`:
             // runs before prototype processor...
         }
     }
+```
 
 When the value of a key in the object given to the `processors` processor is an object,
 it can use two properties to configure its behavior:
@@ -141,12 +151,14 @@ any properties other than `before` and `after` in an object value.
 
 In the first example, the `processors` could have be expressed as:
 
+```javascript
     processors: {
         foo: {
             after: 'bar'  // "foo" requires "bar" to run first
         },
         bar: true  // the value "true" is ignored
     }
+```
 
 # Next Steps
 

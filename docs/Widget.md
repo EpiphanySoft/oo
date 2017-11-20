@@ -2,11 +2,13 @@
 
 `oo` exports a recommended `Widget` base class:
 
+```javascript
     import { Widget } from '@epiphanysoft/oo';
     
     class MyClass extends Widget {
         //
     }
+```
 
 `Widget` defines a standard object life-cycle as well as descriptive properties and helper
 methods. 
@@ -53,11 +55,13 @@ These methods ensure the following:
 The `ctor` method is like a `constructor` in that it is only called once as the instance
 is being created.
 
+```javascript
     class MyClass extends Widget {
         ctor () {
             // do constructor-like things
         }
     }
+```
 
 The major difference between a `ctor` and a standard `constructor` is how `ctor` methods
 are called. `Widget` ensures that all `ctor` implementations in the class hierarchy are
@@ -65,6 +69,7 @@ called once and in the proper order.
 
 For example:
 
+```javascript
     class MyClass extends Widget {
         ctor () {
             // do constructor-like things
@@ -81,6 +86,7 @@ For example:
     }
     
     let inst = new MyDerived();
+```
     
     > MyClass ctor
     > MyDerived ctor
@@ -96,6 +102,7 @@ This saves derived classes from overriding `destroy` and remembering to call
 
 For example:
 
+```javascript
     class MyClass extends Widget {
         dtor () {
             console.log('MyClass dtor');
@@ -111,6 +118,7 @@ For example:
     let inst = new MyDerived();
     
     inst.destroy();
+```
     
     > MyDerived dtor
     > MyClass dtor
@@ -124,6 +132,7 @@ There are times when some manual involvement in the life-cycle is needed. In the
 there are the `construct` and `destruct` methods. The implementations of these methods in
 `Widget` invoke the `ctor` and `dtor` methods, respectively.
 
+```javascript
     class MyClass extends Widget {
         ctor () {
             console.log('MyClass ctor');
@@ -157,13 +166,16 @@ there are the `construct` and `destruct` methods. The implementations of these m
     }
     
     let inst = new MyDerived();
+```
     
     > MyDerived before construct    
     > MyClass ctor
     > MyDerived ctor
     > MyDerived after construct    
 
+```javascript
     inst.destroy();
+```
 
     > MyDerived before destruct    
     > MyDerived dtor

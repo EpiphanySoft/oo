@@ -8,6 +8,7 @@ All mixin strategies basically reduce to copying properties from the mixin class
 target class. Since Configly defines mixins as actual classes, this includes `static` as
 well as `prototype` properties.
 
+```javascript
     import { Widget, define } from '@epiphanysoft/oo';
     
     class MyClass extends Widget {
@@ -58,6 +59,7 @@ well as `prototype` properties.
     }
     
     let inst = new MyDerived();
+```
     
     > MyClass ctor
     > MyMixin ctor
@@ -65,8 +67,10 @@ well as `prototype` properties.
 
 The first thing to note here is that all of the `ctor` methods were called and in the
 proper, "top down" order.
-    
+
+```javascript
     inst.foo();
+```
     
     > MyDerived foo
     > MyClass foo
@@ -78,7 +82,9 @@ from the `MyMixin.prototype` to the `MyDerived.prototype`. This works in the sam
 
 Object destruction is similar to creation:
 
+```javascript
     inst.destroy();
+```
     
     > MyDerived dtor
     > MyMixin dtor
@@ -94,6 +100,7 @@ feature.
 
 The same features are available as a `static` method:
 
+```javascript
     class MyDerived extends MyClass {
         // ...
     }
@@ -101,6 +108,7 @@ The same features are available as a `static` method:
     MyDerived.define({
         mixins: MyMixin
     })
+```
 
 ### Why Not Use Multiple Decorators?
 
@@ -110,6 +118,7 @@ consistent order.
 
 Instead that order is lexically determined. For example, consider these classes:
 
+```javascript
     @foo @bar
     class FooBar {
     }
@@ -117,6 +126,7 @@ Instead that order is lexically determined. For example, consider these classes:
     @bar @foo
     class BarFoo {
     }
+```
 
 The different order of the above decorators results in different execution order. In many
 cases this difference will not matter, but if the `@foo` and `@bar` decorators intersect
@@ -131,22 +141,27 @@ in a mixin, that property is ignored.
 The first step to managing overlapping mixins is to assign id's to them. The simplest way
 is to assign one to the mixin class:
 
+```javascript
     @define({
         mixinId: 'mymixin'
     })
     class MyMixin extends Widget {
         //...
     }
+```
 
 Now when `MyMixin` is mixed into another class, it is added to the `mixins` object on the
 class constructor and its prototype is added to a `mixins` object on the class prototype.
 These object allow a class to directly access their mixins. In code:
 
+```javascript
     MyDerived.mixins['mymixin'] = MyMixin;
     MyDerived.prototype.mixins['mymixin'] = MyMixin.prototype;
+```
 
 For example:
 
+```javascript
     import { Widget, define } from '@epiphanysoft/oo';
     
     class MyClass extends Widget {
@@ -178,6 +193,7 @@ For example:
     let inst = new MyDerived();
     
     inst.foo();
+```
     
     > MyClass foo
     > MyDerived foo
@@ -191,12 +207,14 @@ prototype, the same technique applies to `static` methods.
 The `mixins` property passed to `@define` above was a single class. When multiple mixins
 are used, this can changed to an array.
 
+```javascript
     @define({
         mixins: [ MyMixin, MyOtherMixin ]
     })
     class MyOtherDerived extends MyClass {
         //
     }
+```
 
 In this case the mixin classes are mixed in sequentially. This means `MyMixin` may have
 properties that do not collide with `MyOtherDerived` and would be included while the same
@@ -205,6 +223,7 @@ properties defined in `MyOtherMixin` would be ignored.
 The fact that a `mixins` array is mixed in sequentially ensures predictability. When using
 an array, each element can be either a class to mixin or a 2-element array:
 
+```javascript
     @define({
         mixins: [
             MyMixin,
@@ -214,6 +233,7 @@ an array, each element can be either a class to mixin or a 2-element array:
     class MyOtherDerived extends MyClass {
         //
     }
+```
 
 When one of the elements of the `mixins` array is a 2-element array, the first item in
 that array is the mixin id (the key to use in the `mixins` object of the target class).
@@ -225,6 +245,7 @@ classes came from different authors and had conflicting id's.
 When methods collide it is often desirable to treat the mixin methods as normal `super`
 methods. This can be accomplished by declaring the colliding method as a `@junction`.
 
+```javascript
     import { Widget, define, junction } from '@epiphanysoft/oo';
     
     class MyClass extends Widget {
@@ -254,6 +275,7 @@ methods. This can be accomplished by declaring the colliding method as a `@junct
     let inst = new MyDerived();
     
     inst.foo();
+```
     
     > MyClass foo
     > MyMixin foo
@@ -274,6 +296,7 @@ called only once, even if there are multiple paths to a common base class (a.k.a
 ["dreaded diamond"](https://en.wikipedia.org/wiki/Multiple_inheritance)). This behavior is
 available for other methods using the `chains` processor:
 
+```javascript
     import { Widget, define } from '@epiphanysoft/oo';
     
     @define({
@@ -307,6 +330,7 @@ available for other methods using the `chains` processor:
     let inst = new MyDerived();
     
     inst.initialize(1, 2);
+```
     
     > MyClass init 1 2
     > MyMixin init 1 2

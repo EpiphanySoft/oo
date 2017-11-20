@@ -29,6 +29,7 @@ The `Widget` class defines two method chains (`ctor` and `dtor`) to manage life-
 `ctor` method is called "top down" during object instantiation while `dtor` is called
 "bottom up" when `destroy()` is called.
 
+```javascript
     import { Widget } from '@epiphanysoft/oo';
     
     class MyClass extends Widget {
@@ -52,11 +53,14 @@ The `Widget` class defines two method chains (`ctor` and `dtor`) to manage life-
     }
     
     let inst = new MyDerived();
+```
     
     > MyClass ctor
     > MyDerived ctor
     
+```javascript
     inst.destroy();
+```
 
     > MyDerived dtor
     > MyClass dtor
@@ -71,6 +75,7 @@ these chains are automatically called by the `constructor` and `destroy` methods
 Mixins provide a form of multiple-inheritance that allows behavior reuse beyond JavaScript's
 standard, single-inheritance model.
 
+```javascript
     import { Widget, define } from '@epiphanysoft/oo';
     
     class MyClass extends Widget {
@@ -125,6 +130,7 @@ standard, single-inheritance model.
     let inst = new MyDerived();
     
     inst.foo();
+```
     
     > MyClass foo
     > MyDerived foo
@@ -132,6 +138,7 @@ standard, single-inheritance model.
 
 Alternatively, classes can use a `@junction` method for such cases:
 
+```javascript
     @define({
         mixins: MyMixin
     })
@@ -147,6 +154,7 @@ Alternatively, classes can use a `@junction` method for such cases:
     }
     
     //...
+```
     
     > MyClass foo
     > MyMixin foo
@@ -155,13 +163,17 @@ Alternatively, classes can use a `@junction` method for such cases:
 For cases where mixins manage non-GC-able resources, the `ctor` and `dtor` life-cycle
 methods also apply properly. 
 
+```javascript
     let inst = new MyDerived();
+```
     
     > MyClass ctor
     > MyMixin ctor
     > MyDerived ctor
 
+```javascript
     inst.destroy();
+```
     
     > MyDerived dtor
     > MyMixin dtor
