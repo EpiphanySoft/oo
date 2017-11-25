@@ -1,6 +1,6 @@
 'use strict';
 
-const { clone, Empty, capitalize, merge, prototype, statics } = require('./Util.js');
+const { clone, Empty, merge, prototype, statics } = require('./Util.js');
 
 const metaSym = Symbol('configMeta');
 const initSym = Symbol('configInit');
@@ -27,13 +27,11 @@ const valuesSym = Symbol('configValues');
 })
 class Config {
     constructor (name) {
-        let cap = capitalize(name);
-
         this.$ = this;
 
         this.name = name;
-        this.applier = 'apply' + cap;
-        this.updater = 'update' + cap;
+        this.changer = name + 'Change';
+        this.updater = name + 'Update';
     }
 
     static addMeta (descriptor, metaName, metaValue) {
@@ -105,7 +103,7 @@ class Config {
     createDef () {
         let cfg = this;
         let name = cfg.name;
-        let applier = cfg.applier;
+        let changer = cfg.changer;
         let updater = cfg.updater;
 
         return cfg.def = {
@@ -117,7 +115,7 @@ class Config {
                 let me = this;
                 let values = me[valuesSym];
 
-                if (!me[applier] || (val = me[applier](val, values[name])) !== undefined) {
+                if (!me[changer] || (val = me[changer](val, values[name])) !== undefined) {
                     let old = values[name];
 
                     if (old !== val) {
