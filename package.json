@@ -1,13 +1,13 @@
 {
-    "name": "@epiphanysoft/configly",
+    "name": "@epiphanysoft/oo",
     "version": "1.0.0-alpha.0",
     "description": "Configurable classes",
     "author": "Don Griffin (dongryphon)",
     "license": "MIT",
-    "homepage": "https://github.com/EpiphanySoft/configly#readme",
+    "homepage": "https://github.com/EpiphanySoft/oo#readme",
     "main": "index.js",
     "bugs": {
-        "url": "https://github.com/EpiphanySoft/configly/issues"
+        "url": "https://github.com/EpiphanySoft/oo/issues"
     },
     "devDependencies": {
         "assertly": "^1.0.2",
@@ -20,7 +20,9 @@
         "babel-plugin-transform-object-rest-spread": "^6.23.0",
         "babel-polyfill": "^6.23.0",
         "babel-preset-es2015": "^6.24.0",
-        "mocha": "^3.5.3"
+        "coveralls": "^3.0.0",
+        "mocha": "^3.5.3",
+        "nyc": "^11.3.0"
     },
     "directories": {
         "bin": "./bin",
@@ -29,6 +31,7 @@
         "man": "./man"
     },
     "keywords": [
+        "oo",
         "oop",
         "class",
         "config",
@@ -36,10 +39,11 @@
     ],
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/EpiphanySoft/configly.git"
+        "url": "https://github.com/EpiphanySoft/oo.git"
     },
     "scripts": {
         "debug": "devtool node_modules/mocha/bin/_mocha -qc -- ./test/specs/**/*.js",
-        "test": "mocha --compilers js:babel-core/register --require babel-polyfill ./test/specs/**/*.js"
+        "test": "nyc mocha --compilers js:babel-core/register --require babel-polyfill ./test/specs/**/*.js",
+        "coverage": "nyc report --reporter=text-lcov | coveralls"
     }
 }

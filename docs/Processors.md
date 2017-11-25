@@ -18,7 +18,8 @@ ultimately concerned with the [instances](./Instances.md) of the classes.
 
 The recommended way to use processors is the `@define` decorator:
 
-    import { Widget, define } from '@epiphanysoft/widgetry';
+```javascript
+    import { Widget, define } from '@epiphanysoft/oo';
     
     @define({
         ...processors go here...
@@ -26,19 +27,22 @@ The recommended way to use processors is the `@define` decorator:
     class MyClass extends Widget {
         ...
     }
+```
 
 Alternatively, there is the `define` `static` method of `Widget` which is equivalent in
 every respect other than syntax:
 
-    import { Widget } from '@epiphanysoft/widgetry';
+```javascript
+    import { Widget } from '@epiphanysoft/oo';
     
     class MyClass extends Widget {
-        ...
+        // ...
     }
     
     MyClass.define({
         ...processors go here...
-    })
+    });
+```
 
 The `define` method is useful to avoid the tool chains currently required to transpile the
 decorator syntax.
@@ -53,6 +57,7 @@ method chains are invoked across the class hierarchy.
 
 Consider these classes:
 
+```javascript
     @define({
         chains: ['init']
     })
@@ -84,6 +89,7 @@ Consider these classes:
     let inst = new MyDerived();
     
     inst.initialize(1, 2);
+```
     
     > MyClass init 1 2
     > MyMixin init 1 2
@@ -110,6 +116,7 @@ Sets the identity for a class when it is used as a mixin. This is used as the ke
 
 Consider a simple mixin:
 
+```javascript
     class MyClass extends Widget {
         foo () {
             console.log('MyClass foo');
@@ -137,6 +144,7 @@ Consider a simple mixin:
             this.mixins.mymixin.foo.call(this);
         }
     }
+```
 
 The `mixins` object is maintained on the class constructor and prototype:
 
@@ -150,12 +158,14 @@ The `mixins` object is maintained on the class constructor and prototype:
 Mixins are similar to a base class in that they are a way to inherit functionality from
 one class to another.
 
+```javascript
     @define({
         mixins: [ MyMixin, MyOtherMixin ]
     })
     class MyDerived extends MyClass {
         //
     }
+```
 
 Because JavaScript only truly understands single-inheritance via its prototype chain, the
 properties (both `static` and on the mixin's prototype) are copied from `MyMixin` and
@@ -172,6 +182,7 @@ See [here](./Mixins.md) for more information on mixins.
 This processor allows a class to define and order custom processors for use in derived
 classes.
 
+```javascript
     @define({
         processors: {
             foo: 'bar',   // "foo" requires "bar" to run first
@@ -187,6 +198,7 @@ classes.
             console.log('applyBar: ', bar);
         }
     }
+```
 
 In the above, `FooBar` adds a `foo` and `bar` processor and implements their logic in the
 `applyFoo` and `applyBar` static methods. The order of these processors is also indicated
@@ -201,6 +213,7 @@ See [here](./Classes.md) for more information on custom processors.
 Defines properties on the class prototype. This is primarily useful for controlling the
 property options as opposed to `prototype`.
 
+```javascript
     @define({
         properties: {
             foo: {
@@ -210,14 +223,17 @@ property options as opposed to `prototype`.
     })
     class Something extends Widget {
     }
+```
 
 The above is equivalent to the following:    
 
+```javascript
     Object.defineProperties(Something.prototype, {
         foo: {
             value: 42
         }
     });
+```
 
 <a name="_prototype">
 
@@ -226,6 +242,7 @@ The above is equivalent to the following:
 Copies properties to the class prototype. This is an easy way to provide a constant object
 [shape](https://draft.li/blog/2016/12/22/javascript-engines-hidden-classes/).
 
+```javascript
     @define({
         prototype: {
             foo: 0,
@@ -234,13 +251,16 @@ Copies properties to the class prototype. This is an easy way to provide a const
     })
     class Something extends Widget {
     }
+```
     
 The above is equivalent to the following:    
 
+```javascript
     Object.assign(Something.prototype, {
         foo: 0,
         bar: true
     });
+```
 
 <a name="_static">
 
@@ -248,6 +268,7 @@ The above is equivalent to the following:
 
 Copies properties to the class constructor.
 
+```javascript
     @define({
         static: {
             all: new Map()
@@ -255,9 +276,12 @@ Copies properties to the class constructor.
     })
     class Something extends Widget {
     }
+```
     
 The above is equivalent to the following:    
 
+```javascript
     Object.assign(Something, {
         all: new Map()
     });
+```
