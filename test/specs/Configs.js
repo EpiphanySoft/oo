@@ -3,26 +3,46 @@ const expect = require('assertly').expect;
 const Config = require('../../src/Config.js');
 const Widget = require('../../src/Widget.js');
 
-const { define, initial, lazy, merge, open } = require('../../src/decorators.js');
+const { cached, define, initial, lazy, merge, open } = require('../../src/decorators.js');
 
-function getAllKeys (object) {
+function getKeys (object, own) {
     let keys = [];
 
     for (let key in object) {
-        keys.push(key);
+        if (!own || object.hasOwnProperty(key)) {
+            keys.push(key);
+        }
     }
+
+    keys.sort();
 
     return keys;
 }
 
-function getAllValues (object) {
+function getValues (object, own) {
     let values = [];
 
-    for (let key in object) {
+    for (let key of getKeys(object, own)) {
         values.push(object[key]);
     }
 
     return values;
+}
+
+function getAllKeys (object) {
+    return getKeys(object, false);
+}
+
+function getAllValues (object) {
+    return getValues(object, false);
+}
+
+function getOwnKeys (object) {
+    return getKeys(object, true);
+}
+
+function getOwnValues (object) {
+    return getValues(object, true);
 }
 
 describe('Configs', function () {
@@ -289,8 +309,17 @@ describe('Configs', function () {
         });
 
         it('should populate the inits array and map w/no handler methods', function () {
+            const array = [];
+            const fn = () => {};
+            const re = /abc/;
+            const date = new Date();
+            const object = {};
+
             @define({
                 config: {
+                    // These primitive properties (w/o handlers) should just go to the
+                    // class "defaults" object:
+
                     prop1: null,
                     prop2: undefined,
 
@@ -301,16 +330,16 @@ describe('Configs', function () {
 
                     prop6: 'hello',
 
-                    prop7: () => {},
+                    prop7: fn,
 
                     // These require initialization per-instance:
 
-                    prop8: /abc/,
+                    prop8: re,
 
-                    prop9: new Date(),
+                    prop9: date,
 
-                    prop10: [],
-                    prop11: {}
+                    prop10: array,
+                    prop11: object
                 }
             })
             class Foo extends Widget {}
@@ -322,20 +351,622 @@ describe('Configs', function () {
             expect(fooConfigs.initsMap).to.be(null);
 
             let inst = new Foo();
+            let initProps = fooConfigs.inits.map(cfg => cfg.name);
 
-            expect(fooConfigs.inits.length).to.be(4);
-
-            expect(fooConfigs.inits[0].name).to.be('prop10');
-            expect(fooConfigs.inits[1].name).to.be('prop11');
-            expect(fooConfigs.inits[2].name).to.be('prop8');
-            expect(fooConfigs.inits[3].name).to.be('prop9');
+            expect(initProps).to.equal([ 'prop10', 'prop11', 'prop8', 'prop9' ]);
 
             let keys = Object.keys(fooConfigs.initsMap);
             keys.sort();
 
-            expect(keys).to.equal([ 'prop10', 'prop11', 'prop8', 'prop9' ]);
+            expect(keys).to.equal(initProps);
+
+            expect(inst.prop1).to.be(null);
+            expect(inst.prop2).to.be(undefined);
+            expect(inst.prop3).to.be(123);
+            expect(inst.prop4).to.be(true);
+            expect(inst.prop5).to.be(false);
+            expect(inst.prop6).to.be('hello');
+            expect(inst.prop7).to.be(fn);
+            expect(inst.prop8).to.be(re);
+            expect(inst.prop9).to.be(date);
+            expect(inst.prop10).to.be(array);
+            expect(inst.prop11).to.be(object);
+
+            const values = inst[Config.symbols.values];
+
+            expect(values.prop1).to.be(null);
+            expect(values.prop2).to.be(undefined);
+            expect(values.prop3).to.be(123);
+            expect(values.prop4).to.be(true);
+            expect(values.prop5).to.be(false);
+            expect(values.prop6).to.be('hello');
+            expect(values.prop7).to.be(fn);
+            expect(values.prop8).to.be(re);
+            expect(values.prop9).to.be(date);
+            expect(values.prop10).to.be(array);
+            expect(values.prop11).to.be(object);
+
+            expect(values).to.have.only.own.keys(
+                'prop8', 'prop9', 'prop10', 'prop11'
+            );
+
+            const defaults = Object.getPrototypeOf(values);
+
+            expect(defaults.prop1).to.be(null);
+            expect(defaults.prop2).to.be(undefined);
+            expect(defaults.prop3).to.be(123);
+            expect(defaults.prop4).to.be(true);
+            expect(defaults.prop5).to.be(false);
+            expect(defaults.prop6).to.be('hello');
+            expect(defaults.prop7).to.be(fn);
+
+            expect(defaults).to.have.only.own.keys(
+                'prop1', 'prop2', 'prop3', 'prop4', 'prop5', 'prop6', 'prop7'
+            );
         });
-    });
+
+        it('should populate the inits array and map w/change methods', function () {
+            const array = [];
+            const fn = () => {};
+            const re = /abc/;
+            const date = new Date();
+            const object = {};
+
+            @define({
+                config: {
+                    // These should just go to the class "defaults" object:
+
+                    prop1: null,
+                    prop2: undefined,
+
+                    // These require initialization per-instance:
+
+                    prop3: 123,
+
+                    prop4: true,
+                    prop5: false,
+
+                    prop6: 'hello',
+
+                    prop7: fn,
+
+                    prop8: re,
+
+                    prop9: date,
+
+                    prop10: array,
+                    prop11: object
+                }
+            })
+            class Foo extends Widget {
+                prop1Change (v) { return v; }
+                prop2Change (v) { return v; }
+                prop3Change (v) { return v; }
+                prop4Change (v) { return v; }
+                prop5Change (v) { return v; }
+                prop6Change (v) { return v; }
+                prop7Change (v) { return v; }
+                prop8Change (v) { return v; }
+                prop9Change (v) { return v; }
+                prop10Change (v) { return v; }
+                prop11Change (v) { return v; }
+            }
+
+            let fooMeta = Foo.getMeta();
+            let fooConfigs = fooMeta.configs;
+
+            expect(fooConfigs.inits).to.be(null);
+            expect(fooConfigs.initsMap).to.be(null);
+
+            let inst = new Foo();
+            let initProps = fooConfigs.inits.map(cfg => cfg.name);
+
+            expect(initProps).to.equal([
+                'prop10', 'prop11',
+                'prop3', 'prop4', 'prop5', 'prop6', 'prop7', 'prop8', 'prop9'
+            ]);
+
+            let keys = Object.keys(fooConfigs.initsMap);
+            keys.sort();
+
+            expect(keys).to.equal(initProps);
+
+            expect(inst.prop1).to.be(null);
+            expect(inst.prop2).to.be(undefined);
+            expect(inst.prop3).to.be(123);
+            expect(inst.prop4).to.be(true);
+            expect(inst.prop5).to.be(false);
+            expect(inst.prop6).to.be('hello');
+            expect(inst.prop7).to.be(fn);
+            expect(inst.prop8).to.be(re);
+            expect(inst.prop9).to.be(date);
+            expect(inst.prop10).to.be(array);
+            expect(inst.prop11).to.be(object);
+
+            const values = inst[Config.symbols.values];
+
+            expect(values.prop1).to.be(null);
+            expect(values.prop2).to.be(undefined);
+            expect(values.prop3).to.be(123);
+            expect(values.prop4).to.be(true);
+            expect(values.prop5).to.be(false);
+            expect(values.prop6).to.be('hello');
+            expect(values.prop7).to.be(fn);
+            expect(values.prop8).to.be(re);
+            expect(values.prop9).to.be(date);
+            expect(values.prop10).to.be(array);
+            expect(values.prop11).to.be(object);
+
+            expect(values).to.have.only.own.keys(
+                'prop3', 'prop4', 'prop5', 'prop6', 'prop7', 'prop8', 'prop9',
+                'prop10', 'prop11'
+            );
+
+            const defaults = Object.getPrototypeOf(values);
+
+            expect(defaults.prop1).to.be(null);
+            expect(defaults.prop2).to.be(undefined);
+
+            expect(defaults).to.have.only.own.keys('prop1', 'prop2');
+        });
+
+        it('should populate the inits array and map w/update methods', function () {
+            const array = [];
+            const fn = () => {};
+            const re = /abc/;
+            const date = new Date();
+            const object = {};
+
+            @define({
+                config: {
+                    // These should just go to the class "defaults" object:
+
+                    prop1: null,
+                    prop2: undefined,
+
+                    // These require initialization per-instance:
+
+                    prop3: 123,
+
+                    prop4: true,
+                    prop5: false,
+
+                    prop6: 'hello',
+
+                    prop7: fn,
+
+                    prop8: re,
+
+                    prop9: date,
+
+                    prop10: array,
+                    prop11: object
+                }
+            })
+            class Foo extends Widget {
+                prop1Update (v) { return v; }
+                prop2Update (v) { return v; }
+                prop3Update (v) { return v; }
+                prop4Update (v) { return v; }
+                prop5Update (v) { return v; }
+                prop6Update (v) { return v; }
+                prop7Update (v) { return v; }
+                prop8Update (v) { return v; }
+                prop9Update (v) { return v; }
+                prop10Update (v) { return v; }
+                prop11Update (v) { return v; }
+            }
+
+            let fooMeta = Foo.getMeta();
+            let fooConfigs = fooMeta.configs;
+
+            expect(fooConfigs.inits).to.be(null);
+            expect(fooConfigs.initsMap).to.be(null);
+
+            let inst = new Foo();
+            let initProps = fooConfigs.inits.map(cfg => cfg.name);
+
+            expect(initProps).to.equal([
+                'prop10', 'prop11',
+                'prop3', 'prop4', 'prop5', 'prop6', 'prop7', 'prop8', 'prop9'
+            ]);
+
+            let keys = Object.keys(fooConfigs.initsMap);
+            keys.sort();
+
+            expect(keys).to.equal(initProps);
+
+            expect(inst.prop1).to.be(null);
+            expect(inst.prop2).to.be(undefined);
+            expect(inst.prop3).to.be(123);
+            expect(inst.prop4).to.be(true);
+            expect(inst.prop5).to.be(false);
+            expect(inst.prop6).to.be('hello');
+            expect(inst.prop7).to.be(fn);
+            expect(inst.prop8).to.be(re);
+            expect(inst.prop9).to.be(date);
+            expect(inst.prop10).to.be(array);
+            expect(inst.prop11).to.be(object);
+
+            const values = inst[Config.symbols.values];
+
+            expect(values.prop1).to.be(null);
+            expect(values.prop2).to.be(undefined);
+            expect(values.prop3).to.be(123);
+            expect(values.prop4).to.be(true);
+            expect(values.prop5).to.be(false);
+            expect(values.prop6).to.be('hello');
+            expect(values.prop7).to.be(fn);
+            expect(values.prop8).to.be(re);
+            expect(values.prop9).to.be(date);
+            expect(values.prop10).to.be(array);
+            expect(values.prop11).to.be(object);
+
+            expect(values).to.have.only.own.keys(
+                'prop3', 'prop4', 'prop5', 'prop6', 'prop7', 'prop8', 'prop9',
+                'prop10', 'prop11'
+            );
+
+            const defaults = Object.getPrototypeOf(values);
+
+            expect(defaults.prop1).to.be(null);
+            expect(defaults.prop2).to.be(undefined);
+
+            expect(defaults).to.have.only.own.keys('prop1', 'prop2');
+        });
+
+        it('should populate the inits array and map w/initial and updater', function () {
+            const fn = () => {};
+            const re = /abc/;
+            const date = new Date();
+
+            @define({
+                config: {
+                    // These should just go to the class "defaults" object:
+
+                    prop1: null,
+                    prop2: undefined,
+
+                    // These require initialization per-instance:
+
+                    @initial
+                    prop3: 123,
+
+                    @initial
+                    prop4: true,
+                    @initial
+                    prop5: false,
+
+                    @initial
+                    prop6: 'hello',
+
+                    @initial
+                    prop7: fn,
+
+                    @initial
+                    prop8: re,
+
+                    @initial
+                    prop9: date
+                }
+            })
+            class Foo extends Widget {
+                prop1Update (v) { return v; }
+                prop2Update (v) { return v; }
+                prop3Update (v) { return v; }
+                prop4Update (v) { return v; }
+                prop5Update (v) { return v; }
+                prop6Update (v) { return v; }
+                prop7Update (v) { return v; }
+                prop8Update (v) { return v; }
+                prop9Update (v) { return v; }
+            }
+
+            let fooMeta = Foo.getMeta();
+            let fooConfigs = fooMeta.configs;
+
+            expect(fooConfigs.inits).to.be(null);
+            expect(fooConfigs.initsMap).to.be(null);
+
+            let inst = new Foo();
+            let initProps = fooConfigs.inits.map(cfg => cfg.name);
+
+            expect(initProps).to.equal([]);
+
+            let keys = Object.keys(fooConfigs.initsMap);
+            keys.sort();
+
+            expect(keys).to.equal(initProps);
+
+            expect(inst.prop1).to.be(null);
+            expect(inst.prop2).to.be(undefined);
+            expect(inst.prop3).to.be(123);
+            expect(inst.prop4).to.be(true);
+            expect(inst.prop5).to.be(false);
+            expect(inst.prop6).to.be('hello');
+            expect(inst.prop7).to.be(fn);
+            expect(inst.prop8).to.be(re);
+            expect(inst.prop9).to.be(date);
+
+            const values = inst[Config.symbols.values];
+
+            expect(values.prop1).to.be(null);
+            expect(values.prop2).to.be(undefined);
+            expect(values.prop3).to.be(123);
+            expect(values.prop4).to.be(true);
+            expect(values.prop5).to.be(false);
+            expect(values.prop6).to.be('hello');
+            expect(values.prop7).to.be(fn);
+            expect(values.prop8).to.be(re);
+            expect(values.prop9).to.be(date);
+
+            expect(values).to.have.only.own.keys(/* none */);
+
+            const defaults = Object.getPrototypeOf(values);
+
+            expect(defaults.prop1).to.be(null);
+            expect(defaults.prop2).to.be(undefined);
+
+            expect(defaults).to.have.only.own.keys(
+                'prop1', 'prop2', 'prop3', 'prop4', 'prop5', 'prop6', 'prop7', 'prop8',
+                'prop9'
+            );
+        });
+
+        it('should populate the defaults object w/cached configs', function () {
+            const array = [];
+            const fn = () => {};
+            const re = /abc/;
+            const date = new Date();
+            const object = {};
+
+            @define({
+                config: {
+                    @cached
+                    prop1: null,
+
+                    @cached
+                    prop2: undefined,
+
+                    @cached
+                    prop3: 123,
+
+                    @cached
+                    prop4: true,
+                    @cached
+                    prop5: false,
+
+                    @cached
+                    prop6: 'hello',
+
+                    @cached
+                    prop7: fn,
+
+                    @cached
+                    prop8: re,
+
+                    @cached
+                    prop9: date,
+
+                    @cached
+                    prop10: array,
+
+                    @cached
+                    prop11: object
+                }
+            })
+            class Foo extends Widget {
+                prop1Change (v) { throw new Error('do not call') }
+                prop2Change (v) { throw new Error('do not call') }
+                prop3Change (v) { return v * 10; }
+                prop4Change (v) { return !v; }
+                prop5Change (v) { return !v; }
+                prop6Change (v) { return v.toUpperCase(); }
+                prop7Change (v) { v.foo = 1; return v; }
+                prop8Change (v) { v.foo = 2; return v; }
+                prop9Change (v) { v.foo = 3; return v; }
+                prop10Change (v) { return ['foo'].concat(v); }
+                prop11Change (v) { return { foo: 4, v }; }
+            }
+
+            let fooMeta = Foo.getMeta();
+            let fooConfigs = fooMeta.configs;
+
+            expect(fooConfigs.inits).to.be(null);
+            expect(fooConfigs.initsMap).to.be(null);
+
+            let inst = new Foo();
+            let initProps = fooConfigs.inits.map(cfg => cfg.name);
+
+            expect(initProps).to.equal([]);
+
+            let keys = Object.keys(fooConfigs.initsMap);
+            keys.sort();
+
+            expect(keys).to.equal(initProps);
+
+            expect(inst.prop1).to.be(null);
+            expect(inst.prop2).to.be(undefined);
+            expect(inst.prop3).to.be(1230);
+            expect(inst.prop4).to.be(false);
+            expect(inst.prop5).to.be(true);
+            expect(inst.prop6).to.be('HELLO');
+            expect(inst.prop7).to.be(fn);
+            expect(inst.prop8).to.be(re);
+            expect(inst.prop9).to.be(date);
+            expect(inst.prop10).to.equal([ 'foo' ]);
+            expect(inst.prop11).to.equal({ foo: 4, v: object });
+
+            expect(fn.foo).to.be(1);
+            expect(re.foo).to.be(2);
+            expect(date.foo).to.be(3);
+
+            const values = inst[Config.symbols.values];
+
+            expect(values.prop1).to.be(null);
+            expect(values.prop2).to.be(undefined);
+            expect(values.prop3).to.be(1230);
+            expect(values.prop4).to.be(false);
+            expect(values.prop5).to.be(true);
+            expect(values.prop6).to.be('HELLO');
+            expect(values.prop7).to.be(fn);
+            expect(values.prop8).to.be(re);
+            expect(values.prop9).to.be(date);
+            expect(values.prop10).to.equal([ 'foo' ]);
+            expect(values.prop11).to.equal({ foo: 4, v: object });
+
+            expect(values).to.have.only.own.keys(/* none */);
+
+            const defaults = Object.getPrototypeOf(values);
+
+            expect(defaults.prop1).to.be(null);
+            expect(defaults.prop2).to.be(undefined);
+
+            expect(defaults).to.have.only.own.keys(
+                'prop1', 'prop2',
+                'prop3', 'prop4', 'prop5', 'prop6', 'prop7', 'prop8', 'prop9',
+                'prop10', 'prop11'
+            );
+        });
+
+        it('should populate the defaults object w/cached configs even if configured', function () {
+            const array = [];
+            const fn = () => {};
+            const re = /abc/;
+            const date = new Date();
+            const object = {};
+
+            const log = [];
+
+            @define({
+                config: {
+                    // These should just go to the class "defaults" object:
+
+                    @cached
+                    prop1: null,
+
+                    @cached
+                    prop2: undefined,
+
+                    // These require initialization per-instance:
+
+                    @cached
+                    prop3: 123,
+
+                    @cached
+                    prop4: true,
+                    @cached
+                    prop5: false,
+
+                    @cached
+                    prop6: 'hello',
+
+                    @cached
+                    prop7: fn,
+
+                    @cached
+                    prop8: re,
+
+                    @cached
+                    prop9: date,
+
+                    @cached
+                    prop10: array,
+
+                    @cached
+                    prop11: object
+                }
+            })
+            class Foo extends Widget {
+                prop1Change (v)  { log.push([ 'prop1', v ]); return v; }
+                prop2Change (v)  { log.push([ 'prop2', v ]); return v; }
+                prop3Change (v)  { log.push([ 'prop3', v ]); return v; }
+                prop4Change (v)  { log.push([ 'prop4', v ]); return v; }
+                prop5Change (v)  { log.push([ 'prop5', v ]); return v; }
+                prop6Change (v)  { log.push([ 'prop6', v ]); return v; }
+                prop7Change (v)  { log.push([ 'prop7', v ]); return v; }
+                prop8Change (v)  { log.push([ 'prop8', v ]); return v; }
+                prop9Change (v)  { log.push([ 'prop9', v ]); return v; }
+                prop10Change (v) { log.push([ 'prop10', v ]); return v; }
+                prop11Change (v) { log.push([ 'prop11', v ]); return v; }
+            }
+
+            let fooMeta = Foo.getMeta();
+            let fooConfigs = fooMeta.configs;
+
+            expect(fooConfigs.inits).to.be(null);
+            expect(fooConfigs.initsMap).to.be(null);
+global.foo = 1;
+            let inst = new Foo({
+                prop1: 'a',
+                prop2: 'b',
+                prop3: 'c',
+                prop4: 'd',
+                prop5: 'e',
+                prop6: 'f',
+                prop7: 'g',
+                prop8: 'h',
+                prop9: 'i',
+                prop10: undefined,
+                prop11: null
+            });
+            let initProps = fooConfigs.inits.map(cfg => cfg.name);
+
+            expect(initProps).to.equal([]);
+
+            let keys = Object.keys(fooConfigs.initsMap);
+            keys.sort();
+
+            expect(keys).to.equal(initProps);
+
+            expect(inst.prop1).to.be('a');
+            expect(inst.prop2).to.be('b');
+            expect(inst.prop3).to.be('c');
+            expect(inst.prop4).to.be('d');
+            expect(inst.prop5).to.be('e');
+            expect(inst.prop6).to.be('f');
+            expect(inst.prop7).to.be('g');
+            expect(inst.prop8).to.be('h');
+            expect(inst.prop9).to.be('i');
+            expect(inst.prop10).to.be(undefined);
+            expect(inst.prop11).to.be(null);
+
+            expect(fn.foo).to.be(1);
+            expect(re.foo).to.be(2);
+            expect(date.foo).to.be(3);
+
+            const values = inst[Config.symbols.values];
+
+            expect(values.prop1).to.be('a');
+            expect(values.prop2).to.be('b');
+            expect(values.prop3).to.be('c');
+            expect(values.prop4).to.be('d');
+            expect(values.prop5).to.be('e');
+            expect(values.prop6).to.be('f');
+            expect(values.prop7).to.be('g');
+            expect(values.prop8).to.be('h');
+            expect(values.prop9).to.be('i');
+            expect(values.prop10).to.be(undefined);
+            expect(values.prop11).to.be(null);
+
+            expect(values).to.have.only.own.keys(
+                'prop1', 'prop2',
+                'prop3', 'prop4', 'prop5', 'prop6', 'prop7', 'prop8', 'prop9',
+                'prop10', 'prop11'
+            );
+
+            const defaults = Object.getPrototypeOf(values);
+
+            expect(defaults.prop1).to.be(null);
+            expect(defaults.prop2).to.be(undefined);
+
+            expect(defaults).to.have.only.own.keys(
+                'prop1', 'prop2',
+                'prop3', 'prop4', 'prop5', 'prop6', 'prop7', 'prop8', 'prop9',
+                'prop10', 'prop11'
+            );
+        });
+    }); // internals
 
     describe('behaviors', function () {
         describe('first instances', function () {

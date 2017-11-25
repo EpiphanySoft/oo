@@ -482,7 +482,7 @@ class Meta {
         let defs = configs.defs;
         let cfg, name, value;
 
-
+if (global.foo) { global.foo = 0; debugger }
         if (me.instances > 1) {
             // This object is the backing store for config properties.
             instance[Config.symbols.values] = Object.create(configs.defaults);
@@ -554,11 +554,10 @@ class Meta {
         let inits = configs.inits = [];
         let initsMap = configs.initsMap = new Empty();
         let prototype = me.class.prototype;
-        let instanceValues = instance[Config.symbols.values];
-        let cfg, name, simple, value;
+        let cfg, instanceValues, name, simple, value;
 
         instance[Config.symbols.init] = configValues;
-        instance[Config.symbols.values] = Object.create(defaults);
+        instance[Config.symbols.values] = instanceValues = Object.create(defaults);
 
         configNames.sort();
 
@@ -568,7 +567,7 @@ class Meta {
 
             simple = value == null || (cfg.initial && value === cfg.initialValue);
             if (!simple) {
-                simple = !prototype[cfg.applier] && !prototype[cfg.updater] &&
+                simple = !prototype[cfg.changer] && !prototype[cfg.updater] &&
                          typeof value !== 'object';
             }
 

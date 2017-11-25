@@ -93,6 +93,10 @@ module.exports = {
     //-----------------------------------------------------------------------
     // Configs
 
+    cached (instance, name, descriptor) {
+        Config.addMeta(descriptor, 'cached', true);
+    },
+
     /**
      * Defines the initial value of a config. This value will be applied without running
      * through the normal apply/update process when set during construction.
