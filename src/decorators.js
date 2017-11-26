@@ -85,13 +85,15 @@ module.exports = {
     junction (targetCls, name, descriptor) {
         let fn = descriptor.value;
 
-        if (typeof fn === 'function') {
-            fn[Meta.symbols.junction] = true;
-        }
+        fn[Meta.symbols.junction] = true;
     },
 
     //-----------------------------------------------------------------------
     // Configs
+
+    cached (instance, name, descriptor) {
+        Config.addMeta(descriptor, 'cached', true);
+    },
 
     /**
      * Defines the initial value of a config. This value will be applied without running

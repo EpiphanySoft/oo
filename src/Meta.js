@@ -5,7 +5,7 @@ const Configs = require('./Configs.js');
 const Processor = require('./Processor.js');
 const Util = require('./Util.js');
 
-const { clone, Empty, EMPTY, getAllKeys, getOwnKeys, raise, setProto } = Util;
+const { Empty, getAllKeys, getOwnKeys, raise, setProto } = Util;
 
 const junctionSym = Symbol('junction');
 
@@ -477,8 +477,16 @@ class Meta {
     initConfig (instance, instanceConfig) {
         let me = this;
         let configs = me.configs;
+        let mergedConfig = new Empty();
+        let configValues = configs.values;
+        let defs = configs.defs;
+        let cfg, name, value;
 
-        if (me.instances < 2) {
+        if (me.instances > 1) {
+            // This object is the backing store for config properties.
+            instance[Config.symbols.values] = Object.create(configs.defaults);
+        }
+        else {
             me.initFirstInstance(instance);
 
             if (instance.afterCachedConfig) {
@@ -486,22 +494,14 @@ class Meta {
             }
         }
 
-        let mergedConfig = new Empty();
-        let configValues = configs.values;
-        let defs = configs.defs;
-        let inits = configs.inits;
-        let initsMap = configs.initsMap;
-        let cfg, name, value;
-
         // The mergedConfig is stored on the instance for use by the initializer. It is
         // used here for immediately initialized properties, but also later for any lazy
         // configs.
         instance[Config.symbols.init] = mergedConfig;
 
-        // This object is the backing store for config properties.
-        instance[Config.symbols.values] = Object.create(configs.defaults);
+        let initsMap = configs.initsMap; // this is setup by initFirstInstance()
 
-        for (cfg of inits) {
+        for (cfg of configs.inits) {
             cfg.define(instance, /*init=*/true);
 
             mergedConfig[cfg.name] = configValues[cfg.name];
@@ -535,7 +535,7 @@ class Meta {
 
         for (name of configs.names) {
             if (name in initsMap || (instanceConfig && (name in instanceConfig))) {
-                if (instance.hasOwnProperty(name) && !defs[name].lazy) {
+                if (!defs[name].lazy && instance.hasOwnProperty(name)) {
                     instance[name] = mergedConfig[name];
                 }
             }
@@ -566,7 +566,7 @@ class Meta {
 
             simple = value == null || (cfg.initial && value === cfg.initialValue);
             if (!simple) {
-                simple = !prototype[cfg.applier] && !prototype[cfg.updater] &&
+                simple = !prototype[cfg.changer] && !prototype[cfg.updater] &&
                          typeof value !== 'object';
             }
 

@@ -26,23 +26,30 @@ state. These are:
 
 ## Instance Methods
 
-`Widget` defines the following methods:
+`Widget` defines the following life-cycle methods:
 
- - callChain
- - callChainRev
+ - [construct](#_construct)
+ - [destruct](#_construct)
+ - [destroy](#_lifeCycle)
+
+In addition, `Widget` defines these methods:
+
+ - [callChain](./Processors.md#_chains)
+ - [callChainRev](./Processors.md#_chains)
  - configure
  - getMeta
- - reconfigure
+
+<a name="_lifeCycle">
 
 ## Life-cycle
 
-The `constructor` of `Widget` expects a single `Object` parameter that holds configuration
-properties (described later). It is not recommended that a derived class implement a
-`constructor`, but instead take advantage of the `ctor` method.
+The `constructor` of `Widget` recognizes a single `Object` parameter that holds instance
+configuration properties (described later). It is recommended that a derived class not
+implement a `constructor`, but instead take advantage of the `ctor` method.
 
 `Widget` also defines a `destroy` method that is used to cleanup any resources that the GC
-(garbage collector) won't handle. It is also not recommended that derived classes override
-the `destroy` method but instead implement a `dtor` method.
+(garbage collector) won't handle. It is also recommended that derived classes not override
+the `destroy` method, but instead implement a `dtor` method.
 
 These methods ensure the following:
 
@@ -126,11 +133,14 @@ For example:
 The `dtor` implementations are called "bottom up" from the derived-most class upwards to
 the `Widget` class.
 
+<a name="_construct">
+
 ### construct / destruct
 
 There are times when some manual involvement in the life-cycle is needed. In these cases
-there are the `construct` and `destruct` methods. The implementations of these methods in
-`Widget` invoke the `ctor` and `dtor` methods, respectively.
+there are the `construct` and `destruct` methods which are called by the `constructor` and
+`destroy` method, respectively. It is these implementations in the `Widget` base class
+that invoke the `ctor` and `dtor` methods.
 
 ```javascript
     class MyClass extends Widget {

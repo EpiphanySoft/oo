@@ -17,20 +17,6 @@ Object.defineProperty(Empty.prototype = Object.create(null), 'hasOwnProperty', {
     value: Object.prototype.hasOwnProperty
 });
 
-class MyMap extends Map {
-    addAll (src) {
-        for (let [key, value] of src) {
-            this.add(key, value);
-        }
-
-        return this;
-    }
-
-    clone () {
-        return new MyMap().addAll(this);
-    }
-}
-
 class MySet extends Set {
     constructor () {
         super();
@@ -54,7 +40,6 @@ const Util = {
 
     Empty: Empty,
     EMPTY: Object.freeze([]),
-    Map: MyMap,
     Set: MySet,
 
     capitalize (str) {
@@ -133,21 +118,7 @@ const Util = {
         return keys;
     },
 
-    getOwnKeys (object) {
-        let keys = getOwnNames(object);
-        let symbols = getOwnSymbols(object);
-
-        if (keys.length) {
-            if (symbols.length) {
-                keys.push(...symbols);
-            }
-        }
-        else {
-            keys = symbols;
-        }
-
-        return keys;
-    },
+    getOwnKeys: getOwnNames,
 
     merge (target, ...sources) {
         if (target) {
@@ -222,26 +193,37 @@ const Util = {
     }
 };
 
-if (!getOwnSymbols) {
-    Util.getOwnKeys = getOwnNames;
+if (getOwnSymbols) {
+    Util.getOwnKeys = function (object) {
+        let keys = getOwnNames(object);
+        let symbols = getOwnSymbols(object);
+
+        if (keys.length) {
+            if (symbols.length) {
+                keys.push(...symbols);
+            }
+        }
+        else {
+            keys = symbols;
+        }
+
+        return keys;
+    };
 }
 
-Util.setProto = Object.setPrototypeOf || (function () {
-    let base = { works: 1 };
-    let extended = {};
+Util.setProto = Util.noSetProto = function () {
+    Util.raise(`Cannot polyfill setPrototypeOf`);
+};
 
-    extended.__proto__ = base;
+Util.setProto__ = function (object, prototype) {
+    object.__proto__ = prototype;
+};
 
-    if (!extended.works) {
-        return function () {
-            Util.raise(`Cannot polyfill setPrototypeOf`);
-        };
-    }
+let base = { works: 1 };
+let pr = {};
+pr.__proto__ = base;
 
-    return function (object, prototype) {
-        object.__proto__ = prototype;
-    };
-}());
+Util.setProto = Object.setPrototypeOf || (pr.works && Util.setProto__) || Util.setProto;
 
 Object.assign(Util.typeOf, {
     cache: new Empty(),
