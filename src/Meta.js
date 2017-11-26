@@ -5,7 +5,7 @@ const Configs = require('./Configs.js');
 const Processor = require('./Processor.js');
 const Util = require('./Util.js');
 
-const { clone, Empty, EMPTY, getAllKeys, getOwnKeys, raise, setProto } = Util;
+const { Empty, getAllKeys, getOwnKeys, raise, setProto } = Util;
 
 const junctionSym = Symbol('junction');
 
@@ -482,7 +482,6 @@ class Meta {
         let defs = configs.defs;
         let cfg, name, value;
 
-if (global.foo) { global.foo = 0; debugger }
         if (me.instances > 1) {
             // This object is the backing store for config properties.
             instance[Config.symbols.values] = Object.create(configs.defaults);

@@ -274,33 +274,44 @@ describe('Configs', function () {
             expect(values).to.equal([ 123 ]);
         });
 
-        it('should mixin a basic config', function () {
+        it('should mixin only new configs', function () {
             @define({
                 config: {
-                    foo: 123
+                    foo: 123,
+                    bar: 'xyz',
+                    zip: 'zap'
                 }
             })
             class Bar extends Widget {}
 
             @define({
-                mixins: Bar
+                config: {
+                    zip: 'woot'
+                }
             })
-            class Foo extends Widget {}
+            class Super extends Widget {}
+
+            @define({
+                mixins: Bar,
+                config: {
+                    foo: 456
+                }
+            })
+            class Foo extends Super {}
 
             let fooMeta = Foo.getMeta();
             let configs = fooMeta.configs.defs;
             let configValues = fooMeta.configs.values;
-            let names = Object.keys(configs);
 
-            expect(names).to.equal([ 'foo' ]);
+            expect(configs).to.have.only.keys('foo', 'bar', 'zip');
 
-            names = Object.keys(configValues);
+            expect(configValues).to.have.only.keys('foo', 'bar','zip');
 
-            expect(names).to.equal([ 'foo' ]);
-
-            let values = Object.values(configValues);
-
-            expect(values).to.equal([ 123 ]);
+            expect(configValues).to.flatly.equal({
+                foo: 456,
+                bar: 'xyz',
+                zip: 'woot'
+            });
 
             let barMeta = Bar.getMeta();
 
@@ -834,7 +845,7 @@ describe('Configs', function () {
             const fn = () => {};
             const re = /abc/;
             const date = new Date();
-            const object = {};
+            const object = { foo: 1 };
 
             const log = [];
 
@@ -878,17 +889,25 @@ describe('Configs', function () {
                 }
             })
             class Foo extends Widget {
-                prop1Change (v)  { log.push([ 'prop1', v ]); return v; }
-                prop2Change (v)  { log.push([ 'prop2', v ]); return v; }
-                prop3Change (v)  { log.push([ 'prop3', v ]); return v; }
-                prop4Change (v)  { log.push([ 'prop4', v ]); return v; }
-                prop5Change (v)  { log.push([ 'prop5', v ]); return v; }
-                prop6Change (v)  { log.push([ 'prop6', v ]); return v; }
-                prop7Change (v)  { log.push([ 'prop7', v ]); return v; }
-                prop8Change (v)  { log.push([ 'prop8', v ]); return v; }
-                prop9Change (v)  { log.push([ 'prop9', v ]); return v; }
-                prop10Change (v) { log.push([ 'prop10', v ]); return v; }
-                prop11Change (v) { log.push([ 'prop11', v ]); return v; }
+                prop1Change  (...args)  { log.push([ 'p1', args ]); return args[0]; }
+                prop2Change (...args)  { log.push([ 'p2', args ]); return args[0]; }
+                prop3Change (...args)  { log.push([ 'p3', args ]); return args[0]; }
+                prop4Change (...args)  { log.push([ 'p4', args ]); return args[0]; }
+                prop5Change (...args)  { log.push([ 'p5', args ]); return args[0]; }
+                prop6Change (...args)  { log.push([ 'p6', args ]); return args[0]; }
+                prop7Change (...args)  { log.push([ 'p7', args ]); return args[0]; }
+                prop8Change (...args)  { log.push([ 'p8', args ]); return args[0]; }
+                prop9Change (...args)  { log.push([ 'p9', args ]); return args[0]; }
+                prop10Change (...args) { log.push([ 'p10', args ]); return args[0]; }
+                prop11Change (...args) { log.push([ 'p11', args ]); return args[0]; }
+
+                afterCachedConfig () {
+                    log.push('afterCachedConfig');
+                }
+
+                beforeInitConfig () {
+                    log.push('beforeInitConfig');
+                }
             }
 
             let fooMeta = Foo.getMeta();
@@ -896,7 +915,7 @@ describe('Configs', function () {
 
             expect(fooConfigs.inits).to.be(null);
             expect(fooConfigs.initsMap).to.be(null);
-global.foo = 1;
+
             let inst = new Foo({
                 prop1: 'a',
                 prop2: 'b',
@@ -907,9 +926,36 @@ global.foo = 1;
                 prop7: 'g',
                 prop8: 'h',
                 prop9: 'i',
-                prop10: undefined,
+                prop10: null,
                 prop11: null
             });
+
+            expect(log).to.equal([
+                [ 'p10', [ array, undefined ] ],
+                [ 'p11', [ object, undefined ] ],
+                [ 'p3',  [ 123, undefined ] ],
+                [ 'p4',  [ true, undefined ] ],
+                [ 'p5',  [ false, undefined ] ],
+                [ 'p6',  [ 'hello', undefined ] ],
+                [ 'p7',  [ fn, undefined ] ],
+                [ 'p8',  [ re, undefined ] ],
+                [ 'p9',  [ date, undefined ] ],
+                'afterCachedConfig',
+
+                'beforeInitConfig',
+                [ 'p1', [ 'a', null ] ],
+                [ 'p10', [ null, array ] ],
+                [ 'p11', [ null, object ] ],
+                [ 'p2', [ 'b', undefined ] ],
+                [ 'p3', [ 'c', 123 ] ],
+                [ 'p4', [ 'd', true ] ],
+                [ 'p5', [ 'e', false ] ],
+                [ 'p6', [ 'f', 'hello' ] ],
+                [ 'p7', [ 'g', fn ] ],
+                [ 'p8', [ 'h', re ] ],
+                [ 'p9', [ 'i', date ] ]
+            ]);
+
             let initProps = fooConfigs.inits.map(cfg => cfg.name);
 
             expect(initProps).to.equal([]);
@@ -928,12 +974,8 @@ global.foo = 1;
             expect(inst.prop7).to.be('g');
             expect(inst.prop8).to.be('h');
             expect(inst.prop9).to.be('i');
-            expect(inst.prop10).to.be(undefined);
+            expect(inst.prop10).to.be(null);
             expect(inst.prop11).to.be(null);
-
-            expect(fn.foo).to.be(1);
-            expect(re.foo).to.be(2);
-            expect(date.foo).to.be(3);
 
             const values = inst[Config.symbols.values];
 
@@ -946,7 +988,7 @@ global.foo = 1;
             expect(values.prop7).to.be('g');
             expect(values.prop8).to.be('h');
             expect(values.prop9).to.be('i');
-            expect(values.prop10).to.be(undefined);
+            expect(values.prop10).to.be(null);
             expect(values.prop11).to.be(null);
 
             expect(values).to.have.only.own.keys(
@@ -956,6 +998,80 @@ global.foo = 1;
             );
 
             const defaults = Object.getPrototypeOf(values);
+
+            expect(defaults.prop1).to.be(null);
+            expect(defaults.prop2).to.be(undefined);
+
+            expect(defaults).to.have.only.own.keys(
+                'prop1', 'prop2',
+                'prop3', 'prop4', 'prop5', 'prop6', 'prop7', 'prop8', 'prop9',
+                'prop10', 'prop11'
+            );
+
+            log.length = 0;
+
+            let inst2 = new Foo({
+                prop1: 'a',
+                prop2: 'b',
+                prop3: 'c',
+                prop4: 'd',
+                prop5: 'e',
+                prop6: 'f',
+                prop7: 'g',
+                prop8: 'h',
+                prop9: 'i',
+                prop10: null,
+                prop11: {
+                    bar: 2
+                }
+            });
+
+            expect(log).to.equal([
+                'beforeInitConfig',
+                [ 'p1', [ 'a', null ] ],
+                [ 'p10', [ null, array ] ],
+                [ 'p11', [ { foo:1, bar:2 }, object ] ],
+                [ 'p2', [ 'b', undefined ] ],
+                [ 'p3', [ 'c', 123 ] ],
+                [ 'p4', [ 'd', true ] ],
+                [ 'p5', [ 'e', false ] ],
+                [ 'p6', [ 'f', 'hello' ] ],
+                [ 'p7', [ 'g', fn ] ],
+                [ 'p8', [ 'h', re ] ],
+                [ 'p9', [ 'i', date ] ]
+            ]);
+
+            expect(inst2.prop1).to.be('a');
+            expect(inst2.prop2).to.be('b');
+            expect(inst2.prop3).to.be('c');
+            expect(inst2.prop4).to.be('d');
+            expect(inst2.prop5).to.be('e');
+            expect(inst2.prop6).to.be('f');
+            expect(inst2.prop7).to.be('g');
+            expect(inst2.prop8).to.be('h');
+            expect(inst2.prop9).to.be('i');
+            expect(inst2.prop10).to.be(null);
+            expect(inst2.prop11).to.equal({ foo:1, bar:2 });
+
+            const values2 = inst2[Config.symbols.values];
+
+            expect(values2.prop1).to.be('a');
+            expect(values2.prop2).to.be('b');
+            expect(values2.prop3).to.be('c');
+            expect(values2.prop4).to.be('d');
+            expect(values2.prop5).to.be('e');
+            expect(values2.prop6).to.be('f');
+            expect(values2.prop7).to.be('g');
+            expect(values2.prop8).to.be('h');
+            expect(values2.prop9).to.be('i');
+            expect(values2.prop10).to.be(null);
+            expect(values2.prop11).to.equal({ foo:1, bar:2 });
+
+            expect(values2).to.have.only.own.keys(
+                'prop1', 'prop2',
+                'prop3', 'prop4', 'prop5', 'prop6', 'prop7', 'prop8', 'prop9',
+                'prop10', 'prop11'
+            );
 
             expect(defaults.prop1).to.be(null);
             expect(defaults.prop2).to.be(undefined);

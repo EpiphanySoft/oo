@@ -424,4 +424,22 @@ describe('Widget', function () {
             expect(Bar2.fooWasHere).to.be('(z=c)(x=a)(y=b)');
         });
     });
+
+    describe('decorators', function () {
+        it('should adopt on @define', function () {
+            @define({
+                prototype: {
+                    bar: 123
+                },
+
+                processors: [
+                    'prototype'
+                ]
+            })
+            class Foo {}
+
+            expect(Foo.define).to.be.a('function');
+            expect(Foo.prototype.bar).to.be(123);
+        });
+    });
 });

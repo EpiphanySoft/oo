@@ -85,9 +85,7 @@ module.exports = {
     junction (targetCls, name, descriptor) {
         let fn = descriptor.value;
 
-        if (typeof fn === 'function') {
-            fn[Meta.symbols.junction] = true;
-        }
+        fn[Meta.symbols.junction] = true;
     },
 
     //-----------------------------------------------------------------------

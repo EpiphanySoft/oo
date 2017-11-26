@@ -77,7 +77,7 @@ class Config {
 
     merge (value, newValue, target = null, mixinMeta = null) {
         if (mixinMeta) {
-            return value;
+            return value;  //UNC
         }
 
         if (newValue && newValue.constructor === Object) {
