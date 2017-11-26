@@ -41,6 +41,18 @@ describe('Widget', function () {
             chains.sort();
             expect(chains).to.equal([ 'ctor', 'dtor' ]);
         });
+
+        it('should have a destroy method', function () {
+            class W extends Widget {}
+
+            let inst = new W();
+
+            inst.destroy();  // determines there is no dtor...
+
+            inst = new W();
+
+            inst.destroy();  // now it won't even look for dtors
+        });
     });
 
     describe('life-cycle', function () {
@@ -139,6 +151,13 @@ describe('Widget', function () {
 
         it('should be able to destroy a derived instance', function () {
             let instance = new D();
+
+            log = [];
+            instance.destroy();
+
+            expect(log).to.equal([ 'D.dtor', 'C.dtor' ]);
+
+            instance = new D();
 
             log = [];
             instance.destroy();
@@ -422,6 +441,66 @@ describe('Widget', function () {
             }
 
             expect(Bar2.fooWasHere).to.be('(z=c)(x=a)(y=b)');
+        });
+    });
+
+    describe('method chains', function () {
+        it('should allow new chains', function () {
+            let log = [];
+
+            @define({
+                chains: [ 'fwd', 'rev' ]
+            })
+            class W extends Widget {
+                forward (x) {
+                    this.callChain('fwd', x);
+                }
+
+                reverse (x) {
+                    this.callChainRev('rev', x);
+                }
+            }
+
+            class X extends W {
+                fwd (...args) {
+                    log.push([ 'x.fwd', args ]);
+                }
+
+                rev (...args) {
+                    log.push([ 'x.rev', args ]);
+                }
+            }
+
+            class Y extends X {
+                fwd (...args) {
+                    log.push([ 'y.fwd', args ]);
+                }
+
+                rev (...args) {
+                    log.push([ 'y.rev', args ]);
+                }
+            }
+
+            let inst = new Y();
+
+            expect(log).to.equal([]);
+
+            inst.forward(24);
+
+            expect(log).to.equal([
+                [ 'x.fwd', [ 24 ] ],
+                [ 'y.fwd', [ 24 ] ]
+            ]);
+
+            inst.reverse(42);
+
+            expect(log).to.equal([
+                [ 'x.fwd', [ 24 ] ],
+                [ 'y.fwd', [ 24 ] ],
+
+                [ 'y.rev', [ 42 ] ],
+                [ 'x.rev', [ 42 ] ]
+            ]);
         });
     });
 
