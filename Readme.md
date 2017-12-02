@@ -4,14 +4,14 @@
 [![MIT Licence](https://badges.frapsoft.com/os/mit/mit.svg?v=103)](https://opensource.org/licenses/mit-license.php)
 
 `oo` is an object-oriented (OO) library. It's primary exports are the `Widget` base class
-and `@define` decorator.
+and `@define` [decorator](https://github.com/tc39/proposal-decorators#decorators).
 
 Widgets are just "interesting" objects. Interesting objects are those that have behaviors
 such as a managed life-cycle (not just garbage collected) or properties with side-effects,
 or perhaps belong to class hierarchies.
 
-The `Widget` base class provides patterns and features that allow your code to focus on
-its goal rather than all of the mechanical pieces that burden such "interesting" classes.
+The `Widget` base class provides patterns and features that allow you to not implement the
+mechanics required by such "interesting" classes.
 
 A simple example is the `destroy()` method. This common pattern for cleaning up resources
 has the equally common task of ensuring that multiple (possibly accidental) calls to
