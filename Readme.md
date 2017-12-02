@@ -3,20 +3,18 @@
 [![Coverage Status](https://coveralls.io/repos/github/EpiphanySoft/oo/badge.svg?branch=master)](https://coveralls.io/github/EpiphanySoft/oo?branch=master)
 [![MIT Licence](https://badges.frapsoft.com/os/mit/mit.svg?v=103)](https://opensource.org/licenses/mit-license.php)
 
-`oo` is a class-based, object-oriented (OO) library for ES6+. `oo` expands on JavaScript
-`class` to add powerful capabilities to [classes](./docs/Classes.md) and their
-[instances](./docs/Instances.md).
+`oo` is a class-based, object-oriented (OO) library. It's primary exports are its `Widget`
+base class and `@define` decorator.
 
-The primary entry points for `oo` are `Widget` and `@define`. Widgets are just "interesting"
-objects. Interesting objects are those that have features such as a managed life-cycle (not
-just garbarge collected), properties with side-effects or belong to class hierarchies that
-have
+Widgets are just "interesting" objects. Interesting objects are those that have behaviors
+such as a managed life-cycle (not just garbage collected) or properties with side-effects,
+or perhaps belong to class hierarchies.
 
 The `Widget` base class provides patterns and features that allow your code to focus on
-its goal rather than all of the mechanical pieces that burden most classes. One simple
-example is the `destroy()` method. This common pattern for cleaning up resources has the
-equally common task of ensuring that multiple (possibly accidental) calls to `destroy()`
-don't result in an exception:
+its goal rather than all of the mechanical pieces that burden "interesting" classes. One
+simple example is the `destroy()` method. This common pattern for cleaning up resources
+has the equally common task of ensuring that multiple (possibly accidental) calls to
+`destroy()` don't result in an exception:
 
 ```javascript
     class Foo {
@@ -32,12 +30,10 @@ don't result in an exception:
 ```
 
 While this is typically easy to handle (when it is detected), "paranoia code" just makes
-the overall codebase that much more complex. Using `Widget`, the `destroy()` method is
-guarded to ensure that secondary calls are ignored.
+the overall codebase that much more complex. Using `Widget`, the `destroy()` method ensures
+that secondary calls are ignored.
 
-This is just the start of what `Widget` offers to make classes easier to get right.
-
-The core features of [Widget](./docs/Widget.md) are:
+This example is just the start of what [Widget](./docs/Widget.md) provides:
 
  - [Common life-cycle](#_lifecycle)
  - [Mixins](#_mixins) (or multiple inheritance) ([more](./docs/Mixins.md))
@@ -54,9 +50,14 @@ the helper class [Meta](./docs/Meta.md) (for "meta-class").
 
 # Life-cycle
 
-The `Widget` class defines two method chains (`ctor` and `dtor`) to manage life-cycle. The
-`ctor` method is called "top down" during object instantiation while `dtor` is called
-"bottom up" when `destroy()` is called.
+The `Widget` class defines two [method chains](#_chains) (`ctor` and `dtor`) to manage
+object life-cycle. Method chains are a powerful construct that are explained in general
+elsewhere, but their role in object life-cycle should make their value clear.
+
+The `ctor` method is called during object instantiation while `dtor` is called during
+destruction (initiated by `destroy()`).
+
+Consider:
 
 ```javascript
     import { Widget } from '@epiphanysoft/oo';
@@ -82,22 +83,22 @@ The `Widget` class defines two method chains (`ctor` and `dtor`) to manage life-
     }
     
     let inst = new MyDerived();
-```
-    
-    > MyClass ctor
-    > MyDerived ctor
-    
-```javascript
+    console.log('----');
     inst.destroy();
 ```
 
+When the above code executes, the output will look like this:
+    
+    > MyClass ctor
+    > MyDerived ctor
+    > ----
     > MyDerived dtor
     > MyClass dtor
 
-In general, method chains are tied to their defining class and can be called in either
-"top down" (forward) or "bottom up" (reverse) order. In the case of `ctor` and `dtor`,
-these chains are automatically called by the `constructor` and `destroy` methods of
-`Widget`, respectively.
+In general, methods in a method chain are tied to their defining class and are called in
+either "top down" (forward) or "bottom up" (reverse) order. For life-cycle methods such as
+these, `ctor` is called in forward order and `dtor` in reverse. These particular method
+chains are invoked by the `constructor` and `destroy` methods of `Widget`, respectively.
 
 <a name="_mixins">
 
