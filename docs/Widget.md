@@ -20,7 +20,7 @@ state. These are:
  - `configuring` Set to `true` prior to calling `configure` and cleared afterward.
  - `destroying` Set to `true` on entry to `destroy()` (never cleared).
  - `destroyed` Set to `true` on exit from `destroy()`.
- - `meta` A readonly reference to the class's [Meta](#_meta) class.
+ - `meta` A readonly [reference](#_meta) to the class's [Meta](./Meta.md) class.
 
 ## Instance Methods
 
