@@ -101,6 +101,10 @@ either "top down" (forward) or "bottom up" (reverse) order. For life-cycle metho
 these, `ctor` is called in forward order and `dtor` in reverse as can be seen by the order
 of their `log()` statements.
 
+The key benefits of method chains are two-fold: first, there is no need for `super` calls
+sprinkled all over, or worse, accidentally forgotten; second, the calls are always made
+in the correct order.
+
 See [here](./docs/Widget.md#_lifeCycle) for more on the `Widget` life-cycle.
 
 <a name="_mixins">
@@ -108,7 +112,7 @@ See [here](./docs/Widget.md#_lifeCycle) for more on the `Widget` life-cycle.
 # Mixins
 
 Mixins provide a form of multiple-inheritance that allows behavior reuse beyond JavaScript's
-standard, single-inheritance model.
+single-inheritance model.
 
 Unlike other approaches to mixins, in `oo` mixins are widgets. In other words, mixins are
 just like any other `Widget` class. In particular, they participate in the common object

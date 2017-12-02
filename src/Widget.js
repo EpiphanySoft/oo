@@ -84,11 +84,8 @@ Widget.define({
         mixins: 'chains',
         config: 'mixins'
 
-        // mixinId and processors are deliberately not defined. The "mixinId" processor
-        // is only of use when the class is mixed in to another class (so it has no
-        // interaction with other aspects of the class on which it is used). As for the
-        // "processors" processor, because it defines other processors, it is hoisted to
-        // the first in every case.
+        // The "processors" processor is deliberately not defined because it defines
+        // other processors, it is hoisted to the first in every case.
     },
 
     properties: {

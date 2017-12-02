@@ -36,8 +36,8 @@ In addition, `Widget` defines these methods:
 
  - [callChain](./Processors.md#_chains)
  - [callChainRev](./Processors.md#_chains)
- - configure
- - getMeta
+ - [configure](#_configure)
+ - [getMeta](#_meta)
 
 <a name="_lifeCycle">
 
@@ -140,7 +140,7 @@ the `Widget` class.
 There are times when some manual involvement in the life-cycle is needed. In these cases
 there are the `construct` and `destruct` methods which are called by the `constructor` and
 `destroy` method, respectively. It is these implementations in the `Widget` base class
-that invoke the `ctor` and `dtor` methods.
+that invoke the `ctor` and `dtor` [method chains](./Mixins.md#_chains).
 
 ```javascript
     class MyClass extends Widget {
@@ -176,18 +176,30 @@ that invoke the `ctor` and `dtor` methods.
     }
     
     let inst = new MyDerived();
-```
-    
-    > MyDerived before construct    
-    > MyClass ctor
-    > MyDerived ctor
-    > MyDerived after construct    
-
-```javascript
+    console.log('---');
     inst.destroy();
 ```
 
-    > MyDerived before destruct    
+Produces:
+
+    > MyDerived before construct
+    > MyClass ctor
+    > MyDerived ctor
+    > MyDerived after construct
+    > ---
+    > MyDerived before destruct
     > MyDerived dtor
     > MyClass dtor
-    > MyDerived after destruct    
+    > MyDerived after destruct
+
+<a name="_configure">
+
+## Configuration
+
+TODO
+
+<a name="_meta">
+
+## Meta Class
+
+TODO

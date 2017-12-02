@@ -4,7 +4,6 @@ The `@define` decorator understands the following built-in processors:
 
  - [chains](#_chains)
  - [config](#_config)
- - [mixinId](#_mixinId)
  - [mixins](#_mixins)
  - [processors](#_processors)
  - [properties](#_properties)
@@ -106,50 +105,6 @@ methods are called and in the correct, top-down order.
 # `config`
 
 WIP
-
-<a name="_mixinId">
-
-# `mixinId`
-
-Sets the identity for a class when it is used as a mixin. This is used as the key in the
-`mixins` object maintained for classes using mixins.
-
-Consider a simple mixin:
-
-```javascript
-    class MyClass extends Widget {
-        foo () {
-            console.log('MyClass foo');
-        }
-    }
-
-    @define({
-        mixinId: 'mymixin'  // the name of this mixin
-    })
-    class MyMixin extends Widget {
-        foo () {
-            console.log('MyMixin foo');
-        }
-    }
-
-    @define({
-        mixins: MyMixin
-    })
-    class MyDerived extends MyClass {
-        foo () {
-            super.foo();
-            console.log('MyDerived foo');
-            
-            // "this.mixins" is maintained so that we can call into our mixin:
-            this.mixins.mymixin.foo.call(this);
-        }
-    }
-```
-
-The `mixins` object is maintained on the class constructor and prototype:
-
-    MyDerived.mixins['mymixin'] = MyMixin;
-    MyDerived.prototype.mixins['mymixin'] = MyMixin.prototype;
 
 <a name="_mixins">
 
