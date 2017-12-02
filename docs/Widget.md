@@ -200,10 +200,46 @@ Produces:
 
 ## `configure()`
 
-TODO
+This method applies the properties of a config object to the corresponding
+[config properties](../Readme.md#_configs). To ensure that config property ordering is
+transparent, this process is not as simple as an `Object.assign()`. For example:
+
+```javascript
+    @define({
+        config: {
+            host: null,
+            port: null
+        }
+    })
+    class MyWidget extends Widget {
+        hostUpdate (value) {
+            this.connection.address = value + ':' + this.port;
+        }
+    }
+    
+    let inst = new MyWidget({
+        host: '127.0.0.1',
+        port: 123
+    });
+```
+
+In the code above, the `hostUpdate` method consumes not only the new value for the `host`
+config property but also the `port` config property. It is therefore important that the
+`port` config property be the correct value.
+
+The same solution to the above also applies when setting config properties after object
+creation:
+
+```javascript
+    inst.configure({
+        host: '192.168.1.10',
+        port: 321
+    })
+```
 
 <a name="_meta">
 
 ## `getMeta()`
 
-TODO
+There is a static and non-static version of this method. It returns the [Meta](./Meta.md)
+class for the class or the instance's class.
