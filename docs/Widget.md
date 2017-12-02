@@ -1,14 +1,15 @@
 # Widget
 
-The `Widget` class is used like so:
-
 ```javascript
     import { Widget } from '@epiphanysoft/oo';
     
-    class MyClass extends Widget {
+    class MyWidget extends Widget {
         //
     }
 ```
+
+In addition to what has already been [described](../Readme.md), the `Widget` class sets
+several (readonly) instance properties as well as provides a handful of methods.
 
 ## Instance Properties
 
@@ -40,9 +41,12 @@ In addition, `Widget` defines these methods:
 
 ## Life-cycle
 
-The `constructor` of `Widget` recognizes a single `Object` parameter that holds instance
-configuration properties (described later). It is recommended that a derived class not
-implement a `constructor`, but instead take advantage of the `ctor` method.
+It is recommended that derived classes not implement a `constructor`, but instead take
+advantage of the `ctor` [method chain](./Mixins.md#_chains). To facilitate this, the
+`constructor` of `Widget` takes a single `Object` parameter or "config object". Prior to
+invoking the `ctor` method chain, the config object's properties are used to set the
+widget's [configuration properties](../Readme.md#_configs) using the [configure](#_configure)
+method.
 
 `Widget` also defines a `destroy` method that is used to cleanup any resources that the GC
 (garbage collector) won't handle. It is also recommended that derived classes not override
@@ -54,7 +58,7 @@ These methods ensure the following:
  - The `destroying` and `destroyed` properties track destruction.
  - The `destroy` method is harmless to call after it has been called.
 
-### ctor
+### `ctor`
 
 The `ctor` method is like a `constructor` in that it is only called once as the instance
 is being created.
@@ -98,7 +102,7 @@ For example:
 The `ctor` implementations are called "top down" from the `Widget` class to the
 derived-most class.
 
-### dtor
+### `dtor`
 
 As with `ctor` calls, the `Widget` class ensures that the proper `dtor` calls are made.
 This saves derived classes from overriding `destroy` and remembering to call
@@ -132,12 +136,15 @@ the `Widget` class.
 
 <a name="_construct">
 
-### construct / destruct
+### `construct()` and `destruct()`
 
 There are times when some manual involvement in the life cycle is needed. In these cases
-there are the `construct` and `destruct` methods which are called by the `constructor` and
-`destroy` method, respectively. It is these implementations in the `Widget` base class
-that invoke the `ctor` and `dtor` [method chains](./Mixins.md#_chains).
+there are the `construct` and `destruct` methods.
+
+The `construct` method is called by the `constructor`, passing along all of its arguments.
+The `construct` method in `Widget` invokes the `ctor` [method chain](./Mixins.md#_chains).
+Conversely, the `destruct` method is called by the `destroy` method in `Widget`. The `dtor`
+method chain is invoked by `Widget`'s implementation of `destruct`.
 
 ```javascript
     class MyClass extends Widget {
@@ -191,12 +198,12 @@ Produces:
 
 <a name="_configure">
 
-## Configuration
+## `configure()`
 
 TODO
 
 <a name="_meta">
 
-## Meta Class
+## `getMeta()`
 
 TODO

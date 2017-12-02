@@ -4,8 +4,8 @@ The concept of mixins has been [explored](https://www.npmjs.com/package/core-dec
 in various ways, but the approach taken here is to treat mixins like alternative base
 classes as much as possible.
 
-All mixin strategies basically reduce to copying properties from the mixin class to the
-target class. Since mixins as actual classes, this includes `static` as well as `prototype`
+All mixin strategies basically reduce to copying properties from the mixin to the target
+class. Since mixins as actual classes, this includes `static` as well as `prototype`
 properties.
 
 ```javascript
@@ -69,7 +69,7 @@ proper, "top down" order.
     > MyDerived ctor
 
 Methods (actually all properties) that are not already defined on the target class are
-copied from the mix in class. This allows the `foo()` method to call `this.bar()`.
+copied from the mixin. This allows the `foo()` method to call `this.bar()`.
 
 ```javascript
     inst.foo();
@@ -119,10 +119,10 @@ properties defined in `MyOtherMixin` would be ignored.
 
 When properties are copied from a mixin, only properties that have no prior definition
 are included. If the target class has or inherits a property by the same name as one defined
-in a mixin, that property is ignored.
+in a mixin, that property on the mixin is ignored.
 
 For methods that need to call both the proper `super` method as well as the mixin's method,
-a manual `call()` is used.
+a manual `call()` can be used.
 
 For example:
 
@@ -172,7 +172,8 @@ Again, the same technique applies to `static` methods.
 ## Method Junctions
 
 When methods collide it is often desirable to treat the mixin methods as normal `super`
-methods. This can be accomplished by declaring the colliding method as a `@junction`.
+methods. This can be accomplished by declaring the method at the point of collision to be
+a `@junction`:
 
 ```javascript
     import { Widget, define, junction } from '@epiphanysoft/oo';
