@@ -212,11 +212,10 @@ methods. This can be accomplished by declaring the colliding method as a `@junct
 
 ### Behind The Curtain
 
-In order to achieve the above simplicity of using `super.foo()` and having that call reach
-both the proper super class as well as `MyMixin`, the `@junction` decorator inserts the
-junction method in the class prototype chain between `MyDerived` and `MyClass`. This extra
-link in the prototype chain is added by the first `@junction` method only (all other
-junctions reuse it).
+In order to achieve the `super.foo()` simplicity above, the `@junction` decorator inserts 
+the junction method in the class prototype chain between `MyDerived` and `MyClass`. This
+extra link in the prototype chain is added only by the first `@junction` method (all other
+method junctions reuse it).
 
 <a name="_chains">
 
