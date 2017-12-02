@@ -37,7 +37,7 @@ In addition, `Widget` defines these methods:
  - [configure](#_configure)
  - [getMeta](#_meta)
 
-<a name="_lifecycle">
+<a name="_lifecycle"></a>
 
 ## Life-cycle
 
@@ -134,7 +134,7 @@ For example:
 The `dtor` implementations are called "bottom up" from the derived-most class upwards to
 the `Widget` class.
 
-<a name="_construct">
+<a name="_construct"></a>
 
 ### `construct()` and `destruct()`
 
@@ -196,7 +196,7 @@ Produces:
     > MyClass dtor
     > MyDerived after destruct
 
-<a name="_configure">
+<a name="_configure"></a>
 
 ## `configure()`
 
@@ -237,7 +237,7 @@ creation:
     })
 ```
 
-<a name="_meta">
+<a name="_meta"></a>
 
 ## `getMeta()`
 

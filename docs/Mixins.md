@@ -77,7 +77,7 @@ Which produces this:
 
 Again, the same technique applies to `static` methods.
 
-<a name="_junctions">
+<a name="_junctions"></a>
 
 ## Method Junctions
 
@@ -128,7 +128,7 @@ the junction method in the class prototype chain between `MyDerived` and `MyClas
 extra link in the prototype chain is added only by the first `@junction` method (all other
 method junctions reuse it).
 
-<a name="_chains">
+<a name="_chains"></a>
 
 ## Method Chains
 

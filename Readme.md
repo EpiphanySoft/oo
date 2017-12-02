@@ -47,7 +47,7 @@ Only a few features are provided directly by `Widget`, so most of these can be a
 other class hierarchies. This is because most important capabilities are implemented by
 the helper class [Meta](./docs/Meta.md) (for "meta-class").
 
-<a name="_lifecycle">
+<a name="_lifecycle"></a>
 
 # Life cycle
 
@@ -107,7 +107,7 @@ in the correct order.
 
 See [here](./docs/Widget.md#_lifecycle) for more on the `Widget` life cycle.
 
-<a name="_define">
+<a name="_define"></a>
 
 # Class Decoration
 
@@ -148,7 +148,7 @@ The object parameter passed to either form of `define` contains one or more prop
 that map to [processors](./docs/Processors.md). The next section illustrates the use of
 the `mixins` processor.
 
-<a name="_mixins">
+<a name="_mixins"></a>
 
 # Mixins
 
@@ -245,7 +245,7 @@ more compelling when multiple mixins are involved.
 
 See [here](./docs/Mixins.md) for more about mixins.
 
-<a name="_configs">
+<a name="_configs"></a>
 
 # Configuration Properties
 

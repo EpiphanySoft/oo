@@ -89,7 +89,7 @@ The different order of the above decorators results in different execution order
 cases this difference will not matter, but if the `@foo` and `@bar` decorators intersect
 in some way, their order can be important.
 
-<a name="_chains">
+<a name="_chains"></a>
 
 # `chains`
 
@@ -143,13 +143,13 @@ call sequence. Instead the `initialize()` method calls all of the `init()` imple
 in the various classes and mixins using `callChain()`. This ensures that all `init()`
 methods are called and in the correct, top-down order.
 
-<a name="_config">
+<a name="_config"></a>
 
 # `config`
 
 WIP
 
-<a name="_mixins">
+<a name="_mixins"></a>
 
 # `mixins`
 
@@ -173,7 +173,7 @@ from `MyClass` are not overridden by the mixins.
 
 See [here](./Mixins.md) for more information on mixins.
 
-<a name="_processors">
+<a name="_processors"></a>
 
 # `processors`
 
@@ -204,7 +204,7 @@ so that `applyBar` will run before `applyFoo`.
 
 See [below](#_custom) for more information on custom processors.
 
-<a name="_properties">
+<a name="_properties"></a>
 
 # `properties`
 
@@ -233,7 +233,7 @@ The above is equivalent to the following:
     });
 ```
 
-<a name="_prototype">
+<a name="_prototype"></a>
 
 # `prototype`
 
@@ -260,7 +260,7 @@ The above is equivalent to the following:
     });
 ```
 
-<a name="_static">
+<a name="_static"></a>
 
 # `static`
 
@@ -284,7 +284,7 @@ The above is equivalent to the following:
     });
 ```
 
-<a name="_custom">
+<a name="_custom"></a>
 
 # Custom Processors
 
