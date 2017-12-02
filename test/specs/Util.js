@@ -51,7 +51,27 @@ describe('Util', function () {
         });
     });
 
+    describe('capitalize', function () {
+        it('should not throw on capitalize(null)', function () {
+            let o = Util.capitalize(null);
+            expect(o).to.be('');
+        });
+
+        it('should capitalize lowercase name', function () {
+            expect(Util.capitalize('hello')).to.be('Hello');
+        });
+
+        it('should preserve capitalized name', function () {
+            expect(Util.capitalize('Hello')).to.be('Hello');
+        });
+    });
+
     describe('clone', function () {
+        it('should not throw on clone(null)', function () {
+            let o = Util.clone(null);
+            expect(o).to.be(null);
+        });
+
         it('should clone arrays', function () {
             let date = new Date();
             let array = [ 1, 2, date ];
@@ -76,11 +96,16 @@ describe('Util', function () {
     });
 
     describe('copy/If', function () {
+        it('should handle null', function () {
+            expect(Util.copy(null)).to.be(null);
+            expect(Util.copyIf(null)).to.be(null);
+        });
+
         it('should copy and replace', function () {
             let obj = Util.copy({
                 a: 1,
                 b: 2
-            }, {
+            }, null, {
                 b: 3,
                 c: 4
             });
@@ -92,7 +117,7 @@ describe('Util', function () {
             let obj = Util.copyIf({
                 a: 1,
                 b: 2
-            }, {
+            }, null, {
                 b: 3,
                 c: 4
             });
@@ -110,6 +135,10 @@ describe('Util', function () {
     // });
 
     describe('merge', function () {
+        it('should handle null', function () {
+            expect(Util.merge(null)).to.be(null);
+        });
+
         it('should merge correctly', function () {
             let inner = { a: { b: 1 } };
             let date = new Date();
@@ -118,7 +147,7 @@ describe('Util', function () {
                 obj: {},
                 num: 4,
                 y: true
-            }, {
+            }, null, {
                 in: { a: { c: 2 }, d: 23 },
                 obj: 42,
                 num: date,
@@ -168,6 +197,21 @@ describe('Util', function () {
 
         it('should handle regexp', function () {
             expect(Util.typeOf(/a/)).to.be('regexp');
+        });
+
+        it('should not throw if parseRe fails', function () {
+            let fn = Util.typeOf;
+            let parseRe = fn.parseRe;
+
+            fn.parseRe = /xx/;
+            delete fn.cache['[object RegExp]'];
+
+            try {
+                expect(Util.typeOf(/a/)).to.be('[object RegExp]');
+            }
+            finally {
+                fn.parseRe = parseRe;
+            }
         });
     });
 });

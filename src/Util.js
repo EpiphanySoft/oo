@@ -104,10 +104,6 @@ const Util = {
         return dest;
     },
 
-    decapitalize (str) {
-        return str ? str[0].toLowerCase() + str.substr(1) : '';
-    },
-
     getAllKeys (object) {
         let keys = [];
 
