@@ -182,7 +182,7 @@ For example:
 
 The same technique applies to `static` methods.
 
-## Alternative Forms of `mixins`
+## Multiple `mixins`
 
 The `mixins` property passed to `@define` above was a single class. When multiple mixins
 are used, `mixins` becomes an array.

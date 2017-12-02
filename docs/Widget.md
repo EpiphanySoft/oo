@@ -1,6 +1,6 @@
 # Widget
 
-`oo` exports a recommended `Widget` base class:
+The `Widget` class is used like so:
 
 ```javascript
     import { Widget } from '@epiphanysoft/oo';
@@ -9,9 +9,6 @@
         //
     }
 ```
-
-`Widget` defines a standard object life-cycle as well as descriptive properties and helper
-methods. 
 
 ## Instance Properties
 
@@ -30,7 +27,7 @@ state. These are:
 
  - [construct](#_construct)
  - [destruct](#_construct)
- - [destroy](#_lifeCycle)
+ - [destroy](#_lifecycle)
 
 In addition, `Widget` defines these methods:
 
@@ -39,7 +36,7 @@ In addition, `Widget` defines these methods:
  - [configure](#_configure)
  - [getMeta](#_meta)
 
-<a name="_lifeCycle">
+<a name="_lifecycle">
 
 ## Life-cycle
 

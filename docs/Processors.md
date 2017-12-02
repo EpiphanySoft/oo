@@ -1,5 +1,7 @@
 # Processors
 
+TODO
+
 The `@define` decorator understands the following built-in processors:
 
  - [chains](#_chains)
@@ -10,41 +12,8 @@ The `@define` decorator understands the following built-in processors:
  - [prototype](#_prototype)
  - [static](#_static)
 
-While all processors operate upon [classes](./Classes.md), the `config` processor is
-ultimately concerned with the [instances](./Instances.md) of the classes.
-
-## Using `define`
-
-The recommended way to use processors is the `@define` decorator:
-
-```javascript
-    import { Widget, define } from '@epiphanysoft/oo';
-    
-    @define({
-        ...processors go here...
-    })
-    class MyClass extends Widget {
-        ...
-    }
-```
-
-Alternatively, there is the `define` `static` method of `Widget` which is equivalent in
-every respect other than syntax:
-
-```javascript
-    import { Widget } from '@epiphanysoft/oo';
-    
-    class MyClass extends Widget {
-        // ...
-    }
-    
-    MyClass.define({
-        ...processors go here...
-    });
-```
-
-The `define` method is useful to avoid the tool chains currently required to transpile the
-decorator syntax.
+While all processors operate upon classes, the `config` processor is ultimately concerned
+with the instances.
 
 <a name="_chains">
 
@@ -159,7 +128,7 @@ In the above, `FooBar` adds a `foo` and `bar` processor and implements their log
 `applyFoo` and `applyBar` static methods. The order of these processors is also indicated
 so that `applyBar` will run before `applyFoo`.
 
-See [here](./Classes.md) for more information on custom processors.
+See [below](#_custom) for more information on custom processors.
 
 <a name="_properties">
 
@@ -239,4 +208,100 @@ The above is equivalent to the following:
     Object.assign(Something, {
         all: new Map()
     });
+```
+
+<a name="_custom">
+
+# Custom Processors
+
+Processors are class mutation directives. The `processors` processor allows class authors
+to add new processors to the `@define` mechanism. The primary reason to write processors
+instead of decorators is to ensure proper order of operations.
+
+By default, inherited processors (such as `prototype`) will be applied before derived class
+processors so this order is not typically a concern. When defining two processors, however,
+it is worth considering their order:
+
+```javascript
+    @define({
+        processors: {
+            foo: 'bar',   // "foo" requires "bar" to run first
+            bar: true
+        }
+    })
+    class FooBar extends Widget {
+        static applyFoo (foo) {
+            console.log('applyFoo: ', foo);
+        }
+        
+        static applyBar (bar) {
+            console.log('applyBar: ', bar);
+        }
+    }
+```
+
+This class adds a `foo` and `bar` processor and specifies their order of operation. When
+processors are registered for a class, `@define` runs their static applier methods in the
+specified order.
+
+For example:
+
+```javascript
+    @define({
+        foo: 1,
+        bar: 2
+    })
+    class FooBarUser extends FooBar {
+        //
+    }
+```
+    
+    > applyBar: 2
+    > applyFoo: 1
+
+The name of the applier method is computed from the processor name:
+
+    appierName = 'apply' + name[0].toUpperCase() + name.substr(1);
+
+## Advanced Processor Options
+
+Let's now consider a processor that defines properties on the class prototype. Since the
+`prototype` processor also places properties on the class prototype, there is room for
+these processors to conflict.
+
+Assume that the new processor should be executed before `prototype`:
+
+```javascript
+    @define({
+        processors: {
+            foo: {
+                before: 'prototype'
+            }
+        }
+    })
+    class CustomProcessor extends Widget {
+        static applyFoo (foo) {
+            // runs before prototype processor...
+        }
+    }
+```
+
+When the value of a key in the object given to the `processors` processor is an object,
+it can use two properties to configure its behavior:
+
+ - `after`: The processors that this processor must execute after.
+ - `before`: The processors that this processor must execute before.
+
+Any value other than an object or string for a processor is ignored. This is also true of
+any properties other than `before` and `after` in an object value.
+
+In the first example, the `processors` could have be expressed as:
+
+```javascript
+    processors: {
+        foo: {
+            after: 'bar'  // "foo" requires "bar" to run first
+        },
+        bar: true  // the value "true" is ignored
+    }
 ```

@@ -3,8 +3,8 @@
 [![Coverage Status](https://coveralls.io/repos/github/EpiphanySoft/oo/badge.svg?branch=master)](https://coveralls.io/github/EpiphanySoft/oo?branch=master)
 [![MIT Licence](https://badges.frapsoft.com/os/mit/mit.svg?v=103)](https://opensource.org/licenses/mit-license.php)
 
-`oo` is a class-based, object-oriented (OO) library. It's primary exports are the `Widget`
-base class and `@define` decorator.
+`oo` is an object-oriented (OO) library. It's primary exports are the `Widget` base class
+and `@define` decorator.
 
 Widgets are just "interesting" objects. Interesting objects are those that have behaviors
 such as a managed life-cycle (not just garbage collected) or properties with side-effects,
@@ -37,11 +37,12 @@ that secondary calls are ignored.
 This example is just the start of what [Widget](./docs/Widget.md) provides:
 
  - [Common life-cycle](#_lifecycle)
+ - [@define](#_define)
  - [Mixins](#_mixins) (or multiple inheritance) ([more](./docs/Mixins.md))
  - [Configuration properties](#_configs)
  - [Method Junctions](./docs/Mixins.md#_junctions)
  - [Method Chains](./docs/Mixins.md#_chains)
- - [Extensible Processors](#_processors)
+ - [Extensible Processors](./docs/Processors.md)
 
 Only a few features are provided directly by `Widget`, so most of these can be applied to
 other class hierarchies. This is because most important capabilities are implemented by
@@ -105,18 +106,64 @@ The key benefits of method chains are two-fold: first, there is no need for `sup
 sprinkled all over, or worse, accidentally forgotten; second, the calls are always made
 in the correct order.
 
-See [here](./docs/Widget.md#_lifeCycle) for more on the `Widget` life-cycle.
+See [here](./docs/Widget.md#_lifecycle) for more on the `Widget` life-cycle.
+
+<a name="_define">
+
+# `@define`
+
+The `@define` [decorator](https://github.com/tc39/proposal-decorators#decorators) is the 
+primary means to access the functionality in `oo` beyond that of the `Widget` class.
+
+```javascript
+    import { Widget, define } from '@epiphanysoft/oo';
+
+    @define({
+        //...
+    })
+    class MyWidget extends Widget {
+        //...
+    }
+```
+
+Because decorators are not yet standardized, they require the `transform-decorators-legacy`
+Babel plugin to use. This may change as `oo` updates to track the evolving standard, though
+that will not likely impact user code.
+
+You can avoid this by instead using the `define` static method:
+
+```javascript
+    import { Widget } from '@epiphanysoft/oo';
+
+    class MyWidget extends Widget {
+        //...
+    }
+    
+    MyWidget.define({
+        //...
+    })
+```
+
+The object parameter passed to either form of `define` contains one or more properties
+that map to [processors](./docs/Processors.md). The next section illustrates the use of
+the `mixins` processor.
 
 <a name="_mixins">
 
 # Mixins
 
-Mixins provide a form of multiple-inheritance that allows behavior reuse beyond JavaScript's
-single-inheritance model.
+Mixins add multiple-inheritance as a means of behavior reuse beyond JavaScript's
+single-inheritance model. Unlike other approaches to mixins, in `oo` mixins are also
+`Widget`'s. When a class is mixed into another, any properties that it has defined or
+inherited are copied to the target class assuming the target class does not already define
+that property. Because the mixin and its target share (at least) the common base class of
+`Widget`, that is the furthest up the class hierarchy that the mixin processor must climb
+to copy inherited properties.
 
-Unlike other approaches to mixins, in `oo` mixins are widgets. In other words, mixins are
-just like any other `Widget` class. In particular, they participate in the common object
-life-cycle:
+Mixins are otherwise just like any other `Widget` class. In particular, they participate
+in the common object life-cycle.
+
+Consider:
 
 ```javascript
     import { Widget, define } from '@epiphanysoft/oo';
@@ -193,8 +240,8 @@ The above snippet generates the following output:
 
 In addition to life-cycle, the above example illustrates how to invoke methods in mixins
 when those methods are not copied into the class due to a name collision. An alternative
-approach to this is to use a method [junction](./docs/Mixins.md#_junctions). This is an
-even more compelling approach in cases where multiple mixins are involved.
+approach is to use a [method junction](./docs/Mixins.md#_junctions). Junctions are even
+more compelling when multiple mixins are involved.
 
 See [here](./docs/Mixins.md) for more about mixins.
 
@@ -202,16 +249,68 @@ See [here](./docs/Mixins.md) for more about mixins.
 
 # Configuration Properties
 
-<a name="_processors">
+The key to the simple `Widget` [lifecycle](#_lifecycle) is the standardized means of
+instance configuration.
 
-# Extensible Processors
+The `Widget` constructor accepts a "configuration object" (also called "config object").
+The properties of the config object are matched to special properties on the class called
+"config properties" (or simply "configs").
+
+Config properties are like normal properties in many ways and look identical in the use
+of the widget. Internally, config properties provide a simple framework for implementing
+smart properties that have one or more of the following characteristics:
+
+ - Side-effects on value change
+ - Squelch side-effect processing when set to the current value
+ - Ordering of side-effects between related properties
+ - Similar ordering when reconfiguring (bulk property change)
+
+The following example illustrates the basic usage of a config property:
+
+```javascript
+    import { Widget, define } from '@epiphanysoft/oo';
+
+    @define({
+        // declare the class config properties
+        config: {
+            // An "address" config with default value of null
+            address: null
+        }
+    })
+    class Connection extends Widget {
+        // this method is only called when "address" is updated:
+        addressUpdate (value, was) {
+            console.log(`connect(${value}${was ? ' was ' + was : ''})`);
+        }
+    }
+    
+    let conn = new Connection({
+        address: '127.0.0.1:8080'
+    });
+    
+    console.log('---');
+    
+    conn.address = '127.0.0.1:8080';  // same value; not an update
+    
+    console.log('---');
+    
+    conn.address = '192.168.1.10:80';
+```
+
+The above snippet will produce the following output:
+
+    > connect(127.0.0.1:8080)
+    > ---
+    > ---
+    > connect(192.168.1.10:80 was 127.0.0.1:8080)
+
+See [here](./docs/Configs.md) to learn more about config properties. 
 
 # Next Steps
 
 Above are some of the highlights. For more details see:
  
- - [Classes](./docs/Classes.md)
  - [Mixins](./docs/Mixins.md)
- - [Instances](./docs/Instances.md)
+ - [Configs](./docs/Configs.md)
  - [Processors](./docs/Processors.md)
  - [Hacking](./docs/dev.md)

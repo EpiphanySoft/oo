@@ -1,3 +1,3 @@
-# Instances
+# Configs
 
 TODO - WIP
