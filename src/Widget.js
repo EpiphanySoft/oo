@@ -7,13 +7,13 @@ class Widget {
     constructor (...args) {
         let me = this;
         let C = me.constructor;
-        let meta = me.$meta;
+        let meta = me.meta;
 
         if (meta.class !== C) {
-            meta = C.getMeta();
+            meta = C.meta;
         }
 
-        // After the above code has executed "this.$meta" will always be valid for an
+        // After the above code has executed "this.meta" will always be valid for an
         // instance. This is a helpful performance gain since it allows us to avoid a
         // method call every time we want the meta class.
 
@@ -26,7 +26,7 @@ class Widget {
 
     construct (config) {
         let me = this;
-        let meta = me.$meta;
+        let meta = me.meta;
 
         me.configure(config);
 
@@ -36,7 +36,7 @@ class Widget {
     }
 
     configure (config) {
-        this.$meta.configure(this, config);
+        this.meta.configure(this, config);
     }
 
     destroy () {
@@ -51,7 +51,7 @@ class Widget {
     }
 
     destruct () {
-        let meta = this.$meta;
+        let meta = this.meta;
 
         if (meta.liveChains.dtor) {
             meta.callChain(this, 'dtor', null, true);
@@ -59,16 +59,14 @@ class Widget {
     }
 
     callChain (method, ...args) {
-        this.$meta.callChain(this, method, args);
+        this.meta.callChain(this, method, args);
     }
 
     callChainRev (method, ...args) {
-        this.$meta.callChain(this, method, args, true);
+        this.meta.callChain(this, method, args, true);
     }
 
-    getMeta () {
-        return this.$meta;
-    }
+    static get meta () {} // this is replaced but helps tools (like IDE's)
 }
 
 Meta.adopt(Widget);

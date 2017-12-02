@@ -20,7 +20,7 @@ state. These are:
  - `configuring` Set to `true` prior to calling `configure` and cleared afterward.
  - `destroying` Set to `true` on entry to `destroy()` (never cleared).
  - `destroyed` Set to `true` on exit from `destroy()`.
- - `$meta` A readonly reference to the class's [Meta](./Meta.md) class.
+ - `meta` A readonly reference to the class's [Meta](#_meta) class.
 
 ## Instance Methods
 
@@ -35,7 +35,6 @@ In addition, `Widget` defines these methods:
  - [callChain](./Processors.md#_chains)
  - [callChainRev](./Processors.md#_chains)
  - [configure](#_configure)
- - [getMeta](#_meta)
 
 <a name="_lifecycle"></a>
 
@@ -201,8 +200,11 @@ Produces:
 ## `configure()`
 
 This method applies the properties of a config object to the corresponding
-[config properties](../Readme.md#_configs). To ensure that config property ordering is
-transparent, this process is not as simple as an `Object.assign()`. For example:
+[config properties](../Readme.md#_configs). This method is internally called by `construct`
+in `Widget`.
+
+To ensure that config property ordering is transparent, this process is not as simple as
+calling `Object.assign()`. For example:
 
 ```javascript
     @define({
@@ -237,9 +239,11 @@ creation:
     })
 ```
 
+See [here](./Configs.md) for more information on this process.
+
 <a name="_meta"></a>
 
-## `getMeta()`
+## `meta`
 
-There is a static and non-static version of this method. It returns the [Meta](./Meta.md)
-class for the class or the instance's class.
+There is a static and non-static version of this property. It holds the [Meta](./Meta.md)
+class instance for the corresponding `Widget`-derived class.

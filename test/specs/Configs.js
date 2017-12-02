@@ -55,14 +55,14 @@ describe('Configs', function () {
             })
             class Foo extends Widget {}
 
-            let widgetMeta = Widget.getMeta();
+            let widgetMeta = Widget.meta;
             let widgetConfigs = widgetMeta.getConfigs();
             expect(widgetConfigs).to.be(null);
 
             widgetConfigs = widgetMeta.configs;
             expect(widgetConfigs.open).to.be(false);
 
-            let fooMeta = Foo.getMeta();
+            let fooMeta = Foo.meta;
             let configs = fooMeta.configs.defs;
             let configValues = fooMeta.configs.values;
 
@@ -111,12 +111,12 @@ describe('Configs', function () {
             })
             class Foo extends Widget {}
 
-            let fooMeta = Foo.getMeta();
+            let fooMeta = Foo.meta;
             let configs = fooMeta.configs.defs;
             let configValues = fooMeta.configs.values;
             let names = Object.keys(configs);
 
-            let widgetMeta = Widget.getMeta();
+            let widgetMeta = Widget.meta;
 
             expect(widgetMeta.getConfigs()).to.be(null);
             expect(widgetMeta.configs.open).to.be(false);
@@ -172,7 +172,7 @@ describe('Configs', function () {
                 }
             }
 
-            let fooMeta = Foo.getMeta();
+            let fooMeta = Foo.meta;
             let configs = fooMeta.configs.defs;
             let configValues = fooMeta.configs.values;
             let names = Object.keys(configs);
@@ -215,7 +215,7 @@ describe('Configs', function () {
             })
             class Foo extends Widget {}
 
-            let fooMeta = Foo.getMeta();
+            let fooMeta = Foo.meta;
             let configs = fooMeta.configs.defs;
             let configValues = fooMeta.configs.values;
             let names = Object.keys(configs);
@@ -246,7 +246,7 @@ describe('Configs', function () {
 
             class Foo extends Bar {}
 
-            let fooMeta = Foo.getMeta();
+            let fooMeta = Foo.meta;
             let configs = fooMeta.getConfigs(true).defs;
             let configValues = fooMeta.configs.values;
             let names = Object.keys(configs);
@@ -299,7 +299,7 @@ describe('Configs', function () {
             })
             class Foo extends Super {}
 
-            let fooMeta = Foo.getMeta();
+            let fooMeta = Foo.meta;
             let configs = fooMeta.configs.defs;
             let configValues = fooMeta.configs.values;
 
@@ -313,7 +313,7 @@ describe('Configs', function () {
                 zip: 'woot'
             });
 
-            let barMeta = Bar.getMeta();
+            let barMeta = Bar.meta;
 
             expect(configs.foo === configs.foo).to.be(true);
             expect(configs.foo.owner).to.be(null);
@@ -355,7 +355,7 @@ describe('Configs', function () {
             })
             class Foo extends Widget {}
 
-            let fooMeta = Foo.getMeta();
+            let fooMeta = Foo.meta;
             let fooConfigs = fooMeta.configs;
 
             expect(fooConfigs.inits).to.be(null);
@@ -463,7 +463,7 @@ describe('Configs', function () {
                 prop11Change (v) { return v; }
             }
 
-            let fooMeta = Foo.getMeta();
+            let fooMeta = Foo.meta;
             let fooConfigs = fooMeta.configs;
 
             expect(fooConfigs.inits).to.be(null);
@@ -568,7 +568,7 @@ describe('Configs', function () {
                 prop11Update (v) { return v; }
             }
 
-            let fooMeta = Foo.getMeta();
+            let fooMeta = Foo.meta;
             let fooConfigs = fooMeta.configs;
 
             expect(fooConfigs.inits).to.be(null);
@@ -673,7 +673,7 @@ describe('Configs', function () {
                 prop9Update (v) { return v; }
             }
 
-            let fooMeta = Foo.getMeta();
+            let fooMeta = Foo.meta;
             let fooConfigs = fooMeta.configs;
 
             expect(fooConfigs.inits).to.be(null);
@@ -780,7 +780,7 @@ describe('Configs', function () {
                 prop11Change (v) { return { foo: 4, v }; }
             }
 
-            let fooMeta = Foo.getMeta();
+            let fooMeta = Foo.meta;
             let fooConfigs = fooMeta.configs;
 
             expect(fooConfigs.inits).to.be(null);
@@ -910,7 +910,7 @@ describe('Configs', function () {
                 }
             }
 
-            let fooMeta = Foo.getMeta();
+            let fooMeta = Foo.meta;
             let fooConfigs = fooMeta.configs;
 
             expect(fooConfigs.inits).to.be(null);

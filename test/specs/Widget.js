@@ -17,7 +17,7 @@ function getAllKeys (obj) {
 describe('Widget', function () {
     describe('basics', function () {
         it('should have the correct processors', function () {
-            let names = Widget.getMeta().getProcessors().map(p => p.name);
+            let names = Widget.meta.getProcessors().map(p => p.name);
 
             expect(names).to.equal([
                 'properties',
@@ -30,7 +30,7 @@ describe('Widget', function () {
         });
 
         it('should have ctor/dtor chains', function () {
-            let meta = Widget.getMeta();
+            let meta = Widget.meta;
             let chains = getAllKeys(meta.liveChains);
 
             chains.sort();
@@ -210,8 +210,8 @@ describe('Widget', function () {
             expect(instance.str).to.be('M');
             expect(log).to.equal([ 'M.ctor' ]);
 
-            expect(instance.getMeta().liveChains.ctor).to.be(true);
-            expect(instance.getMeta().liveChains.dtor).to.be(true);
+            expect(instance.meta.liveChains.ctor).to.be(true);
+            expect(instance.meta.liveChains.dtor).to.be(true);
         });
 
         it('should copy prototype and static properties', function () {
@@ -243,8 +243,8 @@ describe('Widget', function () {
 
             expect(log).to.equal([ ]);
 
-            expect(F.getMeta().liveChains.ctor).to.be(false);
-            expect(F.getMeta().liveChains.dtor).to.be(false);
+            expect(F.meta.liveChains.ctor).to.be(false);
+            expect(F.meta.liveChains.dtor).to.be(false);
         });
     }); // life cycle
 
