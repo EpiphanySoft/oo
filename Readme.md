@@ -37,12 +37,11 @@ that secondary calls are ignored.
 This example is just the start of what [Widget](./docs/Widget.md) provides:
 
  - [Common life-cycle](#_lifecycle)
- - [@define](#_define)
+ - [Class decoration](#_define)
  - [Mixins](#_mixins) (or multiple inheritance) ([more](./docs/Mixins.md))
  - [Configuration properties](#_configs)
  - [Method Junctions](./docs/Mixins.md#_junctions)
  - [Method Chains](./docs/Mixins.md#_chains)
- - [Extensible Processors](./docs/Processors.md)
 
 Only a few features are provided directly by `Widget`, so most of these can be applied to
 other class hierarchies. This is because most important capabilities are implemented by
@@ -110,7 +109,7 @@ See [here](./docs/Widget.md#_lifecycle) for more on the `Widget` life-cycle.
 
 <a name="_define">
 
-# `@define`
+# Class Decoration
 
 The `@define` [decorator](https://github.com/tc39/proposal-decorators#decorators) is the 
 primary means to access the functionality in `oo` beyond that of the `Widget` class.
