@@ -3,16 +3,20 @@
 [![Coverage Status](https://coveralls.io/repos/github/EpiphanySoft/oo/badge.svg?branch=master)](https://coveralls.io/github/EpiphanySoft/oo?branch=master)
 [![MIT Licence](https://badges.frapsoft.com/os/mit/mit.svg?v=103)](https://opensource.org/licenses/mit-license.php)
 
-`oo` is a class-based, object-oriented (OO) library for ES6+. `oo` expands on the
-embattled JavaScript `class` keyword using ES.next decorators to add powerful capabilities
-to [classes](./docs/Classes.md) and their [instances](./docs/Instances.md).
+`oo` is a class-based, object-oriented (OO) library for ES6+. `oo` expands on JavaScript
+`class` to add powerful capabilities to [classes](./docs/Classes.md) and their
+[instances](./docs/Instances.md).
 
 The primary entry points for `oo` are `Widget` and `@define`. Widgets are just "interesting"
-objects. The `Widget` base class provides patterns and features that allow your code to
-focus on its goal rather than all of the mechanical pieces that burden most classes. One
-simple example is the `destroy()` method. This common pattern for cleaning up resources
-has the equally common problem of ensuring that multiple (possibly accidental) calls to
-`destroy()` don't result in the exception:
+objects. Interesting objects are those that have features such as a managed life-cycle (not
+just garbarge collected), properties with side-effects or belong to class hierarchies that
+have
+
+The `Widget` base class provides patterns and features that allow your code to focus on
+its goal rather than all of the mechanical pieces that burden most classes. One simple
+example is the `destroy()` method. This common pattern for cleaning up resources has the
+equally common task of ensuring that multiple (possibly accidental) calls to `destroy()`
+don't result in an exception:
 
 ```javascript
     class Foo {
@@ -28,8 +32,8 @@ has the equally common problem of ensuring that multiple (possibly accidental) c
 ```
 
 While this is typically easy to handle (when it is detected), "paranoia code" just makes
-the real code that much more complex. Using `Widget`, the `destroy()` method is guarded to
-ensure that secondary calls are ignored.
+the overall codebase that much more complex. Using `Widget`, the `destroy()` method is
+guarded to ensure that secondary calls are ignored.
 
 This is just the start of what `Widget` offers to make classes easier to get right.
 
