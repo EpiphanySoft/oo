@@ -138,26 +138,8 @@ When properties are copied from a mixin, only properties that have no prior defi
 are included. If the target class has or inherits a property by the same name as one defined
 in a mixin, that property is ignored.
 
-The first step to managing overlapping mixins is to assign id's to them. The simplest way
-is to assign one to the mixin class:
-
-```javascript
-    @define({
-        mixinId: 'mymixin'
-    })
-    class MyMixin extends Widget {
-        //...
-    }
-```
-
-Now when `MyMixin` is mixed into another class, it is added to the `mixins` object on the
-class constructor and its prototype is added to a `mixins` object on the class prototype.
-These object allow a class to directly access their mixins. In code:
-
-```javascript
-    MyDerived.mixins['mymixin'] = MyMixin;
-    MyDerived.prototype.mixins['mymixin'] = MyMixin.prototype;
-```
+For methods that need to call both the proper `super` method as well as the mixin's method,
+a manual `call()` is used.
 
 For example:
 
@@ -170,9 +152,6 @@ For example:
         }
     }
 
-    @define({
-        mixinId: 'mymixin'
-    })
     class MyMixin extends Widget {
         foo () {
             console.log('MyMixin foo');
@@ -185,8 +164,10 @@ For example:
     class MyDerived extends MyClass {
         foo () {
             super.foo();
+
             console.log('MyDerived foo');
-            this.mixins.mymixin.foo.call(this);
+
+            MyMixin.prototype.foo.call(this);
         }
     }
     
@@ -199,13 +180,12 @@ For example:
     > MyDerived foo
     > MyMixin foo
 
-Because there is a `mixins` object maintained on the constructor as well as on the
-prototype, the same technique applies to `static` methods.
+The same technique applies to `static` methods.
 
 ## Alternative Forms of `mixins`
 
 The `mixins` property passed to `@define` above was a single class. When multiple mixins
-are used, this can changed to an array.
+are used, `mixins` becomes an array.
 
 ```javascript
     @define({
@@ -220,25 +200,7 @@ In this case the mixin classes are mixed in sequentially. This means `MyMixin` m
 properties that do not collide with `MyOtherDerived` and would be included while the same
 properties defined in `MyOtherMixin` would be ignored.
 
-The fact that a `mixins` array is mixed in sequentially ensures predictability. When using
-an array, each element can be either a class to mixin or a 2-element array:
-
-```javascript
-    @define({
-        mixins: [
-            MyMixin,
-            [ 'othermix', MyOtherMixin ]
-        ]
-    })
-    class MyOtherDerived extends MyClass {
-        //
-    }
-```
-
-When one of the elements of the `mixins` array is a 2-element array, the first item in
-that array is the mixin id (the key to use in the `mixins` object of the target class).
-This form may be needed if the mixin class did not define an id or if perhaps the mixin
-classes came from different authors and had conflicting id's.
+<a name="_junctions">
 
 ## Method Junctions
 
@@ -288,6 +250,8 @@ both the proper super class as well as `MyMixin`, the `@junction` decorator inse
 junction method in the class prototype chain between `MyDerived` and `MyClass`. This extra
 link in the prototype chain is added by the first `@junction` method only (all other
 junctions reuse it).
+
+<a name="_chains">
 
 ## Method Chains
 

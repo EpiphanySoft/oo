@@ -176,7 +176,7 @@ class Meta {
         }
     }
 
-    addMixins (mixinCls, mixinId) {
+    addMixins (mixinCls) {
         let me = this;
 
         if (!mixinCls) {
@@ -184,12 +184,7 @@ class Meta {
         }
         if (Array.isArray(mixinCls)) {
             for (let mx of mixinCls) {
-                if (Array.isArray(mx)) {
-                    me.addMixins(mx[1], mx[0]);
-                }
-                else {
-                    me.addMixins(mx);
-                }
+                me.addMixins(mx);
             }
 
             return;
@@ -220,16 +215,6 @@ class Meta {
         mixinMeta.complete();
         if (mixinConfigs) {
             me.addConfigs(mixinConfigs.values, mixinMeta);
-        }
-
-        mixinId = mixinId || mixinMeta.getMixinId();
-        if (mixinId) {
-            let mixins = me.getMixins();
-
-            if (!mixins[mixinId]) {
-                mixins[mixinId] = mixinCls;
-                prototype.mixins[mixinId] = mixinCls.prototype;
-            }
         }
 
         for (mixCls = mixinCls; mixCls !== rootClass; mixCls = mixCls.super) {
@@ -425,33 +410,6 @@ class Meta {
         }
 
         return members;
-    }
-
-    getMixinId () {
-        let mixinId = this.mixinId;
-
-        if (mixinId == null) {
-            mixinId = this.class.name;
-            mixinId = mixinId ? Util.decapitalize(mixinId) : '';
-
-            this.mixinId = mixinId;
-        }
-
-        return mixinId;
-    }
-
-    getMixins (forPrototype) {
-        let cls = this.class;
-        let proto = cls.prototype;
-
-        if (!cls.hasOwnProperty('mixins')) {
-            let sup = this.super;
-
-            cls.mixins = (sup ? Object.create(sup.getMixins()) : new Empty());
-            proto.mixins = (sup ? Object.create(sup.getMixins(true)) : new Empty());
-        }
-
-        return (forPrototype ? proto : cls).mixins;
     }
 
     getProcessors () {
@@ -659,9 +617,6 @@ class Meta {
 
     static adopt (cls) {
         cls.isClass = true;
-        cls.mixins = new Empty();
-
-        cls.prototype.mixins = new Empty();
 
         Util.copyIf(cls, {
             applyChains (chains) {
@@ -670,10 +625,6 @@ class Meta {
 
             applyConfig (configs) {
                 this.getMeta().addConfigs(configs);
-            },
-
-            applyMixinId (mixinId) {
-                this.getMeta().mixinId = mixinId;
             },
 
             applyMixins (mixinCls) {

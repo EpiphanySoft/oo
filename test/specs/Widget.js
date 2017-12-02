@@ -78,7 +78,6 @@ describe('Widget', function () {
                 }
             };
 
-            @mixinId('mixum')
             class m extends Widget {
                 ctor () {
                     log.push('M.ctor');
@@ -180,13 +179,10 @@ describe('Widget', function () {
 
             D.applyMixins(M);
 
-            expect(D.mixins.mixum === M).to.be(true);
-
             let instance = new D();
 
             expect(instance.str).to.be('CMD');
             expect(log).to.equal([ 'C.ctor', 'M.ctor', 'D.ctor' ]);
-            expect(instance.mixins.mixum === M.prototype).to.be(true);
 
             log = [];
             let res = instance.foo(42);
@@ -213,7 +209,6 @@ describe('Widget', function () {
 
             expect(instance.str).to.be('M');
             expect(log).to.equal([ 'M.ctor' ]);
-            expect(instance.mixins.mixum === M.prototype).to.be(true);
 
             expect(instance.getMeta().liveChains.ctor).to.be(true);
             expect(instance.getMeta().liveChains.dtor).to.be(true);
@@ -253,46 +248,8 @@ describe('Widget', function () {
         });
     }); // life-cycle
 
-    describe('mixins', function () {
-        it('should be able to reassign mixinId', function () {
-            @define({
-                mixinId: 'moo'
-            })
-            class M extends Widget {
-                static foo () {}
-                foo () {}
-            }
-
-            @define({
-                mixins: [
-                    M
-                ]
-            })
-            class D extends Widget {
-                //
-            }
-
-            expect(D.foo).to.be(M.foo);
-            expect(D.prototype.foo).to.be(M.prototype.foo);
-
-            expect(D.mixins.moo).to.be(M);
-
-            @define({
-                mixins: [
-                    [ 'goo', M ]
-                ]
-            })
-            class E extends Widget {
-                //
-            }
-
-            expect(E.foo).to.be(M.foo);
-            expect(E.prototype.foo).to.be(M.prototype.foo);
-
-            expect(E.mixins.moo).to.be(undefined);
-            expect(E.mixins.goo).to.be(M);
-        });
-    });
+    // describe('mixins', function () {
+    // });
 
     describe('processors', function () {
         it('should allow for custom processors', function () {

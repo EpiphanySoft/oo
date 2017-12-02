@@ -39,8 +39,8 @@ This example is just the start of what [Widget](./docs/Widget.md) provides:
  - [Common life-cycle](#_lifecycle)
  - [Mixins](#_mixins) (or multiple inheritance) ([more](./docs/Mixins.md))
  - [Configuration properties](#_configs)
- - [Method Junctions](#_junctions)
- - [Method Chains](#_chains)
+ - [Method Junctions](./docs/Mixins.md#_junctions)
+ - [Method Chains](./docs/Mixins.md#_chains)
  - [Extensible Processors](#_processors)
 
 Only a few features are provided directly by `Widget`, so most of these can be applied to
@@ -51,9 +51,9 @@ the helper class [Meta](./docs/Meta.md) (for "meta-class").
 
 # Life-cycle
 
-The `Widget` class defines two [method chains](#_chains) (`ctor` and `dtor`) to manage
-object life-cycle. Method chains are a powerful construct that are explained in general
-elsewhere, but their role in object life-cycle should make their value clear.
+The `Widget` class defines two [method chains](./docs/Mixins.md#_chains) (`ctor` and `dtor`)
+to manage object life-cycle. Method chains are a powerful construct that are explained in
+general elsewhere, but their role in object life-cycle should make their value clear.
 
 The `ctor` method is called during object instantiation while `dtor` is called during
 destruction (initiated by `destroy()`).
@@ -110,6 +110,10 @@ See [here](./docs/Widget.md#_lifeCycle) for more on the `Widget` life-cycle.
 Mixins provide a form of multiple-inheritance that allows behavior reuse beyond JavaScript's
 standard, single-inheritance model.
 
+Unlike other approaches to mixins, in `oo` mixins are widgets. In other words, mixins are
+just like any other widget class. In particular, they can participate in the common object
+life-cycle:
+
 ```javascript
     import { Widget, define } from '@epiphanysoft/oo';
     
@@ -158,73 +162,39 @@ standard, single-inheritance model.
 
             console.log('MyDerived foo');
 
-            this.mixins.myMixin.foo.call(this);
+            MyMixin.prototype.foo.call(this);
         }
     }
     
     let inst = new MyDerived();
-    
+    console.log('---');
     inst.foo();
+    console.log('---');
+    inst.destroy();
 ```
-    
-    > MyClass foo
-    > MyDerived foo
-    > MyMixin foo
 
-Alternatively, classes can use a `@junction` method for such cases:
+The above snippet generates the following output:
 
-```javascript
-    @define({
-        mixins: MyMixin
-    })
-    class MyDerived extends MyClass {
-        //...
-        
-        @junction
-        foo () {
-            super.foo(); // calls all inherited foo's (starting w/MyClass)
-
-            console.log('MyDerived foo');
-        }
-    }
-    
-    //...
-```
-    
-    > MyClass foo
-    > MyMixin foo
-    > MyDerived foo
-
-For cases where mixins manage non-GC-able resources, the `ctor` and `dtor` life-cycle
-methods also apply properly. 
-
-```javascript
-    let inst = new MyDerived();
-```
-    
     > MyClass ctor
     > MyMixin ctor
     > MyDerived ctor
-
-```javascript
-    inst.destroy();
-```
-    
+    > ---
+    > MyClass foo
+    > MyDerived foo
+    > MyMixin foo
+    > ---
     > MyDerived dtor
     > MyMixin dtor
     > MyClass dtor
 
+A cleaner solution to the above, especially if multiple mixins collide, is to use a method
+[junction](./docs/Mixins.md#_junctions).
+
+See [here](./docs/Mixins.md) for more about mixins.
+
 <a name="_configs">
 
 # Configuration Properties
-
-<a name="_junctions">
-
-# Method Junctions
-
-<a name="_chains">
-
-# Method Chains
 
 <a name="_processors">
 
