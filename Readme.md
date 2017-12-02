@@ -98,8 +98,10 @@ When the above code executes, the output will look like this:
 
 In general, methods in a method chain are tied to their defining class and are called in
 either "top down" (forward) or "bottom up" (reverse) order. For life-cycle methods such as
-these, `ctor` is called in forward order and `dtor` in reverse. These particular method
-chains are invoked by the `constructor` and `destroy` methods of `Widget`, respectively.
+these, `ctor` is called in forward order and `dtor` in reverse as can be seen by the order
+of their `log()` statements.
+
+See [here](./docs/Widget.md#_lifeCycle) for more on the `Widget` life-cycle.
 
 <a name="_mixins">
 
