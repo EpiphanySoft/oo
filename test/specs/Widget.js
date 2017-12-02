@@ -55,7 +55,7 @@ describe('Widget', function () {
         });
     });
 
-    describe('life-cycle', function () {
+    describe('life cycle', function () {
         let C, D, M;
         let log;
 
@@ -246,7 +246,7 @@ describe('Widget', function () {
             expect(F.getMeta().liveChains.ctor).to.be(false);
             expect(F.getMeta().liveChains.dtor).to.be(false);
         });
-    }); // life-cycle
+    }); // life cycle
 
     // describe('mixins', function () {
     // });

@@ -12,7 +12,7 @@ The `Widget` class is used like so:
 
 ## Instance Properties
 
-`Widget` maintains the following properties to describe an instance's current life-cycle
+`Widget` maintains the following properties to describe an instance's current life cycle
 state. These are:
 
  - `constructing` Starts as `true` and is cleared by the `constructor`.
@@ -23,7 +23,7 @@ state. These are:
 
 ## Instance Methods
 
-`Widget` defines the following life-cycle methods:
+`Widget` defines the following life cycle methods:
 
  - [construct](#_construct)
  - [destruct](#_construct)
@@ -134,7 +134,7 @@ the `Widget` class.
 
 ### construct / destruct
 
-There are times when some manual involvement in the life-cycle is needed. In these cases
+There are times when some manual involvement in the life cycle is needed. In these cases
 there are the `construct` and `destruct` methods which are called by the `constructor` and
 `destroy` method, respectively. It is these implementations in the `Widget` base class
 that invoke the `ctor` and `dtor` [method chains](./Mixins.md#_chains).

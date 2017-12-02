@@ -7,7 +7,7 @@
 and `@define` [decorator](https://github.com/tc39/proposal-decorators#decorators).
 
 Widgets are just "interesting" objects. Interesting objects are those that have behaviors
-such as a managed life-cycle (not just garbage collected) or properties with side-effects,
+such as a managed life cycle (not just garbage collected) or properties with side-effects,
 or perhaps belong to class hierarchies.
 
 The `Widget` base class provides patterns and features that allow you to not implement the
@@ -36,7 +36,7 @@ that secondary calls are ignored.
 
 This example is just the start of what [Widget](./docs/Widget.md) provides:
 
- - [Common life-cycle](#_lifecycle)
+ - [Common life cycle](#_lifecycle)
  - [Class decoration](#_define)
  - [Mixins](#_mixins) (or multiple inheritance) ([more](./docs/Mixins.md))
  - [Configuration properties](#_configs)
@@ -49,11 +49,11 @@ the helper class [Meta](./docs/Meta.md) (for "meta-class").
 
 <a name="_lifecycle">
 
-# Life-cycle
+# Life cycle
 
 The `Widget` class defines two [method chains](./docs/Mixins.md#_chains) (`ctor` and `dtor`)
-to manage object life-cycle. Method chains are a powerful construct that are explained in
-general elsewhere, but their role in object life-cycle should make their value clear.
+to manage object life cycle. Method chains are a powerful construct that are explained in
+general elsewhere, but their role in object life cycle should make their value clear.
 
 The `ctor` method is called during object instantiation while `dtor` is called during
 destruction (initiated by `destroy()`).
@@ -97,7 +97,7 @@ When the above code executes, the output will look like this:
     > MyClass dtor
 
 In general, methods in a method chain are tied to their defining class and are called in
-either "top down" (forward) or "bottom up" (reverse) order. For life-cycle methods such as
+either "top down" (forward) or "bottom up" (reverse) order. For life cycle methods such as
 these, `ctor` is called in forward order and `dtor` in reverse as can be seen by the order
 of their `log()` statements.
 
@@ -105,7 +105,7 @@ The key benefits of method chains are two-fold: first, there is no need for `sup
 sprinkled all over, or worse, accidentally forgotten; second, the calls are always made
 in the correct order.
 
-See [here](./docs/Widget.md#_lifecycle) for more on the `Widget` life-cycle.
+See [here](./docs/Widget.md#_lifecycle) for more on the `Widget` life cycle.
 
 <a name="_define">
 
@@ -155,13 +155,13 @@ the `mixins` processor.
 Mixins add multiple-inheritance as a means of behavior reuse beyond JavaScript's
 single-inheritance model. Unlike other approaches to mixins, in `oo` mixins are also
 `Widget`'s. When a class is mixed into another, any properties that it has defined or
-inherited are copied to the target class assuming the target class does not already define
-that property. Because the mixin and its target share (at least) the common base class of
+inherited are copied to the target class unless the target class has already defined that
+property. Because the mixin and its target share (at least) the common base class of
 `Widget`, that is the furthest up the class hierarchy that the mixin processor must climb
 to copy inherited properties.
 
 Mixins are otherwise just like any other `Widget` class. In particular, they participate
-in the common object life-cycle.
+in the common object life cycle.
 
 Consider:
 
@@ -238,7 +238,7 @@ The above snippet generates the following output:
     > MyMixin dtor
     > MyClass dtor
 
-In addition to life-cycle, the above example illustrates how to invoke methods in mixins
+In addition to life cycle, the above example illustrates how to invoke methods in mixins
 when those methods are not copied into the class due to a name collision. An alternative
 approach is to use a [method junction](./docs/Mixins.md#_junctions). Junctions are even
 more compelling when multiple mixins are involved.
@@ -249,7 +249,7 @@ See [here](./docs/Mixins.md) for more about mixins.
 
 # Configuration Properties
 
-The key to the simple `Widget` [lifecycle](#_lifecycle) is the standardized means of
+The key to the simple `Widget` [life cycle](#_lifecycle) is the standardized means of
 instance configuration.
 
 The `Widget` constructor accepts a "configuration object" (also called "config object").
