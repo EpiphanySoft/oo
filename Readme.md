@@ -271,9 +271,9 @@ The following example illustrates the basic usage of a config property:
     import { Widget, define } from '@epiphanysoft/oo';
 
     @define({
-        // declare the class config properties
+        // use the config processor
         config: {
-            // An "address" config with default value of null
+            // Define the "address" config with default value of null
             address: null
         }
     })

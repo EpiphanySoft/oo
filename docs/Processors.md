@@ -15,6 +15,28 @@ The `@define` decorator understands the following built-in processors:
 While all processors operate upon classes, the `config` processor is ultimately concerned
 with the instances.
 
+## Why Not Use Multiple Decorators?
+
+It is perhaps tempting to view each of these goals as their own decorators (say `@mixin`
+for example). While this works in many cases, using multiple decorators does not ensure a
+consistent order.
+
+Instead that order is lexically determined. For example, consider these classes:
+
+```javascript
+    @foo @bar
+    class FooBar {
+    }
+
+    @bar @foo
+    class BarFoo {
+    }
+```
+
+The different order of the above decorators results in different execution order. In many
+cases this difference will not matter, but if the `@foo` and `@bar` decorators intersect
+in some way, their order can be important.
+
 <a name="_chains">
 
 # `chains`

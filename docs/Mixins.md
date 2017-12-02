@@ -1,12 +1,12 @@
 # Mixins
 
 The concept of mixins has been [explored](https://www.npmjs.com/package/core-decorators)
-in various ways, but the approach Configly takes is to treat mixins like alternative base
+in various ways, but the approach taken here is to treat mixins like alternative base
 classes as much as possible.
 
 All mixin strategies basically reduce to copying properties from the mixin class to the
-target class. Since Configly defines mixins as actual classes, this includes `static` as
-well as `prototype` properties.
+target class. Since mixins as actual classes, this includes `static` as well as `prototype`
+properties.
 
 ```javascript
     import { Widget, define } from '@epiphanysoft/oo';
@@ -60,18 +60,23 @@ well as `prototype` properties.
     
     let inst = new MyDerived();
 ```
+
+The first thing to note here is that all of the `ctor` methods were called and in the
+proper, "top down" order.
     
     > MyClass ctor
     > MyMixin ctor
     > MyDerived ctor
 
-The first thing to note here is that all of the `ctor` methods were called and in the
-proper, "top down" order.
+Methods (actually all properties) that are not already defined on the target class are
+copied from the mix in class. This allows the `foo()` method to call `this.bar()`.
 
 ```javascript
     inst.foo();
 ```
-    
+
+The result is this:
+
     > MyDerived foo
     > MyClass foo
     > MyMixin bar
@@ -91,46 +96,6 @@ Object destruction is similar to creation:
     > MyClass dtor
 
 In the same way that the `ctor` methods were properly called, so are the `dtor` methods.
-
-## The `@define` Decorator
-
-The `@define` decorator is used above to include `MyMixin` as a mixin of `MyDerived`. This
-language feature is currently a standard in progress. Said another way, it is an "ES.next"
-feature.
-
-The same features are available as a `static` method:
-
-```javascript
-    class MyDerived extends MyClass {
-        // ...
-    }
-    
-    MyDerived.define({
-        mixins: MyMixin
-    })
-```
-
-### Why Not Use Multiple Decorators?
-
-It is perhaps tempting to view each of these goals as their own decorators (say `@mixin`
-for example). While this works in many cases, using multiple decorators does not ensure a
-consistent order.
-
-Instead that order is lexically determined. For example, consider these classes:
-
-```javascript
-    @foo @bar
-    class FooBar {
-    }
-
-    @bar @foo
-    class BarFoo {
-    }
-```
-
-The different order of the above decorators results in different execution order. In many
-cases this difference will not matter, but if the `@foo` and `@bar` decorators intersect
-in some way, their order can be important.
 
 ## Managing Mixin Collisions
 
@@ -175,12 +140,14 @@ For example:
     
     inst.foo();
 ```
-    
+
+Which produces this:
+ 
     > MyClass foo
     > MyDerived foo
     > MyMixin foo
 
-The same technique applies to `static` methods.
+Again, the same technique applies to `static` methods.
 
 ## Multiple `mixins`
 
