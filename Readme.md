@@ -111,8 +111,8 @@ See [here](./docs/Widget.md#_lifecycle) for more on the `Widget` life-cycle.
 
 # Class Decoration
 
-The `@define` [decorator](https://github.com/tc39/proposal-decorators#decorators) is the 
-primary means to access the functionality in `oo` beyond that of the `Widget` class.
+Beyond the `Widget` base class, the `@define` decorator is the primary means to access the
+functionality provided by `oo`: 
 
 ```javascript
     import { Widget, define } from '@epiphanysoft/oo';
@@ -125,11 +125,12 @@ primary means to access the functionality in `oo` beyond that of the `Widget` cl
     }
 ```
 
-Because decorators are not yet standardized, they require the `transform-decorators-legacy`
-Babel plugin to use. This may change as `oo` updates to track the evolving standard, though
-that will not likely impact user code.
+Because [decorators](https://github.com/tc39/proposal-decorators#decorators) are not yet
+standardized, they require the `transform-decorators-legacy` Babel plugin to use. This may
+change as `oo` updates to track the evolving standard, though that will not likely impact
+user code.
 
-You can avoid this by instead using the `define` static method:
+You can avoid transpiling by instead using the `define` static method:
 
 ```javascript
     import { Widget } from '@epiphanysoft/oo';
