@@ -1,8 +1,21 @@
 # Processors
 
-TODO
+The single object parameter passed to the `@define` decorator (or `define` static method)
+contains properties named for a processor. The values of these properties are pased to the
+processor to achieve the desired outcome:
 
-The `@define` decorator understands the following built-in processors:
+```javascript
+    import { Widget, define } from '@epiphanysoft/oo';
+
+    @define({
+        //... processors go here
+    })
+    class MyWidget extends Widget {
+        //...
+    }
+```
+
+The following processors are built-in:
 
  - [chains](#_chains)
  - [config](#_config)
@@ -12,14 +25,53 @@ The `@define` decorator understands the following built-in processors:
  - [prototype](#_prototype)
  - [static](#_static)
 
-While all processors operate upon classes, the `config` processor is ultimately concerned
-with the instances.
+Each processor maps to a static method on the class the name of which is derived from the
+processor name.
+
+For example, the following code:
+
+```javascript
+    import { Widget, define } from '@epiphanysoft/oo';
+
+    @define({
+        mixins: MyMixin
+    })
+    class MyWidget extends Widget {
+        //...
+    }
+```
+
+Is equivalent to:
+
+```javascript
+    import { Widget } from '@epiphanysoft/oo';
+
+    class MyWidget extends Widget {
+        //...
+    }
+
+    MyWidget.define({
+        mixins: MyMixin
+    });
+```
+
+And also equivalent to:
+
+```javascript
+    import { Widget } from '@epiphanysoft/oo';
+
+    class MyWidget extends Widget {
+        //...
+    }
+
+    MyWidget.applyMixins(MyMixin);
+```
 
 ## Why Not Use Multiple Decorators?
 
-It is perhaps tempting to view each of these goals as their own decorators (say `@mixin`
-for example). While this works in many cases, using multiple decorators does not ensure a
-consistent order.
+It is perhaps tempting to view each of these processors as their own decorators (for
+example, `@mixin`). While this can work in many cases, using multiple decorators does not
+ensure a consistent order.
 
 Instead that order is lexically determined. For example, consider these classes:
 
@@ -238,7 +290,7 @@ The above is equivalent to the following:
 
 Processors are class mutation directives. The `processors` processor allows class authors
 to add new processors to the `@define` mechanism. The primary reason to write processors
-instead of decorators is to ensure proper order of operations.
+instead of decorators is, as statd, to ensure proper order of operations.
 
 By default, inherited processors (such as `prototype`) will be applied before derived class
 processors so this order is not typically a concern. When defining two processors, however,
@@ -247,8 +299,8 @@ it is worth considering their order:
 ```javascript
     @define({
         processors: {
-            foo: 'bar',   // "foo" requires "bar" to run first
-            bar: true
+            foo: true,
+            bar: 'foo'   // "bar" requires "foo" to run first
         }
     })
     class FooBar extends Widget {
@@ -278,8 +330,8 @@ For example:
     }
 ```
     
-    > applyBar: 2
     > applyFoo: 1
+    > applyBar: 2
 
 The name of the applier method is computed from the processor name:
 
@@ -301,7 +353,7 @@ Assume that the new processor should be executed before `prototype`:
             }
         }
     })
-    class CustomProcessor extends Widget {
+    class WidgetWithCustomProcessor extends Widget {
         static applyFoo (foo) {
             // runs before prototype processor...
         }
@@ -320,10 +372,12 @@ any properties other than `before` and `after` in an object value.
 In the first example, the `processors` could have be expressed as:
 
 ```javascript
-    processors: {
-        foo: {
-            after: 'bar'  // "foo" requires "bar" to run first
-        },
-        bar: true  // the value "true" is ignored
-    }
+    @define({
+        processors: {
+            foo: {
+                after: 'bar'  // "foo" requires "bar" to run first
+            },
+            bar: true  // the value "true" is ignored
+        }
+    })
 ```

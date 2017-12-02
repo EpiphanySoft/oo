@@ -25,7 +25,7 @@ In this case the mixin classes are mixed in sequentially. This means `MyMixin` m
 properties that do not collide with `MyOtherDerived` and would be included while the same
 properties defined in `MyOtherMixin` would be ignored.
 
-## Mixin Collisions
+## Name Collisions
 
 When properties are copied from a mixin, only properties that have no prior definition
 are included. If the target class has or inherits a property by the same name as one defined
