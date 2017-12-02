@@ -3,7 +3,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/EpiphanySoft/oo/badge.svg?branch=master)](https://coveralls.io/github/EpiphanySoft/oo?branch=master)
 [![MIT Licence](https://badges.frapsoft.com/os/mit/mit.svg?v=103)](https://opensource.org/licenses/mit-license.php)
 
-`oo` is a class-based, object-oriented (OO) library. It's primary exports are its `Widget`
+`oo` is a class-based, object-oriented (OO) library. It's primary exports are the `Widget`
 base class and `@define` decorator.
 
 Widgets are just "interesting" objects. Interesting objects are those that have behaviors
@@ -111,7 +111,7 @@ Mixins provide a form of multiple-inheritance that allows behavior reuse beyond 
 standard, single-inheritance model.
 
 Unlike other approaches to mixins, in `oo` mixins are widgets. In other words, mixins are
-just like any other widget class. In particular, they can participate in the common object
+just like any other `Widget` class. In particular, they participate in the common object
 life-cycle:
 
 ```javascript
@@ -187,8 +187,10 @@ The above snippet generates the following output:
     > MyMixin dtor
     > MyClass dtor
 
-A cleaner solution to the above, especially if multiple mixins collide, is to use a method
-[junction](./docs/Mixins.md#_junctions).
+In addition to life-cycle, the above example illustrates how to invoke methods in mixins
+when those methods are not copied into the class due to a name collision. An alternative
+approach to this is to use a method [junction](./docs/Mixins.md#_junctions). This is an
+even more compelling approach in cases where multiple mixins are involved.
 
 See [here](./docs/Mixins.md) for more about mixins.
 
