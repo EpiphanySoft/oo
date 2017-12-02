@@ -6,101 +6,11 @@ classes as much as possible.
 
 All mixin strategies basically reduce to copying properties from the mixin to the target
 class. Since mixins as actual classes, this includes `static` as well as `prototype`
-properties.
-
-```javascript
-    import { Widget, define } from '@epiphanysoft/oo';
-    
-    class MyClass extends Widget {
-        ctor () {
-            console.log('MyClass ctor');
-        }
-
-        dtor () {
-            console.log('MyClass dtor');
-        }
-        
-        foo () {
-            console.log('MyClass foo');
-        }
-    }
-
-    class MyMixin extends Widget {
-        ctor () {
-            console.log('MyMixin ctor');
-        }
-
-        dtor () {
-            console.log('MyMixin dtor');
-        }
-        
-        bar () {
-            console.log('MyMixin bar');
-        }
-    }
-
-    @define({
-        mixins: MyMixin
-    })
-    class MyDerived extends MyClass {
-        ctor () {
-            console.log('MyClass ctor');
-        }
-
-        dtor () {
-            console.log('MyClass dtor');
-        }
-        
-        foo () {
-            console.log('MyDerived foo');
-            super.foo();
-            this.bar();
-        }
-    }
-    
-    let inst = new MyDerived();
-```
-
-The first thing to note here is that all of the `ctor` methods were called and in the
-proper, "top down" order.
-    
-    > MyClass ctor
-    > MyMixin ctor
-    > MyDerived ctor
-
-Methods (actually all properties) that are not already defined on the target class are
-copied from the mixin. This allows the `foo()` method to call `this.bar()`.
-
-```javascript
-    inst.foo();
-```
-
-The result is this:
-
-    > MyDerived foo
-    > MyClass foo
-    > MyMixin bar
-
-The call to the `bar` method in `MyDerived.foo()` is made possible by the copied reference
-from the `MyMixin.prototype` to the `MyDerived.prototype`. This works in the same way for
-`static` methods.
-
-Object destruction is similar to creation:
-
-```javascript
-    inst.destroy();
-```
-    
-    > MyDerived dtor
-    > MyMixin dtor
-    > MyClass dtor
-
-In the same way that the `ctor` methods were properly called, so are the `dtor` methods.
+properties. Further, they participate in the common [life cycle](../Readme.md#_mixins).
 
 ## Multiple `mixins`
 
-The `mixins` property passed to `@define` above was a single class. When multiple mixins
-are used, `mixins` becomes an array.
+The `mixins` property passed to `@define` can be a single class or an array.
 
 ```javascript
     @define({
@@ -115,7 +25,7 @@ In this case the mixin classes are mixed in sequentially. This means `MyMixin` m
 properties that do not collide with `MyOtherDerived` and would be included while the same
 properties defined in `MyOtherMixin` would be ignored.
 
-## Managing Mixin Collisions
+## Mixin Collisions
 
 When properties are copied from a mixin, only properties that have no prior definition
 are included. If the target class has or inherits a property by the same name as one defined
