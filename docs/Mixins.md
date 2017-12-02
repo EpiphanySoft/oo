@@ -97,6 +97,24 @@ Object destruction is similar to creation:
 
 In the same way that the `ctor` methods were properly called, so are the `dtor` methods.
 
+## Multiple `mixins`
+
+The `mixins` property passed to `@define` above was a single class. When multiple mixins
+are used, `mixins` becomes an array.
+
+```javascript
+    @define({
+        mixins: [ MyMixin, MyOtherMixin ]
+    })
+    class MyOtherDerived extends MyClass {
+        //
+    }
+```
+
+In this case the mixin classes are mixed in sequentially. This means `MyMixin` may have
+properties that do not collide with `MyOtherDerived` and would be included while the same
+properties defined in `MyOtherMixin` would be ignored.
+
 ## Managing Mixin Collisions
 
 When properties are copied from a mixin, only properties that have no prior definition
@@ -148,24 +166,6 @@ Which produces this:
     > MyMixin foo
 
 Again, the same technique applies to `static` methods.
-
-## Multiple `mixins`
-
-The `mixins` property passed to `@define` above was a single class. When multiple mixins
-are used, `mixins` becomes an array.
-
-```javascript
-    @define({
-        mixins: [ MyMixin, MyOtherMixin ]
-    })
-    class MyOtherDerived extends MyClass {
-        //
-    }
-```
-
-In this case the mixin classes are mixed in sequentially. This means `MyMixin` may have
-properties that do not collide with `MyOtherDerived` and would be included while the same
-properties defined in `MyOtherMixin` would be ignored.
 
 <a name="_junctions">
 
