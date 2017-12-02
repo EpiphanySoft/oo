@@ -7,21 +7,46 @@
 embattled JavaScript `class` keyword using ES.next decorators to add powerful capabilities
 to [classes](./docs/Classes.md) and their [instances](./docs/Instances.md).
 
-The primary entry points for `oo` are its `Widget` class and `@define` decorator. While
-other base classes can be used, [Widget](./docs/Widget.md) defines some  of useful
-behaviors:
+The primary entry points for `oo` are `Widget` and `@define`. Widgets are just "interesting"
+objects. The `Widget` base class provides patterns and features that allow your code to
+focus on its goal rather than all of the mechanical pieces that burden most classes. One
+simple example is the `destroy()` method. This common pattern for cleaning up resources
+has the equally common problem of ensuring that multiple (possibly accidental) calls to
+`destroy()` don't result in the exception:
 
- - Common life-cycle
- - Configuration property management
+```javascript
+    class Foo {
+        constructor () {
+            this.resource = new Resource();
+        }
+        
+        destroy () {
+            this.resource.destroy();  // exception here on 2nd call
+            this.resource = null;
+        }
+    }
+```
 
-Other features provided by `Widget` can be applied to other class hierarchies because they
-are implemented by a helper class called [Meta](./docs/Meta.md) (for "meta-class"). These
-include:
+While this is typically easy to handle (when it is detected), "paranoia code" just makes
+the real code that much more complex. Using `Widget`, the `destroy()` method is guarded to
+ensure that secondary calls are ignored.
 
- - [Mixins](./docs/Mixins.md) (or multiple inheritance)
- - Method Junctions
- - Method Chains
- - Extensible Processors
+This is just the start of what `Widget` offers to make classes easier to get right.
+
+The core features of [Widget](./docs/Widget.md) are:
+
+ - [Common life-cycle](#_lifecycle)
+ - [Mixins](#_mixins) (or multiple inheritance) ([more](./docs/Mixins.md))
+ - [Configuration properties](#_configs)
+ - [Method Junctions](#_junctions)
+ - [Method Chains](#_chains)
+ - [Extensible Processors](#_processors)
+
+Only a few features are provided directly by `Widget`, so most of these can be applied to
+other class hierarchies. This is because most important capabilities are implemented by
+the helper class [Meta](./docs/Meta.md) (for "meta-class").
+
+<a name="_lifecycle">
 
 # Life-cycle
 
@@ -69,6 +94,8 @@ In general, method chains are tied to their defining class and can be called in 
 "top down" (forward) or "bottom up" (reverse) order. In the case of `ctor` and `dtor`,
 these chains are automatically called by the `constructor` and `destroy` methods of
 `Widget`, respectively.
+
+<a name="_mixins">
 
 # Mixins
 
@@ -178,6 +205,22 @@ methods also apply properly.
     > MyDerived dtor
     > MyMixin dtor
     > MyClass dtor
+
+<a name="_configs">
+
+# Configuration Properties
+
+<a name="_junctions">
+
+# Method Junctions
+
+<a name="_chains">
+
+# Method Chains
+
+<a name="_processors">
+
+# Extensible Processors
 
 # Next Steps
 
