@@ -11,8 +11,9 @@ such as a managed life-cycle (not just garbage collected) or properties with sid
 or perhaps belong to class hierarchies.
 
 The `Widget` base class provides patterns and features that allow your code to focus on
-its goal rather than all of the mechanical pieces that burden "interesting" classes. One
-simple example is the `destroy()` method. This common pattern for cleaning up resources
+its goal rather than all of the mechanical pieces that burden such "interesting" classes.
+
+A simple example is the `destroy()` method. This common pattern for cleaning up resources
 has the equally common task of ensuring that multiple (possibly accidental) calls to
 `destroy()` don't result in an exception:
 
