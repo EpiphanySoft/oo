@@ -278,7 +278,7 @@ The above is equivalent to the following:
 
 Processors are class mutation directives. The `processors` processor allows class authors
 to add new processors to the `@define` mechanism. The primary reason to write processors
-instead of decorators is, as statd, to ensure proper order of operations.
+instead of decorators is to ensure proper order of operations.
 
 By default, inherited processors (such as `prototype`) will be applied before derived class
 processors so this order is not typically a concern. When defining two processors, however,
