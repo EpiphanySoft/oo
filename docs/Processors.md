@@ -1,14 +1,15 @@
 # Processors
 
 The single object parameter passed to the `@define` decorator (or `define` static method)
-contains properties named for a processor. The values of these properties are pased to the
-processor to achieve the desired outcome:
+contain processor entries. The name of each property is the name of the processor and the
+value is the processor's argument:
 
 ```javascript
     import { Widget, define } from '@epiphanysoft/oo';
 
     @define({
         //... processors go here
+        foo: 42  // pass 42 to the "foo" processor
     })
     class MyWidget extends Widget {
         //...
@@ -25,10 +26,8 @@ The following processors are built-in:
  - [prototype](#_prototype)
  - [static](#_static)
 
-Each processor maps to a static method on the class the name of which is derived from the
-processor name.
-
-For example, the following code:
+Each processor maps to a static method on the class. The name of this method is derived
+from the processor name:
 
 ```javascript
     import { Widget, define } from '@epiphanysoft/oo';
@@ -41,21 +40,7 @@ For example, the following code:
     }
 ```
 
-Is equivalent to:
-
-```javascript
-    import { Widget } from '@epiphanysoft/oo';
-
-    class MyWidget extends Widget {
-        //...
-    }
-
-    MyWidget.define({
-        mixins: MyMixin
-    });
-```
-
-And also equivalent to:
+Would be the same as:
 
 ```javascript
     import { Widget } from '@epiphanysoft/oo';
@@ -103,13 +88,13 @@ Consider these classes:
     @define({
         chains: ['init']
     })
-    class MyClass extends Widget {
+    class MyBase extends Widget {
         initialize (x, y) {
             this.callChain('init', x, y);
         }
         
         init (x, y) {
-            console.log('MyClass init', x, y);
+            console.log('MyBase init', x, y);
         }
     }
 
@@ -122,7 +107,7 @@ Consider these classes:
     @define({
         mixins: MyMixin
     })
-    class MyDerived extends MyClass {
+    class MyDerived extends MyBase {
         init (x, y) {
             console.log('MyDerived init', x, y);
         }
@@ -133,21 +118,24 @@ Consider these classes:
     inst.initialize(1, 2);
 ```
     
-    > MyClass init 1 2
+    > MyBase init 1 2
     > MyMixin init 1 2
     > MyDerived init 1 2
 
-The base `MyClass` defines a method chain on the `init` method. The goal is to enable
+The base `MyBase` defines a method chain on the `init` method. The goal is to enable
 derived classes and mixins to implement `init` methods without orchestrating the exact
 call sequence. Instead the `initialize()` method calls all of the `init()` implementations
 in the various classes and mixins using `callChain()`. This ensures that all `init()`
 methods are called and in the correct, top-down order.
 
+For the method chain to work properly, the `mixins` processor needs to know **not** to copy
+such methods. The `chains` processor tracks these methods so that `mixins` behave properly.
+
 <a name="_config"></a>
 
 # `config`
 
-WIP
+This processor defines one or more [config properties](../Readme.md#_configs).
 
 <a name="_mixins"></a>
 
@@ -160,7 +148,7 @@ one class to another.
     @define({
         mixins: [ MyMixin, MyOtherMixin ]
     })
-    class MyDerived extends MyClass {
+    class MyDerived extends MyBase {
         //
     }
 ```
@@ -169,16 +157,16 @@ Because JavaScript only truly understands single-inheritance via its prototype c
 properties (both `static` and on the mixin's prototype) are copied from `MyMixin` and
 `MyOtherMixin` onto `MyDerived`. This is only performed if there is no collision on the
 name of the property. In other words, properties already defined on `MyDerived` or inherited
-from `MyClass` are not overridden by the mixins.
+from `MyBase` are not overridden by the mixins.
 
-See [here](./Mixins.md) for more information on mixins.
+See [here](../Readme.md#_mixins) for more information on mixins.
 
 <a name="_processors"></a>
 
 # `processors`
 
-This processor allows a class to define and order custom processors for use in derived
-classes.
+This processor allows a class to define and order custom processors for its use as well
+as for use in derived classes.
 
 ```javascript
     @define({

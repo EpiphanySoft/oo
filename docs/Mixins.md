@@ -5,7 +5,7 @@ in various ways, but the approach taken by `oo` is to (as much as possible) trea
 like additional base classes.
 
 All mixin strategies basically reduce to copying properties from the mixin to the target
-class. Since mixins as actual classes, this includes `static` as well as `prototype`
+class. Since mixins are actual classes, this includes `static` as well as `prototype`
 properties. Further, they participate in the common [life cycle](../Readme.md#_mixins).
 
 ## Multiple `mixins`
