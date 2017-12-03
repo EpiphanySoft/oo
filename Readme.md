@@ -10,9 +10,8 @@ primarily through its `Widget` base class and `@define`
 Widgets are what you might call "interesting" objects. Interesting in the sense that they
 have behaviors such as responsive properties (where changes have side-effects), or managed
 life cycle (not just garbage collected) or are perhaps part of a rich class hierarchy.
-
-The `Widget` base class provides patterns and features that allow you to avoid mechanical
-details often required by such interesting classes.
+`Widget` and `@define` provide the bulk of the mechanics that would otherwise be woven
+throughout such classes.
 
 A simple example would be the `destroy()` method. This common pattern for cleaning up
 resources has the equally common burden of ensuring that multiple (probably accidental)
