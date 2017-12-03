@@ -159,24 +159,24 @@ class of `Widget`, that is the furthest up the class hierarchy that the mixin pr
 must climb to copy inherited properties.
 
 Mixins are otherwise just like any other `Widget` class. In particular, they participate
-in the common object life cycle.
+in the common object [life cycle](#_lifecycle).
 
 Consider:
 
 ```javascript
     import { Widget, define } from '@epiphanysoft/oo';
     
-    class MyClass extends Widget {
+    class MyBase extends Widget {
         ctor () {
-            console.log('MyClass ctor');
+            console.log('MyBase ctor');
         }
         
         dtor () {
-            console.log('MyClass dtor');
+            console.log('MyBase dtor');
         }
 
         foo () {
-            console.log('MyClass foo');
+            console.log('MyBase foo');
         }
     }
 
@@ -197,7 +197,7 @@ Consider:
     @define({
         mixins: MyMixin
     })
-    class MyDerived extends MyClass {
+    class MyDerived extends MyBase {
         ctor () {
             console.log('MyDerived ctor');
         }
@@ -224,17 +224,17 @@ Consider:
 
 The above snippet generates the following output:
 
-    > MyClass ctor
+    > MyBase ctor
     > MyMixin ctor
     > MyDerived ctor
     > ---
-    > MyClass foo
+    > MyBase foo
     > MyDerived foo
     > MyMixin foo
     > ---
     > MyDerived dtor
     > MyMixin dtor
-    > MyClass dtor
+    > MyBase dtor
 
 In addition to life cycle, the above example illustrates how to invoke methods in mixins
 when there is a name collision. In this case, the method is not copied from the mixin so

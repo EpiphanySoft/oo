@@ -8,18 +8,22 @@
     }
 ```
 
-In addition to what has already been [described](../Readme.md), the `Widget` class sets
-several (readonly) instance properties as well as provides a handful of methods.
+In addition to what has already been [described](../Readme.md), the `Widget` class has
+several (readonly) instance properties as well as a handful of useful methods.
 
 ## Instance Properties
 
 `Widget` maintains the following properties to describe an instance's current life cycle
 state. These are:
 
- - `constructing` Starts as `true` and is cleared by the `constructor`.
+ - `constructing` Starts as `true` and is cleared on exit from the `constructor`. This
+  will be `true` during the initial configuration phase as well as during the `ctor` call
+  sequence.
  - `configuring` Set to `true` prior to calling `configure` and cleared afterward.
- - `destroying` Set to `true` on entry to `destroy()` (never cleared).
- - `destroyed` Set to `true` on exit from `destroy()`.
+ - `destroying` Set to `true` on entry to `destroy()` (never cleared). This will be `true`
+  during the `dtor` call sequence.
+ - `destroyed` Set to `true` on exit from `destroy()`. This will be set to `true` after
+  the `dtor` methods are called.
  - `meta` A readonly [reference](#_meta) to the class's [Meta](./Meta.md) class.
 
 ## Instance Methods

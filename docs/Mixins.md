@@ -1,8 +1,8 @@
 # Mixins
 
 The concept of mixins has been [explored](https://www.npmjs.com/package/core-decorators)
-in various ways, but the approach taken here is to treat mixins like alternative base
-classes as much as possible.
+in various ways, but the approach taken by `oo` is to (as much as possible) treat mixins
+like additional base classes.
 
 All mixin strategies basically reduce to copying properties from the mixin to the target
 class. Since mixins as actual classes, this includes `static` as well as `prototype`
@@ -16,7 +16,7 @@ The `mixins` property passed to `@define` can be a single class or an array.
     @define({
         mixins: [ MyMixin, MyOtherMixin ]
     })
-    class MyOtherDerived extends MyClass {
+    class MyOtherDerived extends MyBase {
         //
     }
 ```
@@ -39,9 +39,9 @@ For example:
 ```javascript
     import { Widget, define } from '@epiphanysoft/oo';
     
-    class MyClass extends Widget {
+    class MyBase extends Widget {
         foo () {
-            console.log('MyClass foo');
+            console.log('MyBase foo');
         }
     }
 
@@ -54,7 +54,7 @@ For example:
     @define({
         mixins: MyMixin
     })
-    class MyDerived extends MyClass {
+    class MyDerived extends MyBase {
         foo () {
             super.foo();
 
@@ -71,7 +71,7 @@ For example:
 
 Which produces this:
  
-    > MyClass foo
+    > MyBase foo
     > MyDerived foo
     > MyMixin foo
 
@@ -88,9 +88,9 @@ a `@junction`:
 ```javascript
     import { Widget, define, junction } from '@epiphanysoft/oo';
     
-    class MyClass extends Widget {
+    class MyBase extends Widget {
         foo () {
-            console.log('MyClass foo');
+            console.log('MyBase foo');
         }
     }
 
@@ -103,10 +103,10 @@ a `@junction`:
     @define({
         mixins: MyMixin
     })
-    class MyDerived extends MyClass {
+    class MyDerived extends MyBase {
         @junction
         foo () {
-            super.foo(); // calls MyClass.foo() then MyMixin.foo()
+            super.foo(); // calls MyBase.foo() then MyMixin.foo()
             
             console.log('MyDerived foo');
         }
@@ -117,14 +117,14 @@ a `@junction`:
     inst.foo();
 ```
     
-    > MyClass foo
+    > MyBase foo
     > MyMixin foo
     > MyDerived foo
 
 ### Behind The Curtain
 
 In order to achieve the `super.foo()` simplicity above, the `@junction` decorator inserts 
-the junction method in the class prototype chain between `MyDerived` and `MyClass`. This
+the junction method in the class prototype chain between `MyDerived` and `MyBase`. This
 extra link in the prototype chain is added only by the first `@junction` method (all other
 method junctions reuse it).
 
@@ -143,13 +143,13 @@ available for other methods using the `chains` processor:
     @define({
         chains: ['init']
     })
-    class MyClass extends Widget {
+    class MyBase extends Widget {
         initialize (x, y) {
             this.callChain('init', x, y);
         }
         
         init (x, y) {
-            console.log('MyClass init', x, y);
+            console.log('MyBase init', x, y);
         }
     }
 
@@ -162,7 +162,7 @@ available for other methods using the `chains` processor:
     @define({
         mixins: MyMixin
     })
-    class MyDerived extends MyClass {
+    class MyDerived extends MyBase {
         init (x, y) {
             console.log('MyDerived init', x, y);
         }
@@ -173,7 +173,7 @@ available for other methods using the `chains` processor:
     inst.initialize(1, 2);
 ```
     
-    > MyClass init 1 2
+    > MyBase init 1 2
     > MyMixin init 1 2
     > MyDerived init 1 2
 
