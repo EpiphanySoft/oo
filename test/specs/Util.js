@@ -169,6 +169,20 @@ describe('Util', function () {
         });
     });
 
+    describe('str', function () {
+        it('should return empty for null', function () {
+            expect(Util.str(null)).to.be('');
+        });
+
+        it('should return empty for undefined', function () {
+            expect(Util.str()).to.be('');
+        });
+
+        it('should return "0" for 0', function () {
+            expect(Util.str(0)).to.be('0');
+        });
+    });
+
     describe('typeOf', function () {
         it('should handle null', function () {
             expect(Util.typeOf(null)).to.be('null');

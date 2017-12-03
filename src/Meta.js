@@ -5,7 +5,7 @@ const Configs = require('./Configs.js');
 const Processor = require('./Processor.js');
 const Util = require('./Util.js');
 
-const { Empty, getAllKeys, getOwnKeys, raise, setProto } = Util;
+const { Empty, getAllKeys, getOwnKeys, raise, setProto, str } = Util;
 
 const junctionSym = Symbol('junction');
 const metaSym = Symbol('meta');
@@ -53,7 +53,7 @@ class Meta {
             configurable: true
         });
 
-        me.id = (cls.name || '') + '$' + ++Meta.count;
+        me.id = `${str(cls.name)}$${++Meta.count}`;
         me.class = cls;
         me.super = superMeta;
 

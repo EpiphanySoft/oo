@@ -158,6 +158,10 @@ const Util = {
         }
     },
 
+    str (s) {
+        return (s == null) ? '' : String(s);
+    },
+
     toArray (src) {
         if (src && !Array.isArray(src)) {
             src = [src];
