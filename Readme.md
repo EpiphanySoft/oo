@@ -3,8 +3,8 @@
 [![Coverage Status](https://coveralls.io/repos/github/EpiphanySoft/oo/badge.svg?branch=master)](https://coveralls.io/github/EpiphanySoft/oo?branch=master)
 [![MIT Licence](https://badges.frapsoft.com/os/mit/mit.svg?v=103)](https://opensource.org/licenses/mit-license.php)
 
-`oo` is a library that gives its users new, object-oriented (OO) super powers. These come
-primarily through its `Widget` base class and `@define`
+`oo` is a library of object-oriented (OO) super powers. These powers come primarily from
+the `Widget` base class and `@define`
 [decorator](https://github.com/tc39/proposal-decorators#decorators).
 
 Widgets are what you might call "interesting" objects. Interesting in the sense that they
