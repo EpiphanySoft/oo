@@ -1,51 +1,55 @@
 # Widget
 
-`oo` exports a recommended `Widget` base class:
-
 ```javascript
     import { Widget } from '@epiphanysoft/oo';
     
-    class MyClass extends Widget {
+    class MyWidget extends Widget {
         //
     }
 ```
 
-`Widget` defines a standard object life-cycle as well as descriptive properties and helper
-methods. 
+In addition to what has already been [described](../Readme.md), the `Widget` class has
+several (readonly) instance properties as well as a handful of useful methods.
 
 ## Instance Properties
 
-`Widget` maintains the following properties to describe an instance's current life-cycle
+`Widget` maintains the following properties to describe an instance's current life cycle
 state. These are:
 
- - `constructing` Starts as `true` and is cleared by the `constructor`.
+ - `constructing` Starts as `true` and is cleared on exit from the `constructor`. This
+  will be `true` during the initial configuration phase as well as during the `ctor` call
+  sequence.
  - `configuring` Set to `true` prior to calling `configure` and cleared afterward.
- - `destroying` Set to `true` on entry to `destroy()` (never cleared).
- - `destroyed` Set to `true` on exit from `destroy()`.
- - `$meta` A readonly reference to the class's [Meta](./Meta.md) class.
+ - `destroying` Set to `true` on entry to `destroy()` (never cleared). This will be `true`
+  during the `dtor` call sequence.
+ - `destroyed` Set to `true` on exit from `destroy()`. This will be set to `true` after
+  the `dtor` methods are called.
+ - `meta` A readonly [reference](#_meta) to the class's [Meta](./Meta.md) class.
 
 ## Instance Methods
 
-`Widget` defines the following life-cycle methods:
+`Widget` defines the following life cycle methods:
 
  - [construct](#_construct)
  - [destruct](#_construct)
- - [destroy](#_lifeCycle)
+ - [destroy](#_lifecycle)
 
 In addition, `Widget` defines these methods:
 
  - [callChain](./Processors.md#_chains)
  - [callChainRev](./Processors.md#_chains)
- - configure
- - getMeta
+ - [configure](#_configure)
 
-<a name="_lifeCycle">
+<a name="_lifecycle"></a>
 
 ## Life-cycle
 
-The `constructor` of `Widget` recognizes a single `Object` parameter that holds instance
-configuration properties (described later). It is recommended that a derived class not
-implement a `constructor`, but instead take advantage of the `ctor` method.
+It is recommended that derived classes not implement a `constructor`, but instead take
+advantage of the `ctor` [method chain](./Mixins.md#_chains). To facilitate this, the
+`constructor` of `Widget` takes a single `Object` parameter or "config object". Prior to
+invoking the `ctor` method chain, the config object's properties are used to set the
+widget's [configuration properties](../Readme.md#_configs) using the [configure](#_configure)
+method.
 
 `Widget` also defines a `destroy` method that is used to cleanup any resources that the GC
 (garbage collector) won't handle. It is also recommended that derived classes not override
@@ -57,7 +61,7 @@ These methods ensure the following:
  - The `destroying` and `destroyed` properties track destruction.
  - The `destroy` method is harmless to call after it has been called.
 
-### ctor
+### `ctor`
 
 The `ctor` method is like a `constructor` in that it is only called once as the instance
 is being created.
@@ -101,7 +105,7 @@ For example:
 The `ctor` implementations are called "top down" from the `Widget` class to the
 derived-most class.
 
-### dtor
+### `dtor`
 
 As with `ctor` calls, the `Widget` class ensures that the proper `dtor` calls are made.
 This saves derived classes from overriding `destroy` and remembering to call
@@ -133,14 +137,17 @@ For example:
 The `dtor` implementations are called "bottom up" from the derived-most class upwards to
 the `Widget` class.
 
-<a name="_construct">
+<a name="_construct"></a>
 
-### construct / destruct
+### `construct()` and `destruct()`
 
-There are times when some manual involvement in the life-cycle is needed. In these cases
-there are the `construct` and `destruct` methods which are called by the `constructor` and
-`destroy` method, respectively. It is these implementations in the `Widget` base class
-that invoke the `ctor` and `dtor` methods.
+There are times when some manual involvement in the life cycle is needed. In these cases
+there are the `construct` and `destruct` methods.
+
+The `construct` method is called by the `constructor`, passing along all of its arguments.
+The `construct` method in `Widget` invokes the `ctor` [method chain](./Mixins.md#_chains).
+Conversely, the `destruct` method is called by the `destroy` method in `Widget`. The `dtor`
+method chain is invoked by `Widget`'s implementation of `destruct`.
 
 ```javascript
     class MyClass extends Widget {
@@ -176,18 +183,71 @@ that invoke the `ctor` and `dtor` methods.
     }
     
     let inst = new MyDerived();
-```
-    
-    > MyDerived before construct    
-    > MyClass ctor
-    > MyDerived ctor
-    > MyDerived after construct    
-
-```javascript
+    console.log('---');
     inst.destroy();
 ```
 
-    > MyDerived before destruct    
+Produces:
+
+    > MyDerived before construct
+    > MyClass ctor
+    > MyDerived ctor
+    > MyDerived after construct
+    > ---
+    > MyDerived before destruct
     > MyDerived dtor
     > MyClass dtor
-    > MyDerived after destruct    
+    > MyDerived after destruct
+
+<a name="_configure"></a>
+
+## `configure()`
+
+This method applies the properties of a config object to the corresponding
+[config properties](../Readme.md#_configs). This method is internally called by `construct`
+in `Widget`.
+
+To ensure that config property ordering is transparent, this process is not as simple as
+calling `Object.assign()`. For example:
+
+```javascript
+    @define({
+        config: {
+            host: null,
+            port: null
+        }
+    })
+    class MyWidget extends Widget {
+        hostUpdate (value) {
+            this.connection.address = value + ':' + this.port;
+        }
+    }
+    
+    let inst = new MyWidget({
+        host: '127.0.0.1',
+        port: 123
+    });
+```
+
+In the code above, the `hostUpdate` method consumes not only the new value for the `host`
+config property but also the `port` config property. It is therefore important that the
+`port` config property be the correct value.
+
+The same solution to the above also applies when setting config properties after object
+creation:
+
+```javascript
+    inst.configure({
+        host: '192.168.1.10',
+        port: 321
+    })
+```
+
+See [here](./Configs.md) for more information on this process.
+
+<a name="_meta"></a>
+
+## `meta`
+
+There is a static and non-static version of this property. It holds the [Meta](./Meta.md)
+class instance for the corresponding `Widget`-derived class.

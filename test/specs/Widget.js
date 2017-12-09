@@ -2,7 +2,7 @@ const expect = require('assertly').expect;
 
 const Widget = require('../../src/Widget.js');
 
-const { define, junction, mixinId } = require('../../src/decorators.js');
+const { define, junction } = require('../../src/decorators.js');
 
 function getAllKeys (obj) {
     let ret = [];
@@ -17,7 +17,7 @@ function getAllKeys (obj) {
 describe('Widget', function () {
     describe('basics', function () {
         it('should have the correct processors', function () {
-            let names = Widget.getMeta().getProcessors().map(p => p.name);
+            let names = Widget.meta.getProcessors().map(p => p.name);
 
             expect(names).to.equal([
                 'properties',
@@ -30,7 +30,7 @@ describe('Widget', function () {
         });
 
         it('should have ctor/dtor chains', function () {
-            let meta = Widget.getMeta();
+            let meta = Widget.meta;
             let chains = getAllKeys(meta.liveChains);
 
             chains.sort();
@@ -41,9 +41,21 @@ describe('Widget', function () {
             chains.sort();
             expect(chains).to.equal([ 'ctor', 'dtor' ]);
         });
+
+        it('should have a destroy method', function () {
+            class W extends Widget {}
+
+            let inst = new W();
+
+            inst.destroy();  // determines there is no dtor...
+
+            inst = new W();
+
+            inst.destroy();  // now it won't even look for dtors
+        });
     });
 
-    describe('life-cycle', function () {
+    describe('life cycle', function () {
         let C, D, M;
         let log;
 
@@ -66,7 +78,6 @@ describe('Widget', function () {
                 }
             };
 
-            @mixinId('mixum')
             class m extends Widget {
                 ctor () {
                     log.push('M.ctor');
@@ -144,6 +155,13 @@ describe('Widget', function () {
             instance.destroy();
 
             expect(log).to.equal([ 'D.dtor', 'C.dtor' ]);
+
+            instance = new D();
+
+            log = [];
+            instance.destroy();
+
+            expect(log).to.equal([ 'D.dtor', 'C.dtor' ]);
         });
 
         it('should be able to call a derived instance method', function () {
@@ -161,13 +179,10 @@ describe('Widget', function () {
 
             D.applyMixins(M);
 
-            expect(D.mixins.mixum === M).to.be(true);
-
             let instance = new D();
 
             expect(instance.str).to.be('CMD');
             expect(log).to.equal([ 'C.ctor', 'M.ctor', 'D.ctor' ]);
-            expect(instance.mixins.mixum === M.prototype).to.be(true);
 
             log = [];
             let res = instance.foo(42);
@@ -194,10 +209,9 @@ describe('Widget', function () {
 
             expect(instance.str).to.be('M');
             expect(log).to.equal([ 'M.ctor' ]);
-            expect(instance.mixins.mixum === M.prototype).to.be(true);
 
-            expect(instance.getMeta().liveChains.ctor).to.be(true);
-            expect(instance.getMeta().liveChains.dtor).to.be(true);
+            expect(instance.meta.liveChains.ctor).to.be(true);
+            expect(instance.meta.liveChains.dtor).to.be(true);
         });
 
         it('should copy prototype and static properties', function () {
@@ -229,51 +243,13 @@ describe('Widget', function () {
 
             expect(log).to.equal([ ]);
 
-            expect(F.getMeta().liveChains.ctor).to.be(false);
-            expect(F.getMeta().liveChains.dtor).to.be(false);
+            expect(F.meta.liveChains.ctor).to.be(false);
+            expect(F.meta.liveChains.dtor).to.be(false);
         });
-    }); // life-cycle
+    }); // life cycle
 
-    describe('mixins', function () {
-        it('should be able to reassign mixinId', function () {
-            @define({
-                mixinId: 'moo'
-            })
-            class M extends Widget {
-                static foo () {}
-                foo () {}
-            }
-
-            @define({
-                mixins: [
-                    M
-                ]
-            })
-            class D extends Widget {
-                //
-            }
-
-            expect(D.foo).to.be(M.foo);
-            expect(D.prototype.foo).to.be(M.prototype.foo);
-
-            expect(D.mixins.moo).to.be(M);
-
-            @define({
-                mixins: [
-                    [ 'goo', M ]
-                ]
-            })
-            class E extends Widget {
-                //
-            }
-
-            expect(E.foo).to.be(M.foo);
-            expect(E.prototype.foo).to.be(M.prototype.foo);
-
-            expect(E.mixins.moo).to.be(undefined);
-            expect(E.mixins.goo).to.be(M);
-        });
-    });
+    // describe('mixins', function () {
+    // });
 
     describe('processors', function () {
         it('should allow for custom processors', function () {
@@ -422,6 +398,66 @@ describe('Widget', function () {
             }
 
             expect(Bar2.fooWasHere).to.be('(z=c)(x=a)(y=b)');
+        });
+    });
+
+    describe('method chains', function () {
+        it('should allow new chains', function () {
+            let log = [];
+
+            @define({
+                chains: [ 'fwd', 'rev' ]
+            })
+            class W extends Widget {
+                forward (x) {
+                    this.callChain('fwd', x);
+                }
+
+                reverse (x) {
+                    this.callChainRev('rev', x);
+                }
+            }
+
+            class X extends W {
+                fwd (...args) {
+                    log.push([ 'x.fwd', args ]);
+                }
+
+                rev (...args) {
+                    log.push([ 'x.rev', args ]);
+                }
+            }
+
+            class Y extends X {
+                fwd (...args) {
+                    log.push([ 'y.fwd', args ]);
+                }
+
+                rev (...args) {
+                    log.push([ 'y.rev', args ]);
+                }
+            }
+
+            let inst = new Y();
+
+            expect(log).to.equal([]);
+
+            inst.forward(24);
+
+            expect(log).to.equal([
+                [ 'x.fwd', [ 24 ] ],
+                [ 'y.fwd', [ 24 ] ]
+            ]);
+
+            inst.reverse(42);
+
+            expect(log).to.equal([
+                [ 'x.fwd', [ 24 ] ],
+                [ 'y.fwd', [ 24 ] ],
+
+                [ 'y.rev', [ 42 ] ],
+                [ 'x.rev', [ 42 ] ]
+            ]);
         });
     });
 

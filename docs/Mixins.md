@@ -1,217 +1,22 @@
 # Mixins
 
 The concept of mixins has been [explored](https://www.npmjs.com/package/core-decorators)
-in various ways, but the approach Configly takes is to treat mixins like alternative base
-classes as much as possible.
+in various ways, but the approach taken by `oo` is to (as much as possible) treat mixins
+like additional base classes.
 
-All mixin strategies basically reduce to copying properties from the mixin class to the
-target class. Since Configly defines mixins as actual classes, this includes `static` as
-well as `prototype` properties.
+All mixin strategies basically reduce to copying properties from the mixin to the target
+class. Since mixins are actual classes, this includes `static` as well as `prototype`
+properties. Further, they participate in the common [life cycle](../Readme.md#_mixins).
 
-```javascript
-    import { Widget, define } from '@epiphanysoft/oo';
-    
-    class MyClass extends Widget {
-        ctor () {
-            console.log('MyClass ctor');
-        }
+## Multiple `mixins`
 
-        dtor () {
-            console.log('MyClass dtor');
-        }
-        
-        foo () {
-            console.log('MyClass foo');
-        }
-    }
-
-    class MyMixin extends Widget {
-        ctor () {
-            console.log('MyMixin ctor');
-        }
-
-        dtor () {
-            console.log('MyMixin dtor');
-        }
-        
-        bar () {
-            console.log('MyMixin bar');
-        }
-    }
-
-    @define({
-        mixins: MyMixin
-    })
-    class MyDerived extends MyClass {
-        ctor () {
-            console.log('MyClass ctor');
-        }
-
-        dtor () {
-            console.log('MyClass dtor');
-        }
-        
-        foo () {
-            console.log('MyDerived foo');
-            super.foo();
-            this.bar();
-        }
-    }
-    
-    let inst = new MyDerived();
-```
-    
-    > MyClass ctor
-    > MyMixin ctor
-    > MyDerived ctor
-
-The first thing to note here is that all of the `ctor` methods were called and in the
-proper, "top down" order.
-
-```javascript
-    inst.foo();
-```
-    
-    > MyDerived foo
-    > MyClass foo
-    > MyMixin bar
-
-The call to the `bar` method in `MyDerived.foo()` is made possible by the copied reference
-from the `MyMixin.prototype` to the `MyDerived.prototype`. This works in the same way for
-`static` methods.
-
-Object destruction is similar to creation:
-
-```javascript
-    inst.destroy();
-```
-    
-    > MyDerived dtor
-    > MyMixin dtor
-    > MyClass dtor
-
-In the same way that the `ctor` methods were properly called, so are the `dtor` methods.
-
-## The `@define` Decorator
-
-The `@define` decorator is used above to include `MyMixin` as a mixin of `MyDerived`. This
-language feature is currently a standard in progress. Said another way, it is an "ES.next"
-feature.
-
-The same features are available as a `static` method:
-
-```javascript
-    class MyDerived extends MyClass {
-        // ...
-    }
-    
-    MyDerived.define({
-        mixins: MyMixin
-    })
-```
-
-### Why Not Use Multiple Decorators?
-
-It is perhaps tempting to view each of these goals as their own decorators (say `@mixin`
-for example). While this works in many cases, using multiple decorators does not ensure a
-consistent order.
-
-Instead that order is lexically determined. For example, consider these classes:
-
-```javascript
-    @foo @bar
-    class FooBar {
-    }
-
-    @bar @foo
-    class BarFoo {
-    }
-```
-
-The different order of the above decorators results in different execution order. In many
-cases this difference will not matter, but if the `@foo` and `@bar` decorators intersect
-in some way, their order can be important.
-
-## Managing Mixin Collisions
-
-When properties are copied from a mixin, only properties that have no prior definition
-are included. If the target class has or inherits a property by the same name as one defined
-in a mixin, that property is ignored.
-
-The first step to managing overlapping mixins is to assign id's to them. The simplest way
-is to assign one to the mixin class:
-
-```javascript
-    @define({
-        mixinId: 'mymixin'
-    })
-    class MyMixin extends Widget {
-        //...
-    }
-```
-
-Now when `MyMixin` is mixed into another class, it is added to the `mixins` object on the
-class constructor and its prototype is added to a `mixins` object on the class prototype.
-These object allow a class to directly access their mixins. In code:
-
-```javascript
-    MyDerived.mixins['mymixin'] = MyMixin;
-    MyDerived.prototype.mixins['mymixin'] = MyMixin.prototype;
-```
-
-For example:
-
-```javascript
-    import { Widget, define } from '@epiphanysoft/oo';
-    
-    class MyClass extends Widget {
-        foo () {
-            console.log('MyClass foo');
-        }
-    }
-
-    @define({
-        mixinId: 'mymixin'
-    })
-    class MyMixin extends Widget {
-        foo () {
-            console.log('MyMixin foo');
-        }
-    }
-
-    @define({
-        mixins: MyMixin
-    })
-    class MyDerived extends MyClass {
-        foo () {
-            super.foo();
-            console.log('MyDerived foo');
-            this.mixins.mymixin.foo.call(this);
-        }
-    }
-    
-    let inst = new MyDerived();
-    
-    inst.foo();
-```
-    
-    > MyClass foo
-    > MyDerived foo
-    > MyMixin foo
-
-Because there is a `mixins` object maintained on the constructor as well as on the
-prototype, the same technique applies to `static` methods.
-
-## Alternative Forms of `mixins`
-
-The `mixins` property passed to `@define` above was a single class. When multiple mixins
-are used, this can changed to an array.
+The `mixins` property passed to `@define` can be a single class or an array.
 
 ```javascript
     @define({
         mixins: [ MyMixin, MyOtherMixin ]
     })
-    class MyOtherDerived extends MyClass {
+    class MyOtherDerived extends MyBase {
         //
     }
 ```
@@ -220,37 +25,23 @@ In this case the mixin classes are mixed in sequentially. This means `MyMixin` m
 properties that do not collide with `MyOtherDerived` and would be included while the same
 properties defined in `MyOtherMixin` would be ignored.
 
-The fact that a `mixins` array is mixed in sequentially ensures predictability. When using
-an array, each element can be either a class to mixin or a 2-element array:
+## Name Collisions
+
+When properties are copied from a mixin, only properties that have no prior definition
+are included. If the target class has or inherits a property by the same name as one defined
+in a mixin, that property on the mixin is ignored.
+
+For methods that need to call both the proper `super` method as well as the mixin's method,
+a manual `call()` can be used.
+
+For example:
 
 ```javascript
-    @define({
-        mixins: [
-            MyMixin,
-            [ 'othermix', MyOtherMixin ]
-        ]
-    })
-    class MyOtherDerived extends MyClass {
-        //
-    }
-```
-
-When one of the elements of the `mixins` array is a 2-element array, the first item in
-that array is the mixin id (the key to use in the `mixins` object of the target class).
-This form may be needed if the mixin class did not define an id or if perhaps the mixin
-classes came from different authors and had conflicting id's.
-
-## Method Junctions
-
-When methods collide it is often desirable to treat the mixin methods as normal `super`
-methods. This can be accomplished by declaring the colliding method as a `@junction`.
-
-```javascript
-    import { Widget, define, junction } from '@epiphanysoft/oo';
+    import { Widget, define } from '@epiphanysoft/oo';
     
-    class MyClass extends Widget {
+    class MyBase extends Widget {
         foo () {
-            console.log('MyClass foo');
+            console.log('MyBase foo');
         }
     }
 
@@ -263,10 +54,59 @@ methods. This can be accomplished by declaring the colliding method as a `@junct
     @define({
         mixins: MyMixin
     })
-    class MyDerived extends MyClass {
+    class MyDerived extends MyBase {
+        foo () {
+            super.foo();
+
+            console.log('MyDerived foo');
+
+            MyMixin.prototype.foo.call(this);
+        }
+    }
+    
+    let inst = new MyDerived();
+    
+    inst.foo();
+```
+
+Which produces this:
+ 
+    > MyBase foo
+    > MyDerived foo
+    > MyMixin foo
+
+Again, the same technique applies to `static` methods.
+
+<a name="_junctions"></a>
+
+## Method Junctions
+
+When methods collide it is often desirable to treat the mixin methods as normal `super`
+methods. This can be accomplished by declaring the method at the point of collision to be
+a `@junction`:
+
+```javascript
+    import { Widget, define, junction } from '@epiphanysoft/oo';
+    
+    class MyBase extends Widget {
+        foo () {
+            console.log('MyBase foo');
+        }
+    }
+
+    class MyMixin extends Widget {
+        foo () {
+            console.log('MyMixin foo');
+        }
+    }
+
+    @define({
+        mixins: MyMixin
+    })
+    class MyDerived extends MyBase {
         @junction
         foo () {
-            super.foo(); // calls MyClass.foo() then MyMixin.foo()
+            super.foo(); // calls MyBase.foo() then MyMixin.foo()
             
             console.log('MyDerived foo');
         }
@@ -277,17 +117,18 @@ methods. This can be accomplished by declaring the colliding method as a `@junct
     inst.foo();
 ```
     
-    > MyClass foo
+    > MyBase foo
     > MyMixin foo
     > MyDerived foo
 
 ### Behind The Curtain
 
-In order to achieve the above simplicity of using `super.foo()` and having that call reach
-both the proper super class as well as `MyMixin`, the `@junction` decorator inserts the
-junction method in the class prototype chain between `MyDerived` and `MyClass`. This extra
-link in the prototype chain is added by the first `@junction` method only (all other
-junctions reuse it).
+In order to achieve the `super.foo()` simplicity above, the `@junction` decorator inserts 
+the junction method in the class prototype chain between `MyDerived` and `MyBase`. This
+extra link in the prototype chain is added only by the first `@junction` method (all other
+method junctions reuse it).
+
+<a name="_chains"></a>
 
 ## Method Chains
 
@@ -302,13 +143,13 @@ available for other methods using the `chains` processor:
     @define({
         chains: ['init']
     })
-    class MyClass extends Widget {
+    class MyBase extends Widget {
         initialize (x, y) {
             this.callChain('init', x, y);
         }
         
         init (x, y) {
-            console.log('MyClass init', x, y);
+            console.log('MyBase init', x, y);
         }
     }
 
@@ -321,7 +162,7 @@ available for other methods using the `chains` processor:
     @define({
         mixins: MyMixin
     })
-    class MyDerived extends MyClass {
+    class MyDerived extends MyBase {
         init (x, y) {
             console.log('MyDerived init', x, y);
         }
@@ -332,7 +173,7 @@ available for other methods using the `chains` processor:
     inst.initialize(1, 2);
 ```
     
-    > MyClass init 1 2
+    > MyBase init 1 2
     > MyMixin init 1 2
     > MyDerived init 1 2
 

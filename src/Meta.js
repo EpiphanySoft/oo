@@ -5,14 +5,15 @@ const Configs = require('./Configs.js');
 const Processor = require('./Processor.js');
 const Util = require('./Util.js');
 
-const { Empty, getAllKeys, getOwnKeys, raise, setProto } = Util;
+const { Empty, getAllKeys, getOwnKeys, raise, setProto, str } = Util;
 
 const junctionSym = Symbol('junction');
+const metaSym = Symbol('meta');
 
 const prototypeSkip = new Empty({
     constructor: 1,
 
-    $meta: 1,
+    meta: 1,
     super: 1
 });
 
@@ -21,7 +22,8 @@ const staticSkip = new Empty({
     length: 1,
     name: 1,
 
-    $meta: 1,
+    [metaSym]: 1,
+    meta: 1,
     super: 1
 });
 
@@ -44,15 +46,14 @@ class Meta {
     constructor (cls, superclass = null) {
         let me = this;
         let proto = cls.prototype;
-        let superMeta = superclass && superclass.getMeta();
-        let $meta = {
-            value: me
-        };
+        let superMeta = superclass && superclass.meta;
 
-        Object.defineProperty(cls, '$meta', $meta);
-        Object.defineProperty(proto, '$meta', $meta);
+        Object.defineProperty(proto, 'meta', {
+            value: me,
+            configurable: true
+        });
 
-        me.id = (cls.name || '') + '$' + ++Meta.count;
+        me.id = `${str(cls.name)}$${++Meta.count}`;
         me.class = cls;
         me.super = superMeta;
 
@@ -176,7 +177,7 @@ class Meta {
         }
     }
 
-    addMixins (mixinCls, mixinId) {
+    addMixins (mixinCls) {
         let me = this;
 
         if (!mixinCls) {
@@ -184,12 +185,7 @@ class Meta {
         }
         if (Array.isArray(mixinCls)) {
             for (let mx of mixinCls) {
-                if (Array.isArray(mx)) {
-                    me.addMixins(mx[1], mx[0]);
-                }
-                else {
-                    me.addMixins(mx);
-                }
+                me.addMixins(mx);
             }
 
             return;
@@ -199,7 +195,7 @@ class Meta {
         let prototype = cls.prototype;
         let chains = me.getChains();
         let bases = me.bases;
-        let mixinMeta = mixinCls.getMeta();  // ensure all Meta's exist
+        let mixinMeta = mixinCls.meta;  // ensure all Meta's exist
         let mixinConfigs = mixinMeta.getConfigs();
         let rootClass = me.rootClass;
         let instanceMap = new Empty();
@@ -222,22 +218,12 @@ class Meta {
             me.addConfigs(mixinConfigs.values, mixinMeta);
         }
 
-        mixinId = mixinId || mixinMeta.getMixinId();
-        if (mixinId) {
-            let mixins = me.getMixins();
-
-            if (!mixins[mixinId]) {
-                mixins[mixinId] = mixinCls;
-                prototype.mixins[mixinId] = mixinCls.prototype;
-            }
-        }
-
         for (mixCls = mixinCls; mixCls !== rootClass; mixCls = mixCls.super) {
             if (bases.has(mixCls)) {
                 break;
             }
 
-            mixMeta = mixCls.$meta; // earlier call to getMeta ensures this is OK
+            mixMeta = mixCls[metaSym]; // earlier call to .meta ensures this is OK
 
             // Start with instance side members:
             isStatic = false;
@@ -427,33 +413,6 @@ class Meta {
         return members;
     }
 
-    getMixinId () {
-        let mixinId = this.mixinId;
-
-        if (mixinId == null) {
-            mixinId = this.class.name;
-            mixinId = mixinId ? Util.decapitalize(mixinId) : '';
-
-            this.mixinId = mixinId;
-        }
-
-        return mixinId;
-    }
-
-    getMixins (forPrototype) {
-        let cls = this.class;
-        let proto = cls.prototype;
-
-        if (!cls.hasOwnProperty('mixins')) {
-            let sup = this.super;
-
-            cls.mixins = (sup ? Object.create(sup.getMixins()) : new Empty());
-            proto.mixins = (sup ? Object.create(sup.getMixins(true)) : new Empty());
-        }
-
-        return (forPrototype ? proto : cls).mixins;
-    }
-
     getProcessors () {
         let ret = null;
 
@@ -627,7 +586,7 @@ class Meta {
             cls.applyProcessors(processors);
         }
 
-        processors = cls.getMeta().getProcessors();
+        processors = cls.meta.getProcessors();
 
         for (let proc of processors) {
             let name = proc.name;
@@ -659,33 +618,26 @@ class Meta {
 
     static adopt (cls) {
         cls.isClass = true;
-        cls.mixins = new Empty();
-
-        cls.prototype.mixins = new Empty();
 
         Util.copyIf(cls, {
             applyChains (chains) {
-                this.getMeta().addChains(chains);
+                this.meta.addChains(chains);
             },
 
             applyConfig (configs) {
-                this.getMeta().addConfigs(configs);
-            },
-
-            applyMixinId (mixinId) {
-                this.getMeta().mixinId = mixinId;
+                this.meta.addConfigs(configs);
             },
 
             applyMixins (mixinCls) {
-                this.getMeta().addMixins(mixinCls);
+                this.meta.addMixins(mixinCls);
             },
 
             applyProcessors (processors) {
-                this.getMeta().addProcessors(processors);
+                this.meta.addProcessors(processors);
             },
 
             applyProperties (properties) {
-                this.getMeta().addProperties(properties);
+                this.meta.addProperties(properties);
             },
 
             applyPrototype (members) {
@@ -697,21 +649,24 @@ class Meta {
             },
 
             define (options) {
-                this.getMeta().processOptions(options);
+                this.meta.processOptions(options);
                 return this;
-            },
+            }
+        });
 
-            getMeta () {
-                let meta = this.$meta;
-                if (meta.class !== this) {
-                    meta = new Meta(this, Object.getPrototypeOf(this));
+        Object.defineProperty(cls, 'meta', {
+            get () {
+                let meta = this[metaSym];
+
+                if (!meta || this !== meta.class) {
+                    this[metaSym] = meta = new Meta(this, Object.getPrototypeOf(this));
                 }
 
                 return meta;
             }
         });
 
-        return new Meta(cls);
+        return (cls[metaSym] = new Meta(cls));
     }
 
     createJunction (isStatic, key, method) {

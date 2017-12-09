@@ -104,10 +104,6 @@ const Util = {
         return dest;
     },
 
-    decapitalize (str) {
-        return str ? str[0].toLowerCase() + str.substr(1) : '';
-    },
-
     getAllKeys (object) {
         let keys = [];
 
@@ -160,6 +156,10 @@ const Util = {
         return C => {
             Object.assign(C, members);
         }
+    },
+
+    str (s) {
+        return (s == null) ? '' : String(s);
     },
 
     toArray (src) {

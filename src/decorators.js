@@ -36,36 +36,6 @@ module.exports = {
         }
     },
 
-    /**
-     * Declares the applyMixins id for this class. This is used by classes that applyMixins the
-     * class an need to address it directly.
-     *
-     * For example
-     *
-     *      @mixinId('helper')
-     *      class Helper extends Base {
-     *          something (x) {
-     *          }
-     *      }
-     *
-     *      @define({
-     *          mixins: [ Helper ]
-     *      })
-     *      class Foo extends Base {
-     *          something (x) {
-     *              // this method hides the method by this name in the
-     *              // Helper applyMixins... but we can call it directly:
-     *
-     *              this.mixins.helper.something.call(this, x);
-     *          }
-     *      }
-     */
-    mixinId (mixinId) {
-        return C => {
-            C.applyMixinId(mixinId);
-        }
-    },
-
     //-----------------------------------------------------------------------
     // Methods
 

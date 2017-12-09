@@ -1,53 +1,80 @@
 # Processors
 
-The `@define` decorator understands the following built-in processors:
+The single object parameter passed to the `@define` decorator (or `define` static method)
+contain processor entries. The name of each property is the name of the processor and the
+value is the processor's argument:
+
+```javascript
+    import { Widget, define } from '@epiphanysoft/oo';
+
+    @define({
+        //... processors go here
+        foo: 42  // pass 42 to the "foo" processor
+    })
+    class MyWidget extends Widget {
+        //...
+    }
+```
+
+The following processors are built-in:
 
  - [chains](#_chains)
  - [config](#_config)
- - [mixinId](#_mixinId)
  - [mixins](#_mixins)
  - [processors](#_processors)
  - [properties](#_properties)
  - [prototype](#_prototype)
  - [static](#_static)
 
-While all processors operate upon [classes](./Classes.md), the `config` processor is
-ultimately concerned with the [instances](./Instances.md) of the classes.
-
-## Using `define`
-
-The recommended way to use processors is the `@define` decorator:
+Each processor maps to a static method on the class. The name of this method is derived
+from the processor name:
 
 ```javascript
     import { Widget, define } from '@epiphanysoft/oo';
-    
+
     @define({
-        ...processors go here...
+        mixins: MyMixin
     })
-    class MyClass extends Widget {
-        ...
+    class MyWidget extends Widget {
+        //...
     }
 ```
 
-Alternatively, there is the `define` `static` method of `Widget` which is equivalent in
-every respect other than syntax:
+Would be the same as:
 
 ```javascript
     import { Widget } from '@epiphanysoft/oo';
-    
-    class MyClass extends Widget {
-        // ...
+
+    class MyWidget extends Widget {
+        //...
     }
-    
-    MyClass.define({
-        ...processors go here...
-    });
+
+    MyWidget.applyMixins(MyMixin);
 ```
 
-The `define` method is useful to avoid the tool chains currently required to transpile the
-decorator syntax.
+## Why Not Use Multiple Decorators?
 
-<a name="_chains">
+It is perhaps tempting to view each of these processors as their own decorators (for
+example, `@mixin`). While this can work in many cases, using multiple decorators does not
+ensure a consistent order.
+
+Instead that order is lexically determined. For example, consider these classes:
+
+```javascript
+    @foo @bar
+    class FooBar {
+    }
+
+    @bar @foo
+    class BarFoo {
+    }
+```
+
+The different order of the above decorators results in different execution order. In many
+cases this difference will not matter, but if the `@foo` and `@bar` decorators intersect
+in some way, their order can be important.
+
+<a name="_chains"></a>
 
 # `chains`
 
@@ -61,13 +88,13 @@ Consider these classes:
     @define({
         chains: ['init']
     })
-    class MyClass extends Widget {
+    class MyBase extends Widget {
         initialize (x, y) {
             this.callChain('init', x, y);
         }
         
         init (x, y) {
-            console.log('MyClass init', x, y);
+            console.log('MyBase init', x, y);
         }
     }
 
@@ -80,7 +107,7 @@ Consider these classes:
     @define({
         mixins: MyMixin
     })
-    class MyDerived extends MyClass {
+    class MyDerived extends MyBase {
         init (x, y) {
             console.log('MyDerived init', x, y);
         }
@@ -91,67 +118,26 @@ Consider these classes:
     inst.initialize(1, 2);
 ```
     
-    > MyClass init 1 2
+    > MyBase init 1 2
     > MyMixin init 1 2
     > MyDerived init 1 2
 
-The base `MyClass` defines a method chain on the `init` method. The goal is to enable
+The base `MyBase` defines a method chain on the `init` method. The goal is to enable
 derived classes and mixins to implement `init` methods without orchestrating the exact
 call sequence. Instead the `initialize()` method calls all of the `init()` implementations
 in the various classes and mixins using `callChain()`. This ensures that all `init()`
 methods are called and in the correct, top-down order.
 
-<a name="_config">
+For the method chain to work properly, the `mixins` processor needs to know **not** to copy
+such methods. The `chains` processor tracks these methods so that `mixins` behave properly.
+
+<a name="_config"></a>
 
 # `config`
 
-WIP
+This processor defines one or more [config properties](../Readme.md#_configs).
 
-<a name="_mixinId">
-
-# `mixinId`
-
-Sets the identity for a class when it is used as a mixin. This is used as the key in the
-`mixins` object maintained for classes using mixins.
-
-Consider a simple mixin:
-
-```javascript
-    class MyClass extends Widget {
-        foo () {
-            console.log('MyClass foo');
-        }
-    }
-
-    @define({
-        mixinId: 'mymixin'  // the name of this mixin
-    })
-    class MyMixin extends Widget {
-        foo () {
-            console.log('MyMixin foo');
-        }
-    }
-
-    @define({
-        mixins: MyMixin
-    })
-    class MyDerived extends MyClass {
-        foo () {
-            super.foo();
-            console.log('MyDerived foo');
-            
-            // "this.mixins" is maintained so that we can call into our mixin:
-            this.mixins.mymixin.foo.call(this);
-        }
-    }
-```
-
-The `mixins` object is maintained on the class constructor and prototype:
-
-    MyDerived.mixins['mymixin'] = MyMixin;
-    MyDerived.prototype.mixins['mymixin'] = MyMixin.prototype;
-
-<a name="_mixins">
+<a name="_mixins"></a>
 
 # `mixins`
 
@@ -162,7 +148,7 @@ one class to another.
     @define({
         mixins: [ MyMixin, MyOtherMixin ]
     })
-    class MyDerived extends MyClass {
+    class MyDerived extends MyBase {
         //
     }
 ```
@@ -171,16 +157,16 @@ Because JavaScript only truly understands single-inheritance via its prototype c
 properties (both `static` and on the mixin's prototype) are copied from `MyMixin` and
 `MyOtherMixin` onto `MyDerived`. This is only performed if there is no collision on the
 name of the property. In other words, properties already defined on `MyDerived` or inherited
-from `MyClass` are not overridden by the mixins.
+from `MyBase` are not overridden by the mixins.
 
-See [here](./Mixins.md) for more information on mixins.
+See [here](../Readme.md#_mixins) for more information on mixins.
 
-<a name="_processors">
+<a name="_processors"></a>
 
 # `processors`
 
-This processor allows a class to define and order custom processors for use in derived
-classes.
+This processor allows a class to define and order custom processors for its use as well
+as for use in derived classes.
 
 ```javascript
     @define({
@@ -204,9 +190,9 @@ In the above, `FooBar` adds a `foo` and `bar` processor and implements their log
 `applyFoo` and `applyBar` static methods. The order of these processors is also indicated
 so that `applyBar` will run before `applyFoo`.
 
-See [here](./Classes.md) for more information on custom processors.
+See [below](#_custom) for more information on custom processors.
 
-<a name="_properties">
+<a name="_properties"></a>
 
 # `properties`
 
@@ -235,7 +221,7 @@ The above is equivalent to the following:
     });
 ```
 
-<a name="_prototype">
+<a name="_prototype"></a>
 
 # `prototype`
 
@@ -262,7 +248,7 @@ The above is equivalent to the following:
     });
 ```
 
-<a name="_static">
+<a name="_static"></a>
 
 # `static`
 
@@ -284,4 +270,102 @@ The above is equivalent to the following:
     Object.assign(Something, {
         all: new Map()
     });
+```
+
+<a name="_custom"></a>
+
+# Custom Processors
+
+Processors are class mutation directives. The `processors` processor allows class authors
+to add new processors to the `@define` mechanism. The primary reason to write processors
+instead of decorators is to ensure proper order of operations.
+
+By default, inherited processors (such as `prototype`) will be applied before derived class
+processors so this order is not typically a concern. When defining two processors, however,
+it is worth considering their order:
+
+```javascript
+    @define({
+        processors: {
+            foo: true,
+            bar: 'foo'   // "bar" requires "foo" to run first
+        }
+    })
+    class FooBar extends Widget {
+        static applyFoo (foo) {
+            console.log('applyFoo: ', foo);
+        }
+        
+        static applyBar (bar) {
+            console.log('applyBar: ', bar);
+        }
+    }
+```
+
+This class adds a `foo` and `bar` processor and specifies their order of operation. When
+processors are registered for a class, `@define` runs their static applier methods in the
+specified order.
+
+For example:
+
+```javascript
+    @define({
+        foo: 1,
+        bar: 2
+    })
+    class FooBarUser extends FooBar {
+        //
+    }
+```
+    
+    > applyFoo: 1
+    > applyBar: 2
+
+The name of the applier method is computed from the processor name:
+
+    appierName = 'apply' + name[0].toUpperCase() + name.substr(1);
+
+## Advanced Processor Options
+
+Let's now consider a processor that defines properties on the class prototype. Since the
+`prototype` processor also places properties on the class prototype, there is room for
+these processors to conflict.
+
+Assume that the new processor should be executed before `prototype`:
+
+```javascript
+    @define({
+        processors: {
+            foo: {
+                before: 'prototype'
+            }
+        }
+    })
+    class WidgetWithCustomProcessor extends Widget {
+        static applyFoo (foo) {
+            // runs before prototype processor...
+        }
+    }
+```
+
+When the value of a key in the object given to the `processors` processor is an object,
+it can use two properties to configure its behavior:
+
+ - `after`: The processors that this processor must execute after.
+ - `before`: The processors that this processor must execute before.
+
+Any value other than an object or string for a processor is ignored. This is also true of
+any properties other than `before` and `after` in an object value.
+
+In the first example, the `processors` could have be expressed as:
+
+```javascript
+    @define({
+        processors: {
+            foo: {
+                after: 'bar'  // "foo" requires "bar" to run first
+            },
+            bar: true  // the value "true" is ignored
+        }
+    })
 ```
